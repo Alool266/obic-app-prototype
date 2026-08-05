@@ -1,0 +1,28 @@
+OBIC — GitHub Pages (private repo) — exact steps
+================================================
+This machine had no Homebrew/gh auth and GitHub release downloads failed.
+Run these on your Mac after installing tools:
+
+1) Install Homebrew (if missing):
+   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+   eval "$(/opt/homebrew/bin/brew shellenv)"
+
+2) Install GitHub CLI and log in:
+   brew install gh
+   gh auth login
+   # choose GitHub.com → HTTPS → Login with browser → authorize
+
+3) Create private repo + push (from project root):
+   cd /Users/mac/Projects/obic-app
+   gh repo create obic-app-prototype --private --source=. --remote=origin --push
+
+4) Enable Pages:
+   gh api -X PUT "repos/{owner}/obic-app-prototype/pages" \
+     -f build_type=legacy -f source[branch]=main -f source[path]=/
+   # Or: GitHub → Settings → Pages → Deploy from branch → main → / (root) → Save
+
+5) Live URL (after ~1 minute):
+   https://<YOUR_USERNAME>.github.io/obic-app-prototype/
+   (For private repos, viewers need GitHub access to the repo.)
+
+Do NOT upload Desktop deal.rtf / PRD / staff lists / xlsx / docx into the repo.

@@ -1,10 +1,10 @@
 /* OBIC V1 Prototype — Designed & developed by Ali */
 const ICONS = {
-  hotel: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 21h18M5 21V8l7-4 7 4v13M9 21v-6h6v6M9 10h.01M15 10h.01"/></svg>`,
-  flight: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 12l19-8-4 16-5-5-4 2z"/></svg>`,
-  visa: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M7 15h4"/></svg>`,
-  bank: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 10l9-6 9 6M5 10v8M9 10v8M15 10v8M19 10v8M3 18h18"/></svg>`,
-  vip: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3l2.5 6.5L21 10l-5 4.2L17.5 21 12 17.5 6.5 21 8 14.2 3 10l6.5-.5z"/></svg>`,
+  hotel: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V8l8-5 8 5v13"/><path d="M9 21v-6h6v6"/><path d="M4 21h16"/><path d="M9 10h.01M15 10h.01M12 13h.01"/></svg>`,
+  flight: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2L16 11l3.5-3.5C20.5 6.5 21 6 21 5.5s-.5-1-1-1.5L18 2.5c-.5-.5-1-.5-1.5 0L13 6 4.8 4.2c-.4-.1-.8 0-1 .3L3 5.5c-.3.4-.2.9.2 1.1L10 10l-2 4-2.5-.7c-.4-.1-.8 0-1 .3l-.8.8c-.3.3-.2.8.1 1L8 18l9.8 1.2z"/></svg>`,
+  visa: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="2"/><circle cx="12" cy="10" r="2.5"/><path d="M8.5 16.5c.8-1.4 2-2 3.5-2s2.7.6 3.5 2"/><path d="M5 7h14"/></svg>`,
+  bank: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10l9-7 9 7"/><path d="M5 10v8M9 10v8M15 10v8M19 10v8"/><path d="M3 18h18M3 21h18"/></svg>`,
+  vip: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 16L3 7l5.5 4L12 4l3.5 7L21 7l-2 9H5z"/><path d="M5 16h14v2a2 2 0 01-2 2H7a2 2 0 01-2-2v-2z"/></svg>`,
   legal: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v18M5 8l7-4 7 4M6 21h12M8 12l-3 5h6l-3-5zm8 0l-3 5h6l-3-5z"/></svg>`,
   company: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 21V5a1 1 0 011-1h8a1 1 0 011 1v16M14 10h5a1 1 0 011 1v10M8 8h2M8 12h2M8 16h2"/></svg>`,
   scholarship: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 10L12 5 2 10l10 5 10-5zM6 12v5c0 1 3 3 6 3s6-2 6-3v-5"/></svg>`,
@@ -57,12 +57,21 @@ const I18N = {
   ar: {
     panelMuted: "نموذج تجربة مستخدم فاخر",
     panelSub: "تطبيق ثلاثي الأبعاد · الذكاء الاصطناعي · الموظفين · العربية أولاً",
-    panelHint: "الرئيسية: بلاطات ثلاثية الأبعاد · لحظات · أصدقاء · إشعارات الإدارة.<br/>الموظفون: علامة صغيرة في نبذة عني → دخول الموظفين.<br/>المشرف الأعلى يرى محادثات الموظفين. الموظف لا يضيف عملاء كأصدقاء.",
+    panelHint: "الإدارة متاحة في التطبيق والويب.<br/>التطبيق: علامة O صغيرة في حسابي → دخول الموظفين → لوحة الجوال.<br/>الويب: زر «لوحة الإدارة ويب» أعلاه → admin.obicgp.com.<br/>المشرف الأعلى يرى محادثات الموظفين؛ الموظف لا يضيف عملاء كأصدقاء.",
     panelCredit: "تصميم وتطوير: علي",
     modeApp: "تطبيق العميل",
     modeWeb: "لوحة الإدارة ويب",
-    phoneCaption: "آيفون · العميل + إدارة الموظفين",
-    webCaption: "لوحة إدارة سطح المكتب · مشرف أعلى / موظف",
+    adminDualHint: "الإدارة: في التطبيق (دخول الموظفين) وعلى الويب (لوحة الإدارة) — مشرف أعلى / موظف",
+    dualAccessTitle: "وصول الإدارة — تطبيق + ويب",
+    dualAccessBody: "الموظفون والمشرفون يدخلون من التطبيق (جوال) أو من لوحة الويب. بدّل الدور أدناه لترى فرق الصلاحيات.",
+    dualPathApp: "التطبيق",
+    dualPathAppDesc: "دخول الموظفين → لوحة الجوال",
+    dualPathWeb: "الويب",
+    dualPathWebDesc: "لوحة إدارة سطح المكتب",
+    staffEntryHint: "دخول الموظفين · التطبيق والجوال · ليس للعملاء",
+    webAccessNote: "لوحة الويب · نفس الأدوار: مشرف أعلى / موظف · متاحة أيضاً من التطبيق",
+    phoneCaption: "آيفون · العميل + إدارة الموظفين (تطبيق)",
+    webCaption: "لوحة إدارة سطح المكتب · مشرف أعلى / موظف (ويب)",
     home: "الرئيسية",
     services: "الخدمات",
     messages: "الرسائل",
@@ -328,12 +337,21 @@ const I18N = {
   en: {
     panelMuted: "Premium UX prototype",
     panelSub: "3D app · OBIC AI · Staff · Arabic-first (switch to EN)",
-    panelHint: "Home: 3D tiles · Moments · Friends · Admin notify rules.<br/>Staff: tiny mark on Me/About → Staff Login.<br/>Super Admin sees employee chats. Employees cannot add customers as friends.",
+    panelHint: "Admin is available in the app AND on the web.<br/>App: tiny O mark on Me → Staff Login → mobile admin dashboard.<br/>Web: tap «Admin Web» above → admin.obicgp.com desktop panel.<br/>Super Admin sees employee chats; employees cannot add customers as friends.",
     panelCredit: "Designed & developed by Ali",
     modeApp: "Customer App",
     modeWeb: "Admin Web",
-    phoneCaption: "iPhone · Customer + Staff Admin",
-    webCaption: "Desktop Admin Web · Super Admin / Employee",
+    adminDualHint: "Admin: in the app (Staff Login) and on the web (Admin Web) — Super Admin / Employee",
+    dualAccessTitle: "Admin access — App + Web",
+    dualAccessBody: "Staff & Super Admins enter from the mobile app or the desktop web panel. Toggle role below to see privilege differences.",
+    dualPathApp: "App",
+    dualPathAppDesc: "Staff Login → mobile dashboard",
+    dualPathWeb: "Web",
+    dualPathWebDesc: "Desktop Admin Web panel",
+    staffEntryHint: "Staff entry · app + mobile · not for customers",
+    webAccessNote: "Admin Web · same roles: Super Admin / Employee · also reachable from the app",
+    phoneCaption: "iPhone · Customer + Staff Admin (App)",
+    webCaption: "Desktop Admin · Super Admin / Employee (Web)",
     home: "Home",
     services: "Services",
     messages: "Messages",
@@ -769,9 +787,9 @@ let state = {
   postAs: "user",
   momentWithImage: false,
   moments: [
-    { id: 1, author: "OBIC Admin", role: "admin", textAr: "ترقية خدمة التأشيرة السريعة هذا الأسبوع — تواصل مع مستشارك.", textEn: "Visa Express upgrade this week — contact your advisor.", time: "2h", hasImage: true, likes: 24 },
+    { id: 1, author: "OBIC Admin", role: "admin", textAr: "ترقية خدمة التأشيرة السريعة هذا الأسبوع — تواصل مع مستشارك.", textEn: "Visa Express upgrade this week — contact your advisor.", time: "2h", hasImage: true, imageTheme: "visa", likes: 24 },
     { id: 2, author: "Omar", role: "user", textAr: "وصلت إلى ييوو — شكراً لفريق OBIC على التنسيق!", textEn: "Arrived in Yiwu — thanks OBIC team for the coordination!", time: "5h", hasImage: false, likes: 8 },
-    { id: 3, author: "Nora", role: "user", textAr: "اكتمل فتح الحساب البنكي بسلاسة.", textEn: "Bank account opening completed smoothly.", time: "1d", hasImage: true, likes: 12 },
+    { id: 3, author: "Nora", role: "user", textAr: "اكتمل فتح الحساب البنكي بسلاسة.", textEn: "Bank account opening completed smoothly.", time: "1d", hasImage: true, imageTheme: "bank", likes: 12 },
   ],
   notifications: [
     { id: 1, type: "admin_moment", titleAr: "منشور جديد من إدارة OBIC", titleEn: "New post from OBIC Admin", bodyAr: "ترقية خدمة التأشيرة السريعة هذا الأسبوع", bodyEn: "Visa Express upgrade this week", unread: true, time: "2h" },
@@ -846,6 +864,7 @@ function applyDir() {
     ["panelMuted", "panelMuted"], ["panelSub", "panelSub"], ["panelHint", "panelHint"],
     ["panelCredit", "panelCredit"], ["modeAppBtn", "modeApp"], ["modeWebBtn", "modeWeb"],
     ["phoneCaption", "phoneCaption"], ["webCaption", "webCaption"],
+    ["adminDualHint", "adminDualHint"],
   ];
   map.forEach(([id, key]) => {
     const el = document.getElementById(id);
@@ -1169,25 +1188,31 @@ function renderHome() {
     <div class="section">
       <div class="banner-wrap">
         <div class="banner-track">
-          <div class="banner b1" onclick="go('detail',{serviceId:'vip'})">
+          <div class="banner b-vip" onclick="go('detail',{serviceId:'vip'})">
+            <span class="banner-ico" aria-hidden="true">${ico("vip")}</span>
             <div class="eyebrow">${t("featured")}</div><h3>${t("vipTrip")}</h3><p>${t("vipTripDesc")}</p><span class="cta-pill">${t("bookPkg")}</span>
           </div>
-          <div class="banner b2" onclick="go('detail',{serviceId:'visa'})">
+          <div class="banner b-visa" onclick="go('detail',{serviceId:'visa'})">
+            <span class="banner-ico" aria-hidden="true">${ico("visa")}</span>
             <div class="eyebrow">${t("fastTrack")}</div><h3>${t("visaExpress")}</h3><p>${t("visaExpressDesc")}</p><span class="cta-pill">${t("from120")}</span>
           </div>
-          <div class="banner b3" onclick="go('detail',{serviceId:'bank'})">
+          <div class="banner b-bank" onclick="go('detail',{serviceId:'bank'})">
+            <span class="banner-ico" aria-hidden="true">${ico("bank")}</span>
             <div class="eyebrow">${t("setup")}</div><h3>${t("openBank")}</h3><p>${t("openBankDesc")}</p><span class="cta-pill">${t("startReq")}</span>
           </div>
         </div>
         <div class="banner-dots"><i class="on"></i><i></i><i></i></div>
       </div>
       <div class="promo-row">
-        <div class="promo" onclick="go('detail',{serviceId:'visa'})">
-          <div class="ph"><span class="ph-label">${svcs[2].name}</span></div>
+        <div class="promo promo-show" onclick="go('detail',{serviceId:'visa'})">
+          <div class="ph ph-visa">
+            <span class="ph-ico">${ico("visa")}</span>
+            <span class="ph-label">${svcs[2].name}</span>
+          </div>
           <div class="txt">${t("visaExpress")}<div><small>${svcs[2].price}</small></div></div>
         </div>
-        <div class="promo" onclick="go('detail',{serviceId:'bank'})">
-          <div class="ph alt"><span class="ph-label">${svcs[3].name}</span></div>
+        <div class="promo promo-plain" onclick="go('detail',{serviceId:'bank'})">
+          <div class="promo-ico-wrap bank">${ico("bank")}</div>
           <div class="txt">${t("openBank")}<div><small>Yiwu & Guangzhou</small></div></div>
         </div>
       </div>
@@ -1484,7 +1509,7 @@ function renderMoments() {
           </div>
         </div>
         <p class="moment-text">${isAr() ? m.textAr : m.textEn}</p>
-        ${m.hasImage ? `<div class="moment-img">${ico("image")}</div>` : ""}
+        ${m.hasImage && m.imageTheme ? `<div class="moment-img theme-${m.imageTheme}">${ico(m.imageTheme)}</div>` : (m.hasImage ? `<div class="moment-img">${ico("image")}</div>` : "")}
         <div class="moment-actions"><span>${t("like")} · ${m.likes}</span><span>${t("comment")}</span></div>
       </article>`).join("")}
   </div>
@@ -1595,6 +1620,7 @@ function renderMe() {
       <div class="menu-item" onclick="go('chat')">${t("support")} <span>›</span></div>
     </div>
     <div class="staff-entry-row">${staffMark()}</div>
+    <p class="staff-entry-hint">${t("staffEntryHint")}</p>
     <p class="credit-line">${t("designedBy")}</p>
   </div>
   ${tabBar("me")}`;
@@ -1689,6 +1715,18 @@ function renderStaffLogin() {
       <div class="staff-badge-lg">O</div>
       <div class="brand" style="font-size:22px">OBIC Staff</div>
       <p>${t("staffOnly")}</p>
+    </div>
+    <div class="dual-access-card">
+      <h4>${t("dualAccessTitle")}</h4>
+      <p>${t("dualAccessBody")}</p>
+      <div class="dual-paths">
+        <button type="button" onclick="state.staffLoggedIn=true; toast(t('staffIn')); go('adminDash')">
+          <strong>${t("dualPathApp")}</strong>${t("dualPathAppDesc")}
+        </button>
+        <button type="button" onclick="setMode('adminWeb')">
+          <strong>${t("dualPathWeb")}</strong>${t("dualPathWebDesc")}
+        </button>
+      </div>
     </div>
     ${authTabs()}${authIdentityFields("login")}
     <div><label>${t("staffPassword")}</label><input type="password" placeholder="••••••••" /></div>
@@ -1884,10 +1922,12 @@ function renderAdminWebDash() {
       <button onclick="go('adminWebStaff')">${t("staffPriv")}</button>
       <button onclick="${isSuper()?"go('adminWebOversight')":"toast(t('superOnly'))"}">${t("chatOversight")}</button>
       <button class="${isSuper()?"":"dim"}">${t("systemSettings")}</button>
+      <button onclick="setMode('app'); go('staffLogin')">← ${t("staffLogin")} (${t("dualPathApp")})</button>
       <button onclick="setMode('app')">← ${t("home")}</button>
       <div class="web-side-foot">${roleChip()}<p class="credit-mini">${t("designedBy")}</p></div>
     </aside>
     <main class="web-main">
+      <div class="web-access-banner">${t("webAccessNote")}</div>
       <header class="web-head">
         <div><h2>${t("opsDash")}</h2><p>${t("desktopAdmin")} · ${isAr() ? "العربية" : "English"}</p></div>
         <div class="web-head-right">${roleToggle()}
