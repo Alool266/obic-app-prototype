@@ -51,22 +51,22 @@
 <span class="badge">CONFIDENTIAL</span>
 <h1>OBIC iOS & Android App</h1>
 <p class="meta">
-  V1 Product Plan + UX Prototype Summary · English first · Ctrip-inspired UI<br/>
+  V1 Product Plan + UX Prototype Summary · <strong>Arabic default</strong> (RTL) · English switch · Ctrip-inspired UI<br/>
   Website: www.obicgp.com · Branches: Yiwu, Guangzhou, Yemen, Foshan, Hangzhou, Hainan<br/>
-  Document date: 2026-08-05 · Deliverable package for stakeholders
+  Document date: 2026-08-05 · Designed &amp; developed by <strong>Ali</strong>
 </p>
 
 <div class="warn">
   <strong>Confidentiality:</strong> This document and the interactive prototype are for OBIC internal use.
-  Do not publish the repo publicly. Keep API keys, customer data, and contract files out of git.
-  Specs on Desktop/obic (deal, staff lists) stay outside the code repository.
+  Do not publish deal/PRD/staff secret Desktop files into git. Keep API keys and customer data out of the repo.
 </div>
 
 <h2>1. Goal</h2>
 <p>
   Build one mobile app for iOS and Android so international clients can discover, request, track, and
   communicate about OBIC China corporate/travel services — look & density inspired by Ctrip (携程) Chinese app,
-  branded as OBIC. English UI first; Arabic/Chinese later via i18n files.
+  branded as OBIC. <strong>Arabic is the main/default language</strong> with full RTL; English available via in-app switch.
+  Designed &amp; developed by Ali.
 </p>
 
 <h2>2. V1 Scope (ship first)</h2>
@@ -74,19 +74,25 @@
   <tr><th>In V1</th><th>Out of V1 (later)</th></tr>
   <tr>
     <td>
-      Home (search, colored tiles, banners, promos)<br/>
+      Home (search, 3D tiles, banners, floating promos)<br/>
       All 16 services as entries<br/>
       Service detail + request form<br/>
       Auth: phone + email register/login, guest browse<br/>
       Orders list + status timeline<br/>
       Messages + chat with images &amp; files<br/>
-      Voice / video / incoming call UI<br/>
+      Voice / video / incoming call UI (glass overlays)<br/>
+      <strong>OBIC AI</strong> floating assist + keyword auto-replies<br/>
       Register / Login with Email <em>or</em> Phone tabs<br/>
       Discreet Staff entry → Staff Login<br/>
       Admin App (mobile) + Admin Web (desktop)<br/>
       Roles: Super Admin vs Employee privileges<br/>
-      Me / About / branch / language placeholder<br/>
-      5 bottom tabs (customer)
+      Moments feed (admin notify-all / user silent)<br/>
+      Customer add-friend (phone / ID / QR)<br/>
+      Super Admin employee chat oversight<br/>
+      Employee cannot add customers as friends<br/>
+      Arabic ↔ English i18n (default ar + RTL)<br/>
+      Me / About / branch · Designed by Ali<br/>
+      5 bottom tabs (Home · Services · Moments · Messages · Me)
     </td>
     <td>
       Live WebRTC media servers (calls are UX-ready)<br/>
@@ -94,7 +100,7 @@
       Live flight/hotel inventory APIs<br/>
       Wallet, agents, money transfer execution<br/>
       All payment gateways (Stripe/Visa in phase 3)<br/>
-      Full multi-language UI
+      Additional languages beyond AR/EN
     </td>
   </tr>
 </table>
@@ -102,12 +108,13 @@
 <h2>3. Bottom navigation (5 tabs)</h2>
 <table>
   <tr><th>Tab</th><th>Purpose</th></tr>
-  <tr><td>Home</td><td>Search, primary tiles, promos, recommended</td></tr>
+  <tr><td>Home</td><td>Search, primary tiles, promos, recommended · language chip · notification bell</td></tr>
   <tr><td>Services</td><td>Full catalog grid</td></tr>
-  <tr><td>Messages</td><td>Support + system notifications</td></tr>
-  <tr><td>Orders</td><td>Requests and status</td></tr>
-  <tr><td>Me</td><td>Profile, login, About, settings</td></tr>
+  <tr><td>Moments</td><td>朋友圈-style feed · admin posts notify all · user posts silent</td></tr>
+  <tr><td>Messages</td><td>Support · OBIC AI · friends · system</td></tr>
+  <tr><td>Me</td><td>Profile, login, friends, language AR/EN, About, Staff mark</td></tr>
 </table>
+<p style="font-size:9.5pt;color:#64748b">Orders remain reachable from Me and service flows (list + timeline screens still in prototype).</p>
 
 <h2>4. Services (from website / mini program)</h2>
 <p>
@@ -141,10 +148,12 @@
 <ul>
   <li><strong>Brand navy:</strong> #0B1F3A · <strong>Primary blue:</strong> #1A6DFF</li>
   <li><strong>Tile accents:</strong> red hotels, blue flights, teal visa, green bank, orange VIP</li>
-  <li><strong>Font:</strong> Plus Jakarta Sans + DM Sans — premium, not Inter-only</li>
+  <li><strong>Font:</strong> Cairo / Noto Sans Arabic (AR) + Plus Jakarta Sans / DM Sans (EN)</li>
   <li><strong>Layout:</strong> Ctrip-like colored priority tiles + secondary grid + promo cards + rankings</li>
+  <li><strong>Depth:</strong> layered shadows, tile lift/tilt, floating promos, glass call controls, CTA shimmer</li>
+  <li><strong>AI:</strong> floating OBIC AI with keyword demo replies (AR + EN)</li>
   <li><strong>Motion:</strong> banner slide, tile press, tab highlight, CTA shimmer, call pulse</li>
-  <li><strong>i18n:</strong> all strings in en.json from day one</li>
+  <li><strong>i18n:</strong> Arabic default · English switch · full RTL when ar</li>
 </ul>
 
 <div class="page-break"></div>
@@ -161,18 +170,20 @@
   <div class="card"><h4>04 Request Order</h4><p>Branch, name, phone, email, notes → submit</p></div>
   <div class="card"><h4>05 Orders</h4><p>List with status badges</p></div>
   <div class="card"><h4>06 Order Timeline</h4><p>Step progress + message advisor</p></div>
-  <div class="card"><h4>07 Messages</h4><p>Support + system threads</p></div>
-  <div class="card"><h4>08 Chat + files</h4><p>Text, image bubbles, file chips, attach Photo/File, voice &amp; video call buttons</p></div>
-  <div class="card"><h4>09 Voice call</h4><p>Avatar, timer, mute / speaker / hang up</p></div>
-  <div class="card"><h4>10 Video call</h4><p>Remote + local video placeholders, mute, flip, end</p></div>
-  <div class="card"><h4>11 Incoming call</h4><p>Accept / decline / answer with voice</p></div>
-  <div class="card"><h4>12 Me</h4><p>Guest header, wallet row, settings menu</p></div>
-  <div class="card"><h4>13–14 Auth</h4><p>Login + Register with Email | Phone tabs + OTP</p></div>
-  <div class="card"><h4>15 Search</h4><p>Hot keywords + results</p></div>
-  <div class="card"><h4>16 About</h4><p>Brand, branches, discreet Staff mark</p></div>
-  <div class="card"><h4>17 Staff Login</h4><p>Hidden employee entry · role demo toggle</p></div>
-  <div class="card"><h4>18–20 Admin App</h4><p>Mobile dashboard, orders, staff &amp; privileges (Super Admin)</p></div>
-  <div class="card"><h4>W1–W2 Admin Web</h4><p>Desktop admin panel + staff/role management</p></div>
+  <div class="card"><h4>07 Messages</h4><p>Support · OBIC AI · Friends · system</p></div>
+  <div class="card"><h4>08 Chat + files</h4><p>Text, image, file, voice &amp; video call</p></div>
+  <div class="card"><h4>09–11 Calls</h4><p>Voice · Video · Incoming</p></div>
+  <div class="card"><h4>12 Moments</h4><p>Feed · Admin notify-all · User silent</p></div>
+  <div class="card"><h4>13 Notifications</h4><p>Badge + list (admin Moments)</p></div>
+  <div class="card"><h4>14–15 Friends</h4><p>Add by phone/ID/QR · requests · list</p></div>
+  <div class="card"><h4>16 Me</h4><p>Language AR/EN · friends · Ali credit</p></div>
+  <div class="card"><h4>17–18 Auth</h4><p>Login + Register Email | Phone + OTP</p></div>
+  <div class="card"><h4>19 Search</h4><p>Hot keywords + results</p></div>
+  <div class="card"><h4>20 About</h4><p>Brand, branches, Staff mark, Ali</p></div>
+  <div class="card"><h4>21 OBIC AI</h4><p>Keyword assist AR/EN</p></div>
+  <div class="card"><h4>22 Staff Login</h4><p>Hidden entry · Super/Employee toggle</p></div>
+  <div class="card"><h4>23–28 Admin App</h4><p>Dash · orders · staff · oversight · transcript · add contact</p></div>
+  <div class="card"><h4>W1–W3 Admin Web</h4><p>Dashboard · staff · chat oversight</p></div>
 </div>
 
 <h2>8b. Roles &amp; privileges</h2>
@@ -180,13 +191,18 @@
   <tr><th>Role</th><th>Can do</th><th>Cannot do</th></tr>
   <tr>
     <td><strong>Super Admin</strong></td>
-    <td>Full modules · promote / designate staff · grant privileges · system settings · “Signed by Super Admin”</td>
+    <td>Full modules · promote staff · grant privileges · system settings · <strong>employee chat oversight</strong> · add customers as contacts · “Signed by Super Admin”</td>
     <td>—</td>
   </tr>
   <tr>
     <td><strong>Employee / Staff</strong></td>
-    <td>Orders · chat · assigned customers</td>
-    <td>Promote others · full system settings · privilege matrix edits</td>
+    <td>Orders · chat with assigned customers</td>
+    <td>Promote others · system settings · <strong>see other employees’ private chats</strong> · <strong>add customers as friends/contacts</strong></td>
+  </tr>
+  <tr>
+    <td><strong>Customer</strong></td>
+    <td>Services · orders · chat · Moments · <strong>add other customers as friends</strong></td>
+    <td>Staff modules · oversight</td>
   </tr>
 </table>
 <p style="font-size:9.5pt;color:#64748b">
@@ -229,7 +245,7 @@
 </ol>
 
 <p class="footer">
-  OBIC V1 Plan & UX · Generated for project /Users/mac/Projects/obic-app · Also copied to Desktop/obic · © OBIC confidential
+  OBIC V1 Plan &amp; UX · Designed &amp; developed by Ali · Also synced to Desktop/obic/deliverables · © OBIC confidential
 </p>
 </body>
 </html>

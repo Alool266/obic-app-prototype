@@ -1,37 +1,43 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
-<title>OBIC V1 — Interactive UX Prototype</title>
+<title>OBIC V1 — نموذج تجربة المستخدم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Noto+Sans+Arabic:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="styles.css" />
 </head>
-<body>
+<body class="lang-ar" dir="rtl">
 <div class="stage">
   <aside class="panel">
     <div class="panel-brand">
       <div class="panel-mark">O</div>
       <div>
         <h1>OBIC V1</h1>
-        <p class="muted">Premium UX prototype</p>
+        <p class="muted" id="panelMuted">نموذج تجربة مستخدم فاخر</p>
       </div>
     </div>
-    <p class="panel-sub">Customer app · Staff admin · English · Confidential</p>
+    <p class="panel-sub" id="panelSub">تطبيق ثلاثي الأبعاد · الذكاء الاصطناعي · الموظفين · العربية أولاً</p>
+
+    <div class="lang-toggle" id="langToggle">
+      <button type="button" class="lang-btn active" data-lang="ar">العربية</button>
+      <button type="button" class="lang-btn" data-lang="en">English</button>
+    </div>
 
     <div class="mode-toggle" id="modeToggle">
-      <button type="button" class="mode-btn active" data-mode="app">Customer App</button>
-      <button type="button" class="mode-btn" data-mode="adminWeb">Admin Web</button>
+      <button type="button" class="mode-btn active" data-mode="app" id="modeAppBtn">تطبيق العميل</button>
+      <button type="button" class="mode-btn" data-mode="adminWeb" id="modeWebBtn">لوحة الإدارة ويب</button>
     </div>
 
     <nav class="screen-nav" id="screenNav"></nav>
-    <p class="hint">
-      Customer: Home looks like a funded travel super-app.<br/>
-      Staff: tiny mark on About / Me → Staff Login → Admin (mobile).<br/>
-      Toggle <strong>Admin Web</strong> for the desktop panel.
+    <p class="hint" id="panelHint">
+      الرئيسية: بلاطات ثلاثية الأبعاد · لحظات · أصدقاء · إشعارات الإدارة.<br/>
+      الموظفون: علامة صغيرة في نبذة عني → دخول الموظفين.<br/>
+      المشرف الأعلى يرى محادثات الموظفين. الموظف لا يضيف عملاء كأصدقاء.
     </p>
+    <p class="panel-credit" id="panelCredit">تصميم وتطوير: علي</p>
   </aside>
 
   <div class="phone-wrap" id="phoneWrap">
@@ -39,7 +45,7 @@
       <div class="notch"></div>
       <div class="screen" id="app"></div>
     </div>
-    <p class="phone-caption">iPhone · Customer + Staff Admin (in-app)</p>
+    <p class="phone-caption" id="phoneCaption">آيفون · العميل + إدارة الموظفين</p>
   </div>
 
   <div class="desktop-wrap hidden" id="desktopWrap">
@@ -50,7 +56,7 @@
       </div>
       <div class="desktop-screen" id="adminWeb"></div>
     </div>
-    <p class="phone-caption">Desktop Admin Web · Super Admin / Employee roles</p>
+    <p class="phone-caption" id="webCaption">لوحة إدارة سطح المكتب · مشرف أعلى / موظف</p>
   </div>
 </div>
 <script src="app.js"></script>

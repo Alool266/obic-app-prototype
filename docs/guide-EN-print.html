@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>OBIC App Guide — English</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  @page { size: A4; margin: 14mm 12mm; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: "DM Sans", "Plus Jakarta Sans", sans-serif;
+    color: #0B1F3A;
+    font-size: 10.5pt;
+    line-height: 1.5;
+  }
+  .cover {
+    page-break-after: always;
+    min-height: 240mm;
+    display: flex; flex-direction: column; justify-content: center;
+    background: linear-gradient(160deg, #071525 0%, #0B1F3A 50%, #1A6DFF 140%);
+    color: #fff; padding: 28mm 18mm; border-radius: 8px; margin: -6mm;
+  }
+  .cover .mark {
+    width: 64px; height: 64px; border-radius: 18px;
+    background: linear-gradient(145deg,#3B82F6,#1A6DFF);
+    display: grid; place-items: center; font-size: 28pt; font-weight: 800;
+    font-family: "Plus Jakarta Sans", sans-serif; margin-bottom: 18px;
+  }
+  .cover h1 { font-size: 32pt; margin: 0 0 8px; font-family: "Plus Jakarta Sans", sans-serif; }
+  .cover .sub { font-size: 14pt; opacity: .9; margin-bottom: 28px; }
+  .cover .credit { font-size: 13pt; font-weight: 700; color: #7dd3fc; margin-top: 40px; }
+  .cover .meta { font-size: 10pt; opacity: .7; margin-top: 12px; }
+  h2 {
+    font-size: 14pt; margin: 20px 0 8px;
+    border-bottom: 2px solid #1A6DFF; padding-bottom: 4px;
+    font-family: "Plus Jakarta Sans", sans-serif;
+  }
+  h3 { font-size: 11.5pt; margin: 14px 0 6px; }
+  p, li { margin: 0 0 6px; }
+  ul { padding-left: 18px; }
+  .badge {
+    display: inline-block; background: #1A6DFF; color: #fff;
+    font-size: 9pt; font-weight: 700; padding: 3px 10px; border-radius: 999px;
+  }
+  .warn {
+    background: #fff7ed; border: 1px solid #fdba74; padding: 10px 12px;
+    border-radius: 8px; font-size: 9.5pt; margin: 10px 0;
+  }
+  .rule {
+    background: #EFF6FF; border: 1px solid #93C5FD; padding: 10px 12px;
+    border-radius: 8px; font-size: 9.5pt; margin: 10px 0;
+  }
+  figure.shot { margin: 10px 0 16px; break-inside: avoid; }
+  figure.shot img {
+    width: 100%; max-height: 210mm; object-fit: contain;
+    border: 1px solid #e2e8f0; border-radius: 10px; background: #0f172a;
+  }
+  figcaption { font-size: 9pt; color: #64748b; margin-top: 4px; text-align: center; }
+  table { width: 100%; border-collapse: collapse; margin: 8px 0 14px; font-size: 9.5pt; }
+  th, td { border: 1px solid #e2e8f0; padding: 6px 8px; text-align: left; }
+  th { background: #f1f5f9; }
+  .footer { margin-top: 20px; font-size: 9pt; color: #94a3b8; }
+  .page-break { page-break-before: always; }
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <div class="mark">O</div>
+  <h1>OBIC</h1>
+  <div class="sub">Interactive App Prototype — Function Guide<br/>V1 · Arabic is the default language (switch to English anytime)</div>
+  <div class="credit">Designed &amp; developed by Ali</div>
+  <div class="meta">Confidential · Internal use · www.obicgp.com · 2026-08-05</div>
+</div>
+
+<span class="badge">CONFIDENTIAL</span>
+<h2>1. Introduction</h2>
+<p>This guide explains every function in the OBIC interactive prototype for customers and staff. Default UI language is <strong>Arabic</strong> with full RTL; users can switch to English.</p>
+<div class="warn"><strong>Confidentiality:</strong> Do not commit Desktop deal/PRD/staff secret docs into the repository. This guide and prototype are for internal stakeholder review.</div>
+<p style="color:#0284C7;font-weight:700">Designed &amp; developed by Ali</p>
+
+<h2>2. Language switch</h2>
+<p>Use the side panel or Home / Me to switch <strong>Arabic ↔ English</strong>. Arabic enables full right-to-left layout.</p>
+<figure class="shot">
+  <img src="screenshots/home_en.png" alt="Home screen in English" />
+  <figcaption>Home screen in English</figcaption>
+</figure>
+
+<div class="page-break"></div>
+<h2>3. Home (Ctrip-like density)</h2>
+<p>3D service tiles, search, floating promos, banners, and OBIC AI fab. Bottom tabs: Home · Services · Moments · Messages · Me.</p>
+<figure class="shot">
+  <img src="screenshots/home_ar.png" alt="Default Arabic Home (RTL)" />
+  <figcaption>Default Arabic Home (RTL)</figcaption>
+</figure>
+
+<h2>4. Services &amp; Orders</h2>
+<p>Service detail → request form → orders list and status timeline.</p>
+<figure class="shot">
+  <img src="screenshots/orders_ar.png" alt="Orders list with statuses" />
+  <figcaption>Orders list with statuses</figcaption>
+</figure>
+
+<div class="page-break"></div>
+<h2>5. Messages &amp; Chat (files / voice / video)</h2>
+<figure class="shot">
+  <img src="screenshots/messages_ar.png" alt="Messages · AI · Friends entry" />
+  <figcaption>Messages · AI · Friends entry</figcaption>
+</figure>
+<figure class="shot">
+  <img src="screenshots/chat_ar.png" alt="Chat with photo/file tools and call entry" />
+  <figcaption>Chat with photo/file tools and call entry</figcaption>
+</figure>
+<figure class="shot">
+  <img src="screenshots/voiceCall_ar.png" alt="Voice call glass UI" />
+  <figcaption>Voice call glass UI</figcaption>
+</figure>
+
+<div class="page-break"></div>
+<h2>6. Moments (朋友圈-style feed)</h2>
+<div class="rule">
+  <strong>Notification rules:</strong><br/>
+  • When <strong>Admin</strong> posts → <strong>all users</strong> get a notification (badge + list entry).<br/>
+  • When a <strong>User</strong> posts → appears in Moments feed only; <strong>nobody is notified</strong>.
+</div>
+<figure class="shot">
+  <img src="screenshots/moments_en.png" alt="Moments — post as User or Admin" />
+  <figcaption>Moments — post as User or Admin</figcaption>
+</figure>
+<figure class="shot">
+  <img src="screenshots/notifications_en.png" alt="Notifications — admin posts only" />
+  <figcaption>Notifications — admin posts only</figcaption>
+</figure>
+
+<div class="page-break"></div>
+<h2>7. Add friends (customers)</h2>
+<p>Customers can add each other by phone, ID, or QR, with friend requests.</p>
+<figure class="shot">
+  <img src="screenshots/addFriend_en.png" alt="Add friend by phone / ID / QR" />
+  <figcaption>Add friend by phone / ID / QR</figcaption>
+</figure>
+
+<h2>8. Login &amp; Register (Email | Phone)</h2>
+<figure class="shot">
+  <img src="screenshots/login_ar.png" alt="Login — Email or Phone tabs" />
+  <figcaption>Login — Email or Phone tabs</figcaption>
+</figure>
+<figure class="shot">
+  <img src="screenshots/register_ar.png" alt="Register — Email or Phone with verification code" />
+  <figcaption>Register — Email or Phone with verification code</figcaption>
+</figure>
+
+<div class="page-break"></div>
+<h2>9. Me · About · Staff entry</h2>
+<p>Tiny <strong>O Staff</strong> mark on Me / About opens Staff Login (not a customer CTA).</p>
+<figure class="shot">
+  <img src="screenshots/me_en.png" alt="Me — language, friends, Moments + Designed by Ali" />
+  <figcaption>Me — language, friends, Moments + Designed by Ali</figcaption>
+</figure>
+<figure class="shot">
+  <img src="screenshots/about_ar.png" alt="About OBIC — branches, website, Ali credit" />
+  <figcaption>About OBIC — branches, website, Ali credit</figcaption>
+</figure>
+<figure class="shot">
+  <img src="screenshots/staffLogin_ar.png" alt="Staff Login — Super Admin / Employee role demo" />
+  <figcaption>Staff Login — Super Admin / Employee role demo</figcaption>
+</figure>
+
+<div class="page-break"></div>
+<h2>10. Staff privileges</h2>
+<table>
+  <tr><th>Capability</th><th>Super Admin</th><th>Employee</th></tr>
+  <tr><td>Orders &amp; assigned customer chat</td><td>✓</td><td>✓</td></tr>
+  <tr><td>Employee chat oversight</td><td>✓</td><td>—</td></tr>
+  <tr><td>Add customers as contacts</td><td>✓</td><td>— (blocked)</td></tr>
+  <tr><td>Promote staff / grant privileges</td><td>✓</td><td>—</td></tr>
+</table>
+<figure class="shot">
+  <img src="screenshots/adminDash_ar_super.png" alt="Admin App dashboard — Super Admin" />
+  <figcaption>Admin App dashboard — Super Admin</figcaption>
+</figure>
+<figure class="shot">
+  <img src="screenshots/adminDash_en_employee.png" alt="Employee view — add-customer &amp; oversight locked" />
+  <figcaption>Employee view — add-customer &amp; oversight locked</figcaption>
+</figure>
+<figure class="shot">
+  <img src="screenshots/adminAddContact_ar_employee.png" alt="Employee blocked from adding customers" />
+  <figcaption>Employee blocked from adding customers</figcaption>
+</figure>
+
+<div class="page-break"></div>
+<h2>11. Super Admin chat oversight</h2>
+<p>List employee–customer conversations and open transcripts for supervision. Employees cannot see other employees’ private chats.</p>
+<figure class="shot">
+  <img src="screenshots/adminOversight_en_super.png" alt="Employee conversation list" />
+  <figcaption>Employee conversation list</figcaption>
+</figure>
+<figure class="shot">
+  <img src="screenshots/adminTranscript_ar_super.png" alt="Employee transcript (supervision)" />
+  <figcaption>Employee transcript (supervision)</figcaption>
+</figure>
+<figure class="shot">
+  <img src="screenshots/adminStaff_ar_super.png" alt="Staff &amp; permission matrix" />
+  <figcaption>Staff &amp; permission matrix</figcaption>
+</figure>
+
+<div class="page-break"></div>
+<h2>12. Admin Web + OBIC AI</h2>
+<figure class="shot">
+  <img src="screenshots/adminWebDash_ar_super.png" alt="Desktop Admin Web dashboard" />
+  <figcaption>Desktop Admin Web dashboard</figcaption>
+</figure>
+<figure class="shot">
+  <img src="screenshots/adminWebOversight_ar_super.png" alt="Web chat oversight" />
+  <figcaption>Web chat oversight</figcaption>
+</figure>
+<figure class="shot">
+  <img src="screenshots/aiChat_ar.png" alt="OBIC AI assist — keyword demo replies" />
+  <figcaption>OBIC AI assist — keyword demo replies</figcaption>
+</figure>
+
+<h2>13. New screens summary</h2>
+<ul>
+  <li>Moments + admin notification rules</li>
+  <li>Notifications with badge</li>
+  <li>Add Friend / Friends (customers)</li>
+  <li>Chat oversight + transcript</li>
+  <li>Admin add contact (Super Admin only; Employee blocked)</li>
+  <li>Arabic default + full RTL; English switch</li>
+</ul>
+<p class="footer">© 2026 OBIC · Designed &amp; developed by Ali · Confidential stakeholder prototype</p>
+</body>
+</html>

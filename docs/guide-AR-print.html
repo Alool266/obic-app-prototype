@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<title>دليل تطبيق OBIC — العربية</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  @page { size: A4; margin: 14mm 12mm; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: "Cairo", "Noto Sans Arabic", sans-serif;
+    color: #0B1F3A;
+    font-size: 10.5pt;
+    line-height: 1.55;
+    direction: rtl;
+  }
+  .cover {
+    page-break-after: always;
+    min-height: 240mm;
+    display: flex; flex-direction: column; justify-content: center;
+    background: linear-gradient(160deg, #071525 0%, #0B1F3A 50%, #1A6DFF 140%);
+    color: #fff; padding: 28mm 18mm; border-radius: 8px; margin: -6mm;
+  }
+  .cover .mark {
+    width: 64px; height: 64px; border-radius: 18px;
+    background: linear-gradient(145deg,#3B82F6,#1A6DFF);
+    display: grid; place-items: center; font-size: 28pt; font-weight: 800;
+    margin-bottom: 18px;
+  }
+  .cover h1 { font-size: 28pt; margin: 0 0 8px; }
+  .cover .sub { font-size: 14pt; opacity: .9; margin-bottom: 28px; }
+  .cover .credit {
+    font-size: 13pt; font-weight: 700; color: #7dd3fc; margin-top: 40px;
+  }
+  .cover .meta { font-size: 10pt; opacity: .7; margin-top: 12px; }
+  h2 {
+    font-size: 14pt; margin: 20px 0 8px;
+    border-bottom: 2px solid #1A6DFF; padding-bottom: 4px; color: #0B1F3A;
+  }
+  h3 { font-size: 11.5pt; margin: 14px 0 6px; color: #122a4a; }
+  p, li { margin: 0 0 6px; }
+  ul { padding-right: 18px; }
+  .badge {
+    display: inline-block; background: #1A6DFF; color: #fff;
+    font-size: 9pt; font-weight: 700; padding: 3px 10px; border-radius: 999px;
+  }
+  .warn {
+    background: #fff7ed; border: 1px solid #fdba74; padding: 10px 12px;
+    border-radius: 8px; font-size: 9.5pt; margin: 10px 0;
+  }
+  .rule {
+    background: #EFF6FF; border: 1px solid #93C5FD; padding: 10px 12px;
+    border-radius: 8px; font-size: 9.5pt; margin: 10px 0;
+  }
+  figure.shot {
+    margin: 10px 0 16px; break-inside: avoid;
+  }
+  figure.shot img {
+    width: 100%; max-height: 210mm; object-fit: contain;
+    border: 1px solid #e2e8f0; border-radius: 10px; background: #0f172a;
+  }
+  figcaption {
+    font-size: 9pt; color: #64748b; margin-top: 4px; text-align: center;
+  }
+  table { width: 100%; border-collapse: collapse; margin: 8px 0 14px; font-size: 9.5pt; }
+  th, td { border: 1px solid #e2e8f0; padding: 6px 8px; text-align: right; }
+  th { background: #f1f5f9; }
+  .footer { margin-top: 20px; font-size: 9pt; color: #94a3b8; }
+  .page-break { page-break-before: always; }
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <div class="mark">O</div>
+  <h1>OBIC</h1>
+  <div class="sub">دليل وظائف النموذج التفاعلي للتطبيق<br/>الإصدار الأول · العربية هي اللغة الأساسية</div>
+  <div class="credit">تصميم وتطوير: علي</div>
+  <div class="meta">سري · للاستخدام الداخلي · www.obicgp.com · 2026-08-05</div>
+</div>
+
+<span class="badge">سري</span>
+<h2>١. مقدمة</h2>
+<p>هذا الدليل يشرح كل وظيفة في نموذج OBIC التفاعلي للعملاء والموظفين. الواجهة الافتراضية <strong>العربية</strong> مع تخطيط من اليمين لليسار (RTL)، مع إمكانية التبديل إلى الإنجليزية.</p>
+<div class="warn"><strong>السرية:</strong> لا تُنشر المستندات السرية من سطح المكتب (الصفقات، قوائم الموظفين، ملفات العقود) داخل المستودع. هذا الدليل والنموذج للعرض الداخلي فقط.</div>
+<p class="credit" style="color:#0284C7;font-weight:700">تصميم وتطوير: علي</p>
+
+<h2>٢. تبديل اللغة</h2>
+<p>من الشريط الجانبي أو من الشاشة الرئيسية / حسابي: التبديل بين <strong>العربية ↔ الإنجليزية</strong>. عند اختيار العربية يصبح التخطيط كاملاً من اليمين لليسار.</p>
+<figure class="shot">
+  <img src="screenshots/home_ar.png" alt="الشاشة الرئيسية بالعربية (افتراضي)" />
+  <figcaption>الشاشة الرئيسية بالعربية (افتراضي)</figcaption>
+</figure>
+
+<div class="page-break"></div>
+<h2>٣. الرئيسية (بأسلوب يشبه تطبيقات السفر)</h2>
+<p>بلاطات خدمات ثلاثية الأبعاد، شريط بحث، لافتات ترويجية متحركة، ومساعد OBIC AI عائم. التبويبات السفلية: الرئيسية · الخدمات · اللحظات · الرسائل · حسابي.</p>
+<figure class="shot">
+  <img src="screenshots/services_ar.png" alt="كل الخدمات — ١٦ خدمة" />
+  <figcaption>كل الخدمات — ١٦ خدمة</figcaption>
+</figure>
+
+<h2>٤. الخدمات والطلبات</h2>
+<p>تفاصيل الخدمة → طلب (فرع، اسم، هاتف، بريد، ملاحظات) → قائمة الطلبات ومسار الحالة.</p>
+<figure class="shot">
+  <img src="screenshots/orders_ar.png" alt="قائمة الطلبات وحالاتها" />
+  <figcaption>قائمة الطلبات وحالاتها</figcaption>
+</figure>
+
+<div class="page-break"></div>
+<h2>٥. الرسائل والدردشة (صور / ملفات / مكالمات)</h2>
+<p>محادثة مع المستشار، إرفاق صورة أو ملف، مكالمة صوتية أو فيديو، ومكالمة واردة تجريبية.</p>
+<figure class="shot">
+  <img src="screenshots/messages_ar.png" alt="الرسائل · AI · الأصدقاء" />
+  <figcaption>الرسائل · AI · الأصدقاء</figcaption>
+</figure>
+<figure class="shot">
+  <img src="screenshots/chat_ar.png" alt="الدردشة مع المرفقات والمكالمات" />
+  <figcaption>الدردشة مع المرفقات والمكالمات</figcaption>
+</figure>
+<figure class="shot">
+  <img src="screenshots/voiceCall_ar.png" alt="واجهة المكالمة الصوتية" />
+  <figcaption>واجهة المكالمة الصوتية</figcaption>
+</figure>
+
+<div class="page-break"></div>
+<h2>٦. اللحظات (على نمط دائرة الأصدقاء)</h2>
+<p>يمكن للمستخدمين والإدارة نشر نص أو صورة (تجريبي).</p>
+<div class="rule">
+  <strong>قاعدة الإشعارات:</strong><br/>
+  • عندما تنشر <strong>الإدارة</strong> → يحصل <strong>كل المستخدمين</strong> على إشعار (شارة + عنصر في قائمة الإشعارات).<br/>
+  • عندما ينشر <strong>مستخدم</strong> → يظهر المنشور في اللحظات فقط، <strong>دون إشعار لأحد</strong>.
+</div>
+<figure class="shot">
+  <img src="screenshots/moments_ar.png" alt="اللحظات — نشر كمستخدم أو كإدارة" />
+  <figcaption>اللحظات — نشر كمستخدم أو كإدارة</figcaption>
+</figure>
+<figure class="shot">
+  <img src="screenshots/notifications_ar.png" alt="الإشعارات — منشورات الإدارة فقط" />
+  <figcaption>الإشعارات — منشورات الإدارة فقط</figcaption>
+</figure>
+
+<div class="page-break"></div>
+<h2>٧. إضافة الأصدقاء (العملاء)</h2>
+<p>يمكن للعملاء إضافة بعضهم بالهاتف أو المعرّف أو رمز QR، مع طلبات صداقة (قبول / رفض).</p>
+<figure class="shot">
+  <img src="screenshots/addFriend_ar.png" alt="إضافة صديق بالهاتف / المعرّف / QR" />
+  <figcaption>إضافة صديق بالهاتف / المعرّف / QR</figcaption>
+</figure>
+<figure class="shot">
+  <img src="screenshots/friends_ar.png" alt="قائمة الأصدقاء" />
+  <figcaption>قائمة الأصدقاء</figcaption>
+</figure>
+
+<h2>٨. تسجيل الدخول والتسجيل (بريد | هاتف)</h2>
+<figure class="shot">
+  <img src="screenshots/login_ar.png" alt="تسجيل الدخول — تبويب بريد أو هاتف" />
+  <figcaption>تسجيل الدخول — تبويب بريد أو هاتف</figcaption>
+</figure>
+<figure class="shot">
+  <img src="screenshots/register_ar.png" alt="إنشاء حساب — بريد أو هاتف مع رمز تحقق" />
+  <figcaption>إنشاء حساب — بريد أو هاتف مع رمز تحقق</figcaption>
+</figure>
+
+<div class="page-break"></div>
+<h2>٩. حسابي · عن OBIC · دخول الموظفين</h2>
+<p>علامة <strong>O موظفين</strong> الصغيرة في حسابي / عن OBIC تفتح دخول الموظفين (ليست زر عميل ظاهر).</p>
+<figure class="shot">
+  <img src="screenshots/me_ar.png" alt="حسابي — اللغة والأصدقاء واللحظات + تصميم وتطوير: علي" />
+  <figcaption>حسابي — اللغة والأصدقاء واللحظات + تصميم وتطوير: علي</figcaption>
+</figure>
+<figure class="shot">
+  <img src="screenshots/about_ar.png" alt="عن OBIC — الفروع والموقع وائتمان علي" />
+  <figcaption>عن OBIC — الفروع والموقع وائتمان علي</figcaption>
+</figure>
+<figure class="shot">
+  <img src="screenshots/staffLogin_ar.png" alt="دخول الموظفين — اختيار مشرف أعلى / موظف" />
+  <figcaption>دخول الموظفين — اختيار مشرف أعلى / موظف</figcaption>
+</figure>
+
+<div class="page-break"></div>
+<h2>١٠. إدارة الموظفين — صلاحيات</h2>
+<table>
+  <tr><th>القدرة</th><th>مشرف أعلى</th><th>موظف</th></tr>
+  <tr><td>الطلبات والمحادثة مع العملاء المسندين</td><td>✓</td><td>✓</td></tr>
+  <tr><td>رقابة محادثات الموظفين</td><td>✓</td><td>—</td></tr>
+  <tr><td>إضافة عملاء كجهات اتصال</td><td>✓</td><td>— (محظور)</td></tr>
+  <tr><td>ترقية الموظفين ومنح الصلاحيات</td><td>✓</td><td>—</td></tr>
+</table>
+<figure class="shot">
+  <img src="screenshots/adminDash_ar_super.png" alt="لوحة إدارة الجوال — مشرف أعلى" />
+  <figcaption>لوحة إدارة الجوال — مشرف أعلى</figcaption>
+</figure>
+<figure class="shot">
+  <img src="screenshots/adminAddContact_ar_employee.png" alt="الموظف محظور من إضافة العملاء كأصدقاء" />
+  <figcaption>الموظف محظور من إضافة العملاء كأصدقاء</figcaption>
+</figure>
+
+<div class="page-break"></div>
+<h2>١١. رقابة محادثات الموظفين (مشرف أعلى فقط)</h2>
+<p>قائمة محادثات الموظفين مع العملاء وفتح نص المحادثة للإشراف. الموظف لا يرى محادثات زملائه الخاصة.</p>
+<figure class="shot">
+  <img src="screenshots/adminOversight_ar_super.png" alt="قائمة محادثات الموظفين للإشراف" />
+  <figcaption>قائمة محادثات الموظفين للإشراف</figcaption>
+</figure>
+<figure class="shot">
+  <img src="screenshots/adminTranscript_ar_super.png" alt="نص محادثة موظف–عميل" />
+  <figcaption>نص محادثة موظف–عميل</figcaption>
+</figure>
+<figure class="shot">
+  <img src="screenshots/adminStaff_ar_super.png" alt="الموظفون ومصفوفة الصلاحيات" />
+  <figcaption>الموظفون ومصفوفة الصلاحيات</figcaption>
+</figure>
+
+<div class="page-break"></div>
+<h2>١٢. لوحة الإدارة ويب + OBIC AI</h2>
+<figure class="shot">
+  <img src="screenshots/adminWebDash_ar_super.png" alt="لوحة إدارة سطح المكتب" />
+  <figcaption>لوحة إدارة سطح المكتب</figcaption>
+</figure>
+<figure class="shot">
+  <img src="screenshots/adminWebOversight_ar_super.png" alt="رقابة المحادثات على الويب" />
+  <figcaption>رقابة المحادثات على الويب</figcaption>
+</figure>
+<figure class="shot">
+  <img src="screenshots/aiChat_ar.png" alt="مساعد OBIC AI — إجابات فورية تجريبية" />
+  <figcaption>مساعد OBIC AI — إجابات فورية تجريبية</figcaption>
+</figure>
+
+<h2>١٣. ملخص الشاشات الجديدة</h2>
+<ul>
+  <li>اللحظات + قواعد إشعار الإدارة</li>
+  <li>الإشعارات مع الشارة</li>
+  <li>إضافة صديق / الأصدقاء (عملاء)</li>
+  <li>رقابة محادثات الموظفين + نص المحادثة</li>
+  <li>إضافة جهة اتصال للإدارة (مشرف أعلى فقط / موظف محظور)</li>
+  <li>اللغة العربية الافتراضية مع RTL كامل</li>
+</ul>
+<p class="footer">© 2026 OBIC · تصميم وتطوير: علي · نموذج سري للشركاء</p>
+</body>
+</html>
