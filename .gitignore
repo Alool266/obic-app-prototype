@@ -1,0 +1,14 @@
+.DS_Store
+.env
+.env.*
+*.pem
+*.key
+node_modules/
+.vscode/
+.idea/
+# Never commit Desktop deal / PRD / staff secrets
+deal.rtf
+*.docx
+系统.xlsx
+*.xlsx
+Untitled*.rtf

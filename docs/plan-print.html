@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>OBIC Mobile App — V1 Plan & UX</title>
+<style>
+  @page { size: A4; margin: 16mm; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    color: #0B1F3A;
+    font-size: 11pt;
+    line-height: 1.45;
+  }
+  h1 { font-size: 22pt; margin: 0 0 6px; }
+  h2 { font-size: 14pt; margin: 22px 0 8px; border-bottom: 2px solid #1A6DFF; padding-bottom: 4px; }
+  h3 { font-size: 12pt; margin: 14px 0 6px; }
+  p, li { margin: 0 0 6px; }
+  .meta { color: #64748b; font-size: 10pt; margin-bottom: 18px; }
+  .badge {
+    display: inline-block; background: #1A6DFF; color: #fff;
+    font-size: 9pt; font-weight: 700; padding: 3px 8px; border-radius: 999px;
+  }
+  .warn {
+    background: #fff7ed; border: 1px solid #fdba74; padding: 10px 12px;
+    border-radius: 8px; font-size: 10pt; margin: 12px 0;
+  }
+  table { width: 100%; border-collapse: collapse; margin: 8px 0 14px; font-size: 10pt; }
+  th, td { border: 1px solid #e2e8f0; padding: 7px 8px; text-align: left; vertical-align: top; }
+  th { background: #f1f5f9; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .card {
+    border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px; background: #f8fafc;
+    break-inside: avoid;
+  }
+  .card h4 { margin: 0 0 4px; font-size: 11pt; }
+  .card p { font-size: 9.5pt; color: #475569; margin: 0; }
+  img.concept {
+    width: 48%; max-height: 320px; object-fit: contain;
+    border: 1px solid #e2e8f0; border-radius: 12px; background: #0f172a;
+  }
+  .row-imgs { display: flex; gap: 4%; justify-content: space-between; margin: 10px 0; }
+  .footer { margin-top: 24px; font-size: 9pt; color: #94a3b8; }
+  ul { padding-left: 18px; }
+  .page-break { page-break-before: always; }
+  code { background: #f1f5f9; padding: 1px 4px; border-radius: 4px; font-size: 9.5pt; }
+</style>
+</head>
+<body>
+
+<span class="badge">CONFIDENTIAL</span>
+<h1>OBIC iOS & Android App</h1>
+<p class="meta">
+  V1 Product Plan + UX Prototype Summary · English first · Ctrip-inspired UI<br/>
+  Website: www.obicgp.com · Branches: Yiwu, Guangzhou, Yemen, Foshan, Hangzhou, Hainan<br/>
+  Document date: 2026-08-05 · Deliverable package for stakeholders
+</p>
+
+<div class="warn">
+  <strong>Confidentiality:</strong> This document and the interactive prototype are for OBIC internal use.
+  Do not publish the repo publicly. Keep API keys, customer data, and contract files out of git.
+  Specs on Desktop/obic (deal, staff lists) stay outside the code repository.
+</div>
+
+<h2>1. Goal</h2>
+<p>
+  Build one mobile app for iOS and Android so international clients can discover, request, track, and
+  communicate about OBIC China corporate/travel services — look & density inspired by Ctrip (携程) Chinese app,
+  branded as OBIC. English UI first; Arabic/Chinese later via i18n files.
+</p>
+
+<h2>2. V1 Scope (ship first)</h2>
+<table>
+  <tr><th>In V1</th><th>Out of V1 (later)</th></tr>
+  <tr>
+    <td>
+      Home (search, colored tiles, banners, promos)<br/>
+      All 16 services as entries<br/>
+      Service detail + request form<br/>
+      Auth: phone + email register/login, guest browse<br/>
+      Orders list + status timeline<br/>
+      Messages + chat with images &amp; files<br/>
+      Voice / video / incoming call UI<br/>
+      Me / About / branch / language placeholder<br/>
+      5 bottom tabs
+    </td>
+    <td>
+      Live WebRTC media servers (calls are UX-ready)<br/>
+      Full ERP / task trees / KPI boards<br/>
+      Live flight/hotel inventory APIs<br/>
+      Wallet, agents, money transfer execution<br/>
+      All payment gateways (Stripe/Visa in phase 3)<br/>
+      Full multi-language UI
+    </td>
+  </tr>
+</table>
+
+<h2>3. Bottom navigation (5 tabs)</h2>
+<table>
+  <tr><th>Tab</th><th>Purpose</th></tr>
+  <tr><td>Home</td><td>Search, primary tiles, promos, recommended</td></tr>
+  <tr><td>Services</td><td>Full catalog grid</td></tr>
+  <tr><td>Messages</td><td>Support + system notifications</td></tr>
+  <tr><td>Orders</td><td>Requests and status</td></tr>
+  <tr><td>Me</td><td>Profile, login, About, settings</td></tr>
+</table>
+
+<h2>4. Services (from website / mini program)</h2>
+<p>
+  Hotels · Flights · Visa · Bank Account · VIP · Legal · Company Registration · Scholarships ·
+  Money Transfer (request/info only in V1) · Advertisements · Business Services · HR · Insurance ·
+  International Expansion · Technical Support · Business Planning
+</p>
+
+<h2>5. Phased delivery</h2>
+<table>
+  <tr><th>Phase</th><th>Deliverable</th></tr>
+  <tr><td>Month 1 — V1 customer app</td><td>UI + auth + services + orders + chat (files/images) + call UI · TestFlight / internal Android</td></tr>
+  <tr><td>Month 2</td><td>Admin web · Push · wire real chat media upload · call signaling stub</td></tr>
+  <tr><td>Month 3</td><td>Card payments (Stripe/Visa) · i18n start · live WebRTC if approved · store submission</td></tr>
+  <tr><td>Later</td><td>ERP workflows · inventory APIs · transfers</td></tr>
+</table>
+
+<h2>6. Suggested stack (fastest dual-platform)</h2>
+<table>
+  <tr><th>Layer</th><th>Recommendation</th></tr>
+  <tr><td>Mobile</td><td>Flutter <em>or</em> React Native (Expo) — pick one team skill</td></tr>
+  <tr><td>API</td><td>NestJS or Laravel + PostgreSQL</td></tr>
+  <tr><td>Auth</td><td>JWT + SMS OTP + email</td></tr>
+  <tr><td>Admin</td><td>Next.js or Flutter web</td></tr>
+  <tr><td>Payments (later)</td><td>Stripe for international cards</td></tr>
+  <tr><td>Chat + media</td><td>WebSocket / Stream Chat · file &amp; image upload</td></tr>
+  <tr><td>Calls (later wire)</td><td>WebRTC or Agora / Twilio — UX already in prototype</td></tr>
+</table>
+
+<h2>7. Design system</h2>
+<ul>
+  <li><strong>Brand navy:</strong> #0B1F3A · <strong>Primary blue:</strong> #1A6DFF</li>
+  <li><strong>Tile accents:</strong> red hotels, blue flights, teal visa, green bank, orange VIP</li>
+  <li><strong>Font:</strong> Plus Jakarta Sans + DM Sans — premium, not Inter-only</li>
+  <li><strong>Layout:</strong> Ctrip-like colored priority tiles + secondary grid + promo cards + rankings</li>
+  <li><strong>Motion:</strong> banner slide, tile press, tab highlight, CTA shimmer, call pulse</li>
+  <li><strong>i18n:</strong> all strings in en.json from day one</li>
+</ul>
+
+<div class="page-break"></div>
+
+<h2>8. UX prototype screens (V1)</h2>
+<p>
+  Interactive HTML prototype path: <code>prototype/index.html</code> (open in Chrome).
+  Screen map covered:
+</p>
+<div class="grid">
+  <div class="card"><h4>01 Home</h4><p>Brand, search, 5 primary tiles, secondary grid, VIP banner, promos, recommended list</p></div>
+  <div class="card"><h4>02 Services</h4><p>Full 16-service catalog</p></div>
+  <div class="card"><h4>03 Service Detail</h4><p>Hero, inclusions, price, Request / Chat CTAs</p></div>
+  <div class="card"><h4>04 Request Order</h4><p>Branch, name, phone, email, notes → submit</p></div>
+  <div class="card"><h4>05 Orders</h4><p>List with status badges</p></div>
+  <div class="card"><h4>06 Order Timeline</h4><p>Step progress + message advisor</p></div>
+  <div class="card"><h4>07 Messages</h4><p>Support + system threads</p></div>
+  <div class="card"><h4>08 Chat + files</h4><p>Text, image bubbles, file chips, attach Photo/File, voice &amp; video call buttons</p></div>
+  <div class="card"><h4>09 Voice call</h4><p>Avatar, timer, mute / speaker / hang up</p></div>
+  <div class="card"><h4>10 Video call</h4><p>Remote + local video placeholders, mute, flip, end</p></div>
+  <div class="card"><h4>11 Incoming call</h4><p>Accept / decline / answer with voice</p></div>
+  <div class="card"><h4>12 Me</h4><p>Guest header, wallet row, settings menu</p></div>
+  <div class="card"><h4>13–14 Auth</h4><p>Login + Register (phone, email, SMS, agreement)</p></div>
+  <div class="card"><h4>15 Search</h4><p>Hot keywords + results</p></div>
+  <div class="card"><h4>16 About</h4><p>Brand, branches, contact</p></div>
+</div>
+
+<h2>9. Design concepts</h2>
+<div class="row-imgs">
+  <img class="concept" src="../assets/obic-home-design-concept.png" alt="Home concept" />
+  <img class="concept" src="../assets/obic-me-design-concept.png" alt="Me concept" />
+</div>
+<p style="font-size:9.5pt;color:#64748b">Left: Home concept · Right: Me / profile concept (Ctrip-inspired OBIC brand)</p>
+
+<h2>10. Security & no data leak</h2>
+<ul>
+  <li>Private git only · never commit .env / keys / customer PII</li>
+  <li>Keep Desktop deal/PRD/staff files out of the repo</li>
+  <li>Dev / Staging / Prod environments separated</li>
+  <li>Password hashing, OTP rate limits, HTTPS, admin audit log</li>
+  <li>App Store privacy policy required before release</li>
+</ul>
+
+<h2>11. How to use deliverables</h2>
+<ol>
+  <li>Open <code>prototype/index.html</code> in Chrome — click left nav or in-phone tabs</li>
+  <li><strong>Remote share:</strong> publish static site via GitHub Pages (repo root) — stakeholder opens a URL on phone or desktop</li>
+  <li>Share this PDF with stakeholders for sign-off on V1 scope</li>
+  <li>After approval: scaffold Flutter or Expo app and implement screens matching the prototype</li>
+</ol>
+
+<h2>12. Fastest path to real iOS/Android code</h2>
+<ol>
+  <li>Choose stack: <strong>Flutter</strong> (fast UI) or <strong>Expo</strong> (JS team)</li>
+  <li>Scaffold app + navigation with 5 tabs matching prototype</li>
+  <li>Hard-code services list first; plug API in week 2</li>
+  <li>Stand up Nest/Laravel + Postgres (users, services, orders, branches)</li>
+  <li>Wire auth OTP; then order submit; then chat stub</li>
+  <li>Internal TestFlight / APK — do not block on Figma (HTML is the UX source)</li>
+</ol>
+
+<p class="footer">
+  OBIC V1 Plan & UX · Generated for project /Users/mac/Projects/obic-app · Also copied to Desktop/obic · © OBIC confidential
+</p>
+</body>
+</html>
