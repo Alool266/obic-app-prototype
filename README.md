@@ -1,66 +1,60 @@
 # OBIC V1 — Interactive UX Prototype
 
-Premium Ctrip-inspired mobile UX for OBIC China business/travel services.  
-**English UI · Stakeholder demo · No backend · Confidential**
+Premium Ctrip-inspired **customer app** + **staff admin** (mobile & desktop web).  
+English UI · Stakeholder demo · Static HTML · Confidential
 
-> This repo is the **interactive prototype + plan PDF only**.  
-> It is **not** a marketing website rewrite of www.obicgp.com.
+> Prototype + plan only — **not** a rewrite of www.obicgp.com.
 
 ## Open locally
 
-Open in Chrome:
-
 ```bash
-open -a "Google Chrome" prototype/index.html
+open -a "Google Chrome" /Users/mac/Projects/obic-app/prototype/index.html
 ```
 
-Or from repo root (GitHub Pages-style entry):
+Left panel: jump screens. Top toggle: **Customer App** vs **Admin Web**.
 
-```bash
-open -a "Google Chrome" index.html
-```
+### Demo paths for stakeholder
+1. **Customer Home** — premium travel-super-app look  
+2. **Chat** — Photo / File attach · Voice · Video · Incoming call  
+3. **Register / Login** — **Email | Phone** tabs  
+4. **Me or About** — tiny **O Staff** mark → Staff Login  
+5. Toggle role **Super Admin / Employee** → Admin App dashboard  
+6. Toggle **Admin Web** — desktop operations panel  
 
 ## Share remotely (GitHub Pages)
-
-Static hosting — stakeholder opens a URL. Relative paths only; no server required.
-
-### One-time publish (recommended)
 
 ```bash
 cd /Users/mac/Projects/obic-app
 
-# 1) Create repo (private first — ask before making public)
-# Install GitHub CLI if needed: brew install gh && gh auth login
+# Install CLI once if needed:
+# brew install gh && gh auth login
+
+# Prefer private first; ask before public
 gh repo create obic-app-prototype --private --source=. --remote=origin --push
 
-# 2) Enable Pages: Settings → Pages → Deploy from branch `main` / folder `/ (root)`
-# Or via CLI:
-gh api -X POST repos/$(gh api user --jq .login)/obic-app-prototype/pages \
-  -f build_type=legacy -f source='{"branch":"main","path":"/"}'
-
-# 3) Share URL (after ~1 min):
+# Enable Pages from branch main, folder / (root)
+# GitHub → Settings → Pages → Deploy from branch → main → / (root)
+#
+# Live URL after ~1 minute:
 # https://<your-username>.github.io/obic-app-prototype/
 ```
-
-Public Pages on a repo **without secrets** is OK for UX sharing. Prefer **private** until you confirm.
 
 Without `gh`:
 
 ```bash
-# Create empty repo named obic-app-prototype on GitHub (web UI), then:
 git remote add origin https://github.com/<YOU>/obic-app-prototype.git
 git push -u origin main
-# Then enable Pages: Settings → Pages → Branch: main → Folder: / (root)
+# Then enable Pages on the repo (main / root)
 ```
 
-## Screens
-
-Home · Services · Detail · Request · Orders · Timeline · Messages · **Chat (images/files)** · **Voice call** · **Video call** · **Incoming call** · Me · Login · Register · Search · About
+Root `index.html` redirects to `prototype/`. Relative paths only.
 
 ## Deliverables
 
-- Interactive prototype: `prototype/`
-- PDF plan: `docs/OBIC-V1-Plan-and-UX.pdf`
-- Desktop copy: `~/Desktop/obic/deliverables/`
+| Item | Path |
+|------|------|
+| Prototype | `prototype/index.html` |
+| PDF plan | `docs/OBIC-V1-Plan-and-UX.pdf` |
+| Desktop sync | `~/Desktop/obic/deliverables/` |
 
-Do **not** commit Desktop deal/PRD/staff files or `.env` secrets.
+Do **not** commit Desktop deal/PRD/staff secrets or `.env` files.

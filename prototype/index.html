@@ -19,17 +19,38 @@
         <p class="muted">Premium UX prototype</p>
       </div>
     </div>
-    <p class="panel-sub">Ctrip-density · English · Stakeholder demo · Confidential</p>
+    <p class="panel-sub">Customer app · Staff admin · English · Confidential</p>
+
+    <div class="mode-toggle" id="modeToggle">
+      <button type="button" class="mode-btn active" data-mode="app">Customer App</button>
+      <button type="button" class="mode-btn" data-mode="adminWeb">Admin Web</button>
+    </div>
+
     <nav class="screen-nav" id="screenNav"></nav>
-    <p class="hint">Tip: use bottom tabs inside the phone, or jump via this list. Home should feel like a funded travel/business super-app.</p>
+    <p class="hint">
+      Customer: Home looks like a funded travel super-app.<br/>
+      Staff: tiny mark on About / Me → Staff Login → Admin (mobile).<br/>
+      Toggle <strong>Admin Web</strong> for the desktop panel.
+    </p>
   </aside>
 
-  <div class="phone-wrap">
+  <div class="phone-wrap" id="phoneWrap">
     <div class="phone">
       <div class="notch"></div>
       <div class="screen" id="app"></div>
     </div>
-    <p class="phone-caption">iPhone frame · 390×844 · Interactive</p>
+    <p class="phone-caption">iPhone · Customer + Staff Admin (in-app)</p>
+  </div>
+
+  <div class="desktop-wrap hidden" id="desktopWrap">
+    <div class="desktop-chrome">
+      <div class="desktop-bar">
+        <div class="dots"><i></i><i></i><i></i></div>
+        <div class="url">admin.obicgp.com / dashboard</div>
+      </div>
+      <div class="desktop-screen" id="adminWeb"></div>
+    </div>
+    <p class="phone-caption">Desktop Admin Web · Super Admin / Employee roles</p>
   </div>
 </div>
 <script src="app.js"></script>

@@ -66,7 +66,7 @@ const SERVICES = [
   { id: "plan", name: "Business Planning", icon: "plan", desc: "Business planning workshops.", price: "From $220" },
 ];
 
-const SCREENS = [
+const APP_SCREENS = [
   { id: "home", label: "01 Home" },
   { id: "services", label: "02 Services" },
   { id: "detail", label: "03 Service Detail" },
@@ -83,9 +83,19 @@ const SCREENS = [
   { id: "register", label: "14 Register" },
   { id: "search", label: "15 Search" },
   { id: "about", label: "16 About OBIC" },
+  { id: "staffLogin", label: "17 Staff Login" },
+  { id: "adminDash", label: "18 Admin App Dashboard" },
+  { id: "adminStaff", label: "19 Staff & Privileges" },
+  { id: "adminOrders", label: "20 Admin Orders" },
+];
+
+const WEB_SCREENS = [
+  { id: "adminWebDash", label: "W1 Admin Web Dashboard" },
+  { id: "adminWebStaff", label: "W2 Web · Staff & Roles" },
 ];
 
 let state = {
+  mode: "app", // app | adminWeb
   screen: "home",
   serviceId: "visa",
   toast: null,
@@ -93,15 +103,48 @@ let state = {
   speakerOn: true,
   callSec: 126,
   chatExtras: [],
+  authTab: "email", // email | phone
+  staffRole: "super", // super | employee
+  staffLoggedIn: false,
 };
 
 const app = document.getElementById("app");
+const adminWeb = document.getElementById("adminWeb");
 const nav = document.getElementById("screenNav");
+const phoneWrap = document.getElementById("phoneWrap");
+const desktopWrap = document.getElementById("desktopWrap");
 
 function go(screen, extra = {}) {
-  state = { ...state, screen, ...extra, toast: null };
+  const webScreens = ["adminWebDash", "adminWebStaff"];
+  const nextMode = webScreens.includes(screen) ? "adminWeb" : (extra.mode || state.mode);
+  state = { ...state, screen, ...extra, mode: nextMode, toast: null };
+  if (["adminDash", "adminStaff", "adminOrders"].includes(screen)) state.staffLoggedIn = true;
   render();
 }
+
+function setMode(mode) {
+  state.mode = mode;
+  if (mode === "adminWeb" && !["adminWebDash", "adminWebStaff"].includes(state.screen)) {
+    state.screen = "adminWebDash";
+  }
+  if (mode === "app" && ["adminWebDash", "adminWebStaff"].includes(state.screen)) {
+    state.screen = state.staffLoggedIn ? "adminDash" : "home";
+  }
+  render();
+}
+
+function setAuthTab(tab) {
+  state.authTab = tab;
+  render();
+}
+
+function setStaffRole(role) {
+  state.staffRole = role;
+  toast(role === "super" ? "Viewing as Super Admin" : "Viewing as Employee");
+  render();
+}
+
+function isSuper() { return state.staffRole === "super"; }
 
 function toast(msg) {
   state.toast = msg;
@@ -521,6 +564,31 @@ function renderIncomingCall() {
   </div>`;
 }
 
+function authTabs() {
+  return `
+  <div class="auth-tabs">
+    <button type="button" class="${state.authTab === "email" ? "on" : ""}" onclick="setAuthTab('email')">Email</button>
+    <button type="button" class="${state.authTab === "phone" ? "on" : ""}" onclick="setAuthTab('phone')">Phone</button>
+  </div>`;
+}
+
+function authIdentityFields(kind) {
+  if (state.authTab === "phone") {
+    return `
+      <div><label>Mobile (+country code)</label><input placeholder="+966 5…" /></div>
+      ${kind === "register" ? `<div><label>SMS code</label><div class="otp-row"><input placeholder="6-digit code" /><button type="button" class="btn btn-ghost otp-btn" onclick="toast('SMS sent (prototype)')">Send</button></div></div>` : ""}`;
+  }
+  return `
+    <div><label>Email</label><input placeholder="you@email.com" /></div>
+    ${kind === "register" ? `<div><label>Email code</label><div class="otp-row"><input placeholder="6-digit code" /><button type="button" class="btn btn-ghost otp-btn" onclick="toast('Email code sent (prototype)')">Send</button></div></div>` : ""}`;
+}
+
+function staffMark(label = "Staff") {
+  return `<button type="button" class="staff-mark" title="Employee / Admin entry" onclick="go('staffLogin')" aria-label="Staff entry">
+    <span class="staff-o">O</span><span class="staff-txt">${label}</span>
+  </button>`;
+}
+
 function renderMe() {
   return `
   <div class="app-body">
@@ -529,7 +597,7 @@ function renderMe() {
         <div class="av">G</div>
         <div>
           <h3 style="font-size:20px;font-family:var(--font-display);font-weight:800;letter-spacing:-.3px">Guest</h3>
-          <p style="font-size:12px;opacity:.88;margin-top:2px">Sign in to sync orders & chat</p>
+          <p style="font-size:12px;opacity:.88;margin-top:2px">Sign in with email or phone</p>
         </div>
       </div>
       <div style="display:flex;gap:8px;margin-top:16px">
@@ -550,6 +618,7 @@ function renderMe() {
       <div class="menu-item" onclick="go('about')">About OBIC <span>›</span></div>
       <div class="menu-item" onclick="go('chat')">Support <span>›</span></div>
     </div>
+    <div class="staff-entry-row">${staffMark("Staff")}</div>
   </div>
   ${tabBar("me")}`;
 }
@@ -558,8 +627,9 @@ function renderLogin() {
   return `
   <div class="page-header"><button class="back" onclick="go('me')">←</button><h2>Login</h2></div>
   <div class="app-body"><div class="form">
-    <div class="auth-hero"><div class="brand">OBIC</div><p>Welcome back — continue your China journey</p></div>
-    <div><label>Phone or Email</label><input placeholder="+86 / you@email.com" /></div>
+    <div class="auth-hero"><div class="brand">OBIC</div><p>Welcome back — email or phone</p></div>
+    ${authTabs()}
+    ${authIdentityFields("login")}
     <div><label>Password</label><input type="password" placeholder="••••••••" /></div>
     <button class="btn btn-primary" onclick="toast('Logged in (prototype)'); go('me')">Login</button>
     <button class="btn btn-ghost" onclick="go('register')">Create account</button>
@@ -571,11 +641,11 @@ function renderRegister() {
   return `
   <div class="page-header"><button class="back" onclick="go('me')">←</button><h2>Register</h2></div>
   <div class="app-body"><div class="form">
-    <div class="auth-hero"><div class="brand">OBIC</div><p>Create your account in under a minute</p></div>
-    <div><label>Mobile (+country code)</label><input placeholder="+966 ..." /></div>
-    <div><label>Email (required)</label><input placeholder="you@email.com" /></div>
+    <div class="auth-hero"><div class="brand">OBIC</div><p>Register with <strong>email or phone</strong></p></div>
+    ${authTabs()}
+    <div><label>Full name</label><input placeholder="Your name" /></div>
+    ${authIdentityFields("register")}
     <div><label>Password</label><input type="password" placeholder="6–12 letters+numbers+symbol" /></div>
-    <div><label>SMS code</label><input placeholder="6-digit code" /></div>
     <label style="display:flex;gap:8px;align-items:flex-start;font-size:12px;color:var(--navy);font-weight:500">
       <input type="checkbox" style="width:auto;margin-top:2px" /> I agree to User Agreement & Privacy Policy
     </label>
@@ -616,8 +686,244 @@ function renderAbout() {
     <div class="list-card"><div class="thumb" style="background:#E8F1FF;color:var(--blue)">${ico("pin")}</div><div><h4>Branches</h4><p>Yiwu · Guangzhou · Yemen · Foshan · Hangzhou · Hainan</p></div></div>
     <div class="list-card"><div class="thumb" style="background:#E8F1FF;color:var(--blue)">${ico("web")}</div><div><h4>Website</h4><p>www.obicgp.com</p></div></div>
     <div class="list-card"><div class="thumb" style="background:#E8F1FF;color:var(--blue)">${ico("mail")}</div><div><h4>Contact</h4><p>Support via in-app chat</p></div></div>
-    <p style="font-size:11px;color:var(--muted);margin-top:16px;text-align:center">© 2026 OBIC · Confidential prototype · English V1</p>
+    <div class="about-footer">
+      <p>© 2026 OBIC · Confidential prototype · English V1</p>
+      ${staffMark("Staff")}
+    </div>
   </div></div>`;
+}
+
+function roleChip() {
+  return isSuper()
+    ? `<span class="role-chip super">Super Admin</span>`
+    : `<span class="role-chip emp">Employee</span>`;
+}
+
+function roleToggle() {
+  return `
+  <div class="role-toggle">
+    <button type="button" class="${isSuper() ? "on" : ""}" onclick="setStaffRole('super')">Super Admin</button>
+    <button type="button" class="${!isSuper() ? "on" : ""}" onclick="setStaffRole('employee')">Employee</button>
+  </div>`;
+}
+
+function renderStaffLogin() {
+  return `
+  <div class="page-header"><button class="back" onclick="go('me')">←</button><h2>Staff Login</h2></div>
+  <div class="app-body"><div class="form">
+    <div class="auth-hero">
+      <div class="staff-badge-lg">O</div>
+      <div class="brand" style="font-size:22px">OBIC Staff</div>
+      <p>Employees &amp; admins only · not a customer CTA</p>
+    </div>
+    ${authTabs()}
+    ${authIdentityFields("login")}
+    <div><label>Staff password</label><input type="password" placeholder="••••••••" /></div>
+    <div class="demo-hint">Demo: pick a role, then enter</div>
+    ${roleToggle()}
+    <button class="btn btn-primary" onclick="state.staffLoggedIn=true; toast('Staff signed in'); go('adminDash')">Enter Admin App</button>
+    <button class="btn btn-ghost" onclick="setMode('adminWeb')">Open Admin Web instead →</button>
+  </div></div>`;
+}
+
+function adminAppNav() {
+  return `
+  <nav class="admin-tabbar">
+    <button class="tab ${state.screen==="adminDash"?"active":""}" onclick="go('adminDash')"><span class="ti">${ico("grid")}</span>Home</button>
+    <button class="tab ${state.screen==="adminOrders"?"active":""}" onclick="go('adminOrders')"><span class="ti">${ico("orders")}</span>Orders</button>
+    <button class="tab ${state.screen==="messages"?"active":""}" onclick="go('messages')"><span class="ti">${ico("msg")}</span>Chat</button>
+    <button class="tab ${state.screen==="adminStaff"?"active":""} ${!isSuper()?"locked":""}" onclick="${isSuper()?"go('adminStaff')":"toast('Super Admin only')"}"><span class="ti">${ico("hr")}</span>Staff</button>
+  </nav>`;
+}
+
+function renderAdminDash() {
+  return `
+  <div class="admin-app">
+    <div class="admin-top">
+      <div>
+        <div class="admin-brand">OBIC Admin</div>
+        <div class="admin-sub">Mobile staff mode · Yiwu</div>
+      </div>
+      ${roleChip()}
+    </div>
+    <div class="app-body">
+      <div class="section">${roleToggle()}</div>
+      <div class="section">
+        <div class="admin-stats">
+          <div><strong>18</strong><span>Open orders</span></div>
+          <div><strong>5</strong><span>Unread chats</span></div>
+          <div><strong>${isSuper() ? "12" : "3"}</strong><span>${isSuper() ? "Staff" : "Assigned"}</span></div>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-title">Quick actions</div>
+        <div class="admin-actions">
+          <button onclick="go('adminOrders')">${ico("orders")}<span>Orders</span></button>
+          <button onclick="go('chat')">${ico("msg")}<span>Chat</span></button>
+          <button onclick="go('voiceCall')">${ico("phone")}<span>Call</span></button>
+          <button class="${isSuper()?"":"is-disabled"}" onclick="${isSuper()?"go('adminStaff')":"toast('Restricted for Employee')"}">${ico("hr")}<span>Staff</span></button>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-title">Modules</div>
+        <div class="menu-list">
+          <div class="menu-item" onclick="go('adminOrders')">Assigned orders <span>›</span></div>
+          <div class="menu-item" onclick="go('messages')">Customer chats <span>›</span></div>
+          <div class="menu-item ${isSuper()?"":"dimmed"}" onclick="${isSuper()?"go('adminStaff')":"toast('Super Admin only')"}">Staff &amp; privileges ${isSuper()?"<span>›</span>":"<span class='lock'>Locked</span>"}</div>
+          <div class="menu-item ${isSuper()?"":"dimmed"}" onclick="${isSuper()?"toast('System settings (prototype)')":"toast('Super Admin only')"}">System settings ${isSuper()?"<span>›</span>":"<span class='lock'>Locked</span>"}</div>
+          <div class="menu-item" onclick="setMode('adminWeb')">Open Admin Web <span>›</span></div>
+          <div class="menu-item" onclick="state.staffLoggedIn=false; go('home')">Exit to customer app <span>›</span></div>
+        </div>
+      </div>
+    </div>
+    ${adminAppNav()}
+  </div>`;
+}
+
+function renderAdminStaff() {
+  if (!isSuper()) {
+    return `
+    <div class="page-header"><button class="back" onclick="go('adminDash')">←</button><h2>Staff</h2></div>
+    <div class="app-body"><div class="empty"><div class="big" style="font-size:28px;font-weight:800;color:var(--muted)">LOCKED</div><h3>Super Admin only</h3><p>Employees cannot promote staff or edit privileges.</p>
+    <button class="btn btn-primary" onclick="go('adminDash')">Back to dashboard</button></div></div>`;
+  }
+  return `
+  <div class="page-header"><button class="back" onclick="go('adminDash')">←</button><h2>Staff &amp; Privileges</h2></div>
+  <div class="app-body">
+    <div class="section">
+      <div class="sign-banner">Signed / designated by <strong>Super Admin</strong></div>
+      <div class="section-title">Permission matrix</div>
+      <div class="perm-table">
+        <div class="perm-row head"><span>Capability</span><span>Super</span><span>Employee</span></div>
+        <div class="perm-row"><span>Orders &amp; chat</span><span class="ok">✓</span><span class="ok">✓</span></div>
+        <div class="perm-row"><span>Assigned customers</span><span class="ok">✓</span><span class="ok">✓</span></div>
+        <div class="perm-row"><span>Promote staff</span><span class="ok">✓</span><span class="no">—</span></div>
+        <div class="perm-row"><span>System settings</span><span class="ok">✓</span><span class="no">—</span></div>
+        <div class="perm-row"><span>Grant privileges</span><span class="ok">✓</span><span class="no">—</span></div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-title">Team</div>
+      <div class="staff-card">
+        <div class="av-sm">L</div>
+        <div><h4>Lily Chen</h4><p>Visa · Yiwu</p></div>
+        <span class="role-chip emp">Employee</span>
+        <button class="mini-btn" onclick="toast('Promoted (prototype)')">Promote</button>
+      </div>
+      <div class="staff-card">
+        <div class="av-sm">A</div>
+        <div><h4>Ahmed R.</h4><p>VIP · Guangzhou</p></div>
+        <span class="role-chip emp">Employee</span>
+        <button class="mini-btn" onclick="toast('Privileges updated')">Grant</button>
+      </div>
+      <div class="staff-card">
+        <div class="av-sm gold">S</div>
+        <div><h4>Sara O.</h4><p>HQ · Super Admin</p></div>
+        <span class="role-chip super">Super Admin</span>
+      </div>
+      <button class="btn btn-primary" style="margin-top:10px" onclick="toast('Invite sent (prototype)')">Approve / invite staff</button>
+    </div>
+  </div>
+  ${adminAppNav()}`;
+}
+
+function renderAdminOrders() {
+  return `
+  <div class="page-header"><h2>Admin Orders</h2>${roleChip()}</div>
+  <div class="app-body"><div class="section">
+    <p class="admin-subline">${isSuper() ? "All branches · Super Admin view" : "Assigned to you · Employee view"}</p>
+    <div class="list-card" onclick="go('orderDetail')">${thumb(SERVICES[2])}<div><h4>Visa · #OB-1042</h4><p>Customer: Omar · In progress</p></div></div>
+    <div class="list-card" onclick="go('orderDetail')">${thumb(SERVICES[3])}<div><h4>Bank · #OB-1031</h4><p>Customer: Nora · Submitted</p></div></div>
+    ${isSuper() ? `<div class="list-card">${thumb(SERVICES[4])}<div><h4>VIP · #OB-1099</h4><p>Unassigned · needs staff</p></div></div>` : ""}
+  </div></div>
+  ${adminAppNav()}`;
+}
+
+function renderAdminWebDash() {
+  return `
+  <div class="web-shell">
+    <aside class="web-side">
+      <div class="web-logo"><span>O</span> OBIC Admin</div>
+      <button class="on">Dashboard</button>
+      <button onclick="go('adminWebStaff')">Staff &amp; Roles</button>
+      <button class="${isSuper()?"":"dim"}">System settings</button>
+      <button onclick="setMode('app')">← Customer App</button>
+      <div class="web-side-foot">${roleChip()}</div>
+    </aside>
+    <main class="web-main">
+      <header class="web-head">
+        <div>
+          <h2>Operations dashboard</h2>
+          <p>Desktop admin panel · English</p>
+        </div>
+        <div class="web-head-right">
+          ${roleToggle()}
+        </div>
+      </header>
+      <section class="web-kpis">
+        <div><strong>128</strong><span>Customers</span></div>
+        <div><strong>34</strong><span>Open orders</span></div>
+        <div><strong>9</strong><span>Active chats</span></div>
+        <div><strong>${isSuper() ? "12" : "—"}</strong><span>Staff seats</span></div>
+      </section>
+      <section class="web-grid">
+        <div class="web-card">
+          <h3>Live orders</h3>
+          <table class="web-table">
+            <tr><th>ID</th><th>Service</th><th>Branch</th><th>Status</th><th>Assignee</th></tr>
+            <tr><td>#OB-1042</td><td>Visa</td><td>Yiwu</td><td><span class="badge warn">In progress</span></td><td>Lily</td></tr>
+            <tr><td>#OB-1031</td><td>Bank</td><td>Guangzhou</td><td><span class="badge">Submitted</span></td><td>Ahmed</td></tr>
+            <tr><td>#OB-1099</td><td>VIP</td><td>Hangzhou</td><td><span class="badge warn">New</span></td><td>${isSuper() ? "Unassigned" : "Hidden"}</td></tr>
+          </table>
+        </div>
+        <div class="web-card">
+          <h3>Privileges</h3>
+          <p class="web-note">${isSuper() ? "You can promote employees and grant modules." : "Employee view — staff promotion locked."}</p>
+          <div class="perm-table web">
+            <div class="perm-row head"><span>Module</span><span>You</span></div>
+            <div class="perm-row"><span>Orders / Chat</span><span class="ok">✓</span></div>
+            <div class="perm-row"><span>Promote staff</span><span class="${isSuper()?"ok":"no"}">${isSuper()?"✓":"Locked"}</span></div>
+            <div class="perm-row"><span>System settings</span><span class="${isSuper()?"ok":"no"}">${isSuper()?"✓":"Locked"}</span></div>
+          </div>
+          <button class="btn btn-primary" style="margin-top:12px" onclick="go('adminWebStaff')">${isSuper() ? "Manage staff" : "View limited roster"}</button>
+        </div>
+      </section>
+    </main>
+  </div>`;
+}
+
+function renderAdminWebStaff() {
+  return `
+  <div class="web-shell">
+    <aside class="web-side">
+      <div class="web-logo"><span>O</span> OBIC Admin</div>
+      <button onclick="go('adminWebDash')">Dashboard</button>
+      <button class="on">Staff &amp; Roles</button>
+      <button class="${isSuper()?"":"dim"}">System settings</button>
+      <button onclick="setMode('app')">← Customer App</button>
+      <div class="web-side-foot">${roleChip()}</div>
+    </aside>
+    <main class="web-main">
+      <header class="web-head">
+        <div>
+          <h2>Staff management</h2>
+          <p>Designate · promote · grant privileges · Super Admin signature</p>
+        </div>
+        ${roleToggle()}
+      </header>
+      ${!isSuper() ? `<div class="web-lock">Employee role cannot promote others or edit the permission matrix.</div>` : `
+      <div class="sign-banner web">Actions require Super Admin approval · “Signed by Super Admin”</div>
+      <div class="web-card">
+        <table class="web-table">
+          <tr><th>Name</th><th>Branch</th><th>Role</th><th>Modules</th><th>Actions</th></tr>
+          <tr><td>Lily Chen</td><td>Yiwu</td><td><span class="role-chip emp">Employee</span></td><td>Orders, Chat</td><td><button class="mini-btn" onclick="toast('Promoted to Admin')">Promote to Admin</button></td></tr>
+          <tr><td>Ahmed R.</td><td>Guangzhou</td><td><span class="role-chip emp">Employee</span></td><td>Orders</td><td><button class="mini-btn" onclick="toast('Privileges granted')">Grant privileges</button></td></tr>
+          <tr><td>Sara O.</td><td>HQ</td><td><span class="role-chip super">Super Admin</span></td><td>Full</td><td>—</td></tr>
+        </table>
+        <button class="btn btn-primary" style="margin-top:14px;max-width:240px" onclick="toast('Staff approved & signed')">Approve staff · Sign</button>
+      </div>`}
+    </main>
+  </div>`;
 }
 
 const RENDERERS = {
@@ -637,18 +943,49 @@ const RENDERERS = {
   register: renderRegister,
   search: renderSearch,
   about: renderAbout,
+  staffLogin: renderStaffLogin,
+  adminDash: renderAdminDash,
+  adminStaff: renderAdminStaff,
+  adminOrders: renderAdminOrders,
+  adminWebDash: renderAdminWebDash,
+  adminWebStaff: renderAdminWebStaff,
 };
 
 function render() {
-  nav.innerHTML = SCREENS.map(s =>
+  const list = state.mode === "adminWeb" ? WEB_SCREENS : APP_SCREENS;
+  nav.innerHTML = list.map(s =>
     `<button class="${state.screen === s.id ? "active" : ""}" onclick="go('${s.id}')">${s.label}</button>`
   ).join("");
-  const html = (RENDERERS[state.screen] || renderHome)();
-  app.innerHTML = html + (state.toast ? `<div class="toast">${state.toast}</div>` : "");
+
+  document.querySelectorAll(".mode-btn").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.mode === state.mode);
+  });
+
+  if (state.mode === "adminWeb") {
+    phoneWrap.classList.add("hidden");
+    desktopWrap.classList.remove("hidden");
+    const html = (RENDERERS[state.screen] || renderAdminWebDash)();
+    adminWeb.innerHTML = html + (state.toast ? `<div class="toast web-toast">${state.toast}</div>` : "");
+    app.innerHTML = "";
+  } else {
+    desktopWrap.classList.add("hidden");
+    phoneWrap.classList.remove("hidden");
+    const html = (RENDERERS[state.screen] || renderHome)();
+    app.innerHTML = html + (state.toast ? `<div class="toast">${state.toast}</div>` : "");
+    adminWeb.innerHTML = "";
+  }
 }
+
+document.getElementById("modeToggle").addEventListener("click", (e) => {
+  const btn = e.target.closest(".mode-btn");
+  if (btn) setMode(btn.dataset.mode);
+});
 
 window.go = go;
 window.toast = toast;
+window.setMode = setMode;
+window.setAuthTab = setAuthTab;
+window.setStaffRole = setStaffRole;
 window.attachImage = attachImage;
 window.attachFile = attachFile;
 window.sendChatText = sendChatText;
