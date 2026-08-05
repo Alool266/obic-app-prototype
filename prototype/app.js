@@ -276,6 +276,18 @@ const I18N = {
     postedUser: "نُشر في اللحظات (بدون إشعار)",
     notifications: "الإشعارات",
     notifEmpty: "لا إشعارات جديدة",
+    notifEmptyHint: "ستظهر هنا إشعارات الإدارة والطلبات والأصدقاء",
+    markAllRead: "قراءة الكل",
+    notifOrderTitle: "تحديث الطلب",
+    notifOrderBody: "طلب التأشيرة #OB-1042 قيد التنفيذ — بانتظار صورة الجواز",
+    notifFriendTitle: "طلب صداقة جديد",
+    notifFriendBody: "Hassan A. يريد إضافتك كصديق",
+    notifSystemTitle: "تحديث النظام",
+    notifSystemBody: "تم جدولة موعد الفرع البنكي في قوانغتشو",
+    notifTypeAdmin: "لحظات الإدارة",
+    notifTypeOrder: "الطلب",
+    notifTypeFriend: "صديق",
+    notifTypeSystem: "نظام",
     adminMomentNotif: "منشور جديد من إدارة OBIC",
     addFriend: "إضافة صديق",
     friends: "الأصدقاء",
@@ -555,6 +567,18 @@ const I18N = {
     postedUser: "Posted to Moments (no notify)",
     notifications: "Notifications",
     notifEmpty: "No new notifications",
+    notifEmptyHint: "Admin posts, order updates, and friend requests appear here",
+    markAllRead: "Mark all read",
+    notifOrderTitle: "Order update",
+    notifOrderBody: "Visa order #OB-1042 in progress — awaiting passport scan",
+    notifFriendTitle: "New friend request",
+    notifFriendBody: "Hassan A. wants to add you as a friend",
+    notifSystemTitle: "System update",
+    notifSystemBody: "Bank branch appointment scheduled in Guangzhou",
+    notifTypeAdmin: "Admin Moments",
+    notifTypeOrder: "Order",
+    notifTypeFriend: "Friend",
+    notifTypeSystem: "System",
     adminMomentNotif: "New post from OBIC Admin",
     addFriend: "Add friend",
     friends: "Friends",
@@ -792,7 +816,10 @@ let state = {
     { id: 3, author: "Nora", role: "user", textAr: "اكتمل فتح الحساب البنكي بسلاسة.", textEn: "Bank account opening completed smoothly.", time: "1d", hasImage: true, imageTheme: "bank", likes: 12 },
   ],
   notifications: [
-    { id: 1, type: "admin_moment", titleAr: "منشور جديد من إدارة OBIC", titleEn: "New post from OBIC Admin", bodyAr: "ترقية خدمة التأشيرة السريعة هذا الأسبوع", bodyEn: "Visa Express upgrade this week", unread: true, time: "2h" },
+    { id: 1, type: "admin_moment", titleAr: "منشور جديد من إدارة OBIC", titleEn: "New post from OBIC Admin", bodyAr: "ترقية خدمة التأشيرة السريعة هذا الأسبوع — تواصل مع مستشارك.", bodyEn: "Visa Express upgrade this week — contact your advisor.", unread: true, time: "2h", target: "moments" },
+    { id: 2, type: "order", titleAr: "تحديث الطلب", titleEn: "Order update", bodyAr: "طلب التأشيرة #OB-1042 قيد التنفيذ — بانتظار صورة الجواز", bodyEn: "Visa order #OB-1042 in progress — awaiting passport scan", unread: true, time: "5h", target: "orderDetail" },
+    { id: 3, type: "friend_request", titleAr: "طلب صداقة جديد", titleEn: "New friend request", bodyAr: "Hassan A. يريد إضافتك كصديق", bodyEn: "Hassan A. wants to add you as a friend", unread: true, time: "1d", target: "addFriend" },
+    { id: 4, type: "system", titleAr: "تحديث النظام", titleEn: "System update", bodyAr: "تم جدولة موعد الفرع البنكي في قوانغتشو", bodyEn: "Bank branch appointment scheduled in Guangzhou", unread: false, time: "2d", target: "orders" },
   ],
   friendRequests: [
     { id: "fr1", name: "Hassan A.", idCode: "OB-CUS-3102", phone: "+966 55 100 200", status: "pending" },
@@ -1000,12 +1027,13 @@ function postMoment() {
     state.notifications = [{
       id: Date.now(),
       type: "admin_moment",
-      titleAr: t("adminMomentNotif"),
-      titleEn: "New post from OBIC Admin",
+      titleAr: I18N.ar.adminMomentNotif,
+      titleEn: I18N.en.adminMomentNotif,
       bodyAr: text,
       bodyEn: text,
       unread: true,
       time: t("justNow"),
+      target: "moments",
     }, ...state.notifications];
     toast(t("postedAdmin"));
   } else {
@@ -1016,8 +1044,9 @@ function postMoment() {
 }
 
 function markNotifsRead() {
+  if (!unreadCount()) return;
   state.notifications = state.notifications.map(n => ({ ...n, unread: false }));
-  toast(t("markRead"));
+  toast(t("markAllRead"));
   render();
 }
 
@@ -1060,6 +1089,17 @@ function tryAdminAddContact() {
 }
 
 function ico(name) { return ICONS[name] || ICONS.biz; }
+
+/** Full-bleed local photo for Home promo slider */
+function bannerPhoto(kind) {
+  const map = {
+    vip: "assets/banners/vip-china.jpg",
+    visa: "assets/banners/fast-visa.jpg",
+    bank: "assets/banners/open-bank.jpg",
+  };
+  const src = map[kind] || map.visa;
+  return `<img class="banner-photo" src="${src}" alt="" loading="eager" decoding="async" />`;
+}
 function svcById(id) { return SERVICES().find(s => s.id === id) || SERVICES()[2]; }
 function colorOf(s) { return COLORS[s.color] || COLORS.default; }
 function thumb(s, size = 50) {
@@ -1072,7 +1112,35 @@ function softThumb(s) {
 }
 function notifBadge() {
   const n = unreadCount();
-  return n > 0 ? `<span class="notif-badge">${n}</span>` : "";
+  return n > 0 ? `<span class="notif-badge">${n > 99 ? "99+" : n}</span>` : "";
+}
+
+function notifBadgeInline() {
+  const n = unreadCount();
+  return n > 0 ? `<span class="notif-badge notif-badge-inline">${n > 99 ? "99+" : n}</span>` : "";
+}
+
+function notifTypeMeta(type) {
+  const map = {
+    admin_moment: { icon: "moments", tone: "admin", label: t("notifTypeAdmin") },
+    order: { icon: "orders", tone: "order", label: t("notifTypeOrder") },
+    friend_request: { icon: "userPlus", tone: "friend", label: t("notifTypeFriend") },
+    system: { icon: "bell", tone: "system", label: t("notifTypeSystem") },
+  };
+  return map[type] || map.system;
+}
+
+function openNotif(id) {
+  const n = state.notifications.find(x => String(x.id) === String(id));
+  if (!n) return;
+  n.unread = false;
+  const target = n.target || ({
+    admin_moment: "moments",
+    order: "orderDetail",
+    friend_request: "addFriend",
+    system: "orders",
+  })[n.type] || "notifications";
+  go(target);
 }
 
 function tabBar(active) {
@@ -1083,9 +1151,11 @@ function tabBar(active) {
     ["messages", "msg", t("messages")],
     ["me", "me", t("me")],
   ];
-  return `<nav class="tabbar">${tabs.map(([id, icon, lab]) =>
-    `<button class="tab ${active === id ? "active" : ""}" onclick="go('${id}')"><span class="ti">${ico(icon)}</span>${lab}</button>`
-  ).join("")}</nav>`;
+  const unread = unreadCount();
+  return `<nav class="tabbar">${tabs.map(([id, icon, lab]) => {
+    const showBadge = id === "me" && unread > 0;
+    return `<button class="tab ${active === id ? "active" : ""}" onclick="go('${id}')"><span class="ti">${ico(icon)}${showBadge ? `<span class="tab-badge">${unread > 9 ? "9+" : unread}</span>` : ""}</span>${lab}</button>`;
+  }).join("")}</nav>`;
 }
 
 function renderAiMessages() {
@@ -1188,16 +1258,16 @@ function renderHome() {
     <div class="section">
       <div class="banner-wrap">
         <div class="banner-track">
-          <div class="banner b-vip" onclick="go('detail',{serviceId:'vip'})">
-            <span class="banner-ico" aria-hidden="true">${ico("vip")}</span>
+          <div class="banner b-vip has-photo" onclick="go('detail',{serviceId:'vip'})">
+            ${bannerPhoto("vip")}<div class="banner-scrim" aria-hidden="true"></div>
             <div class="eyebrow">${t("featured")}</div><h3>${t("vipTrip")}</h3><p>${t("vipTripDesc")}</p><span class="cta-pill">${t("bookPkg")}</span>
           </div>
-          <div class="banner b-visa" onclick="go('detail',{serviceId:'visa'})">
-            <span class="banner-ico" aria-hidden="true">${ico("visa")}</span>
+          <div class="banner b-visa has-photo" onclick="go('detail',{serviceId:'visa'})">
+            ${bannerPhoto("visa")}<div class="banner-scrim" aria-hidden="true"></div>
             <div class="eyebrow">${t("fastTrack")}</div><h3>${t("visaExpress")}</h3><p>${t("visaExpressDesc")}</p><span class="cta-pill">${t("from120")}</span>
           </div>
-          <div class="banner b-bank" onclick="go('detail',{serviceId:'bank'})">
-            <span class="banner-ico" aria-hidden="true">${ico("bank")}</span>
+          <div class="banner b-bank has-photo" onclick="go('detail',{serviceId:'bank'})">
+            ${bannerPhoto("bank")}<div class="banner-scrim" aria-hidden="true"></div>
             <div class="eyebrow">${t("setup")}</div><h3>${t("openBank")}</h3><p>${t("openBankDesc")}</p><span class="cta-pill">${t("startReq")}</span>
           </div>
         </div>
@@ -1517,27 +1587,47 @@ function renderMoments() {
 }
 
 function renderNotifications() {
+  const list = state.notifications;
+  const unread = unreadCount();
   return `
   <div class="page-header">
-    <button class="back" onclick="go('home')">←</button>
+    <button class="back" onclick="go('me')">←</button>
     <h2>${t("notifications")}</h2>
-    <button class="mini-btn" onclick="markNotifsRead()">${t("markRead")}</button>
+    ${unread > 0 ? `<button class="mini-btn notif-mark-all" onclick="event.stopPropagation();markNotifsRead()">${t("markAllRead")}</button>` : `<span class="hdr-spacer"></span>`}
   </div>
-  <div class="app-body">
-    ${state.notifications.length === 0 ? `<div class="empty"><p>${t("notifEmpty")}</p></div>` : ""}
-    ${state.notifications.map(n => `
-      <div class="notif-item ${n.unread ? "unread" : ""}" onclick="go('moments')">
-        <div class="avatar admin-av">${ico("bell")}</div>
-        <div>
-          <h4>${isAr() ? n.titleAr : n.titleEn} ${n.unread ? `<span class="badge warn">${t("unreadBadge")}</span>` : ""}</h4>
-          <p>${isAr() ? n.bodyAr : n.bodyEn}</p>
-          <small>${n.time} · ${t("adminNotifyAll")}</small>
-        </div>
-      </div>`).join("")}
-    <div class="rule-box">
-      <p><strong>${t("adminPost")}:</strong> ${t("adminNotifyAll")}</p>
-      <p><strong>${t("userPost")}:</strong> ${t("noNotifyUser")}</p>
-    </div>
+  <div class="app-body notif-screen">
+    ${list.length === 0 ? `
+      <div class="empty notif-empty">
+        <div class="empty-ico">${ico("bell")}</div>
+        <h3>${t("notifEmpty")}</h3>
+        <p>${t("notifEmptyHint")}</p>
+      </div>` : `
+      <div class="notif-list">
+        ${list.map(n => {
+          const meta = notifTypeMeta(n.type);
+          const title = isAr() ? n.titleAr : n.titleEn;
+          const body = isAr() ? n.bodyAr : n.bodyEn;
+          return `
+          <button type="button" class="notif-card ${n.unread ? "unread" : "read"}" onclick="openNotif('${n.id}')">
+            <div class="notif-ico tone-${meta.tone}">${ico(meta.icon)}</div>
+            <div class="notif-body">
+              <div class="notif-top">
+                <h4>${title}</h4>
+                <time>${n.time}</time>
+              </div>
+              <p>${body}</p>
+              <div class="notif-meta">
+                <span class="notif-type">${meta.label}</span>
+                ${n.unread ? `<span class="notif-dot" title="${t("unreadBadge")}" aria-label="${t("unreadBadge")}"></span>` : ""}
+              </div>
+            </div>
+          </button>`;
+        }).join("")}
+      </div>
+      <div class="rule-box notif-rule">
+        <p><strong>${t("adminPost")}:</strong> ${t("adminNotifyAll")}</p>
+        <p><strong>${t("userPost")}:</strong> ${t("noNotifyUser")}</p>
+      </div>`}
   </div>`;
 }
 
@@ -1611,7 +1701,14 @@ function renderMe() {
       <div class="menu-item" onclick="go('orders')">${t("myOrders")} <span>›</span></div>
       <div class="menu-item" onclick="go('moments')">${t("moments")} <span>›</span></div>
       <div class="menu-item" onclick="go('friends')">${t("friends")} <span>›</span></div>
-      <div class="menu-item" onclick="go('notifications')">${t("notifications")} ${notifBadge()} <span>›</span></div>
+      <div class="menu-item menu-item-notif" onclick="go('notifications')">
+        <span class="menu-item-leading">
+          <span class="menu-ico" aria-hidden="true">${ico("bell")}</span>
+          <span class="menu-label">${t("notifications")}</span>
+          ${notifBadgeInline()}
+        </span>
+        <span class="menu-chevron">›</span>
+      </div>
       <div class="menu-item" onclick="go('addFriend')">${t("addFriend")} <span>›</span></div>
       <div class="menu-item">${t("myDocs")} <span>›</span></div>
       <div class="menu-item">${t("branch")} <span>Yiwu ›</span></div>
@@ -2088,6 +2185,7 @@ window.closeAi = closeAi;
 window.sendAiMessage = sendAiMessage;
 window.postMoment = postMoment;
 window.markNotifsRead = markNotifsRead;
+window.openNotif = openNotif;
 window.sendFriendRequest = sendFriendRequest;
 window.acceptFriend = acceptFriend;
 window.rejectFriend = rejectFriend;
@@ -2098,7 +2196,7 @@ window.t = t;
 applyDir();
 render();
 
-/* Deep-link for screenshots / demos: ?lang=ar&screen=moments&role=super */
+/* Deep-link for screenshots / demos: ?lang=ar&screen=moments&role=super&banner=0 */
 (function bootFromQuery() {
   try {
     const params = new URLSearchParams(location.search);
@@ -2113,6 +2211,17 @@ render();
       }
       if (["adminWebDash","adminWebStaff","adminWebOversight"].includes(screen)) state.mode = "adminWeb";
       go(screen);
+    }
+    const banner = params.get("banner");
+    if (banner !== null && banner !== "") {
+      const idx = Math.max(0, Math.min(2, parseInt(banner, 10) || 0));
+      requestAnimationFrame(() => {
+        const track = document.querySelector(".banner-track");
+        if (!track) return;
+        track.style.animation = "none";
+        track.style.transform = `translateX(${idx * -33.333}%)`;
+        document.querySelectorAll(".banner-dots i").forEach((d, i) => d.classList.toggle("on", i === idx));
+      });
     }
   } catch (e) { /* ignore */ }
 })();
