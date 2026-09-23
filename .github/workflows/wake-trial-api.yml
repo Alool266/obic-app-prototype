@@ -1,0 +1,34 @@
+# Keep Render free trial API awake (prevents ~15 min idle sleep).
+# Pings GET /v1/health every 10 minutes with long timeouts for cold starts.
+# Free keep-alive — no Render plan upgrade required.
+name: Wake trial API
+
+on:
+  schedule:
+    # Every 10 minutes — under Render free ~15 min sleep threshold.
+    # GitHub may delay cron slightly; retries in the script cover that.
+    - cron: "*/10 * * * *"
+  workflow_dispatch: {}
+
+concurrency:
+  group: wake-trial-api
+  cancel-in-progress: true
+
+jobs:
+  wake:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Wake trial API
+        run: |
+          chmod +x scripts/wake-trial-api.sh
+          ./scripts/wake-trial-api.sh
+        env:
+          HEALTH_URL: https://obic-trial-api.onrender.com/v1/health
+          MAX_ATTEMPTS: "12"
+          CONNECT_TIMEOUT: "30"
+          MAX_TIME: "90"
+          SLEEP_BETWEEN: "8"
