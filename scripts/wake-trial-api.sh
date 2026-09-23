@@ -1,23 +1,63 @@
 #!/usr/bin/env bash
 # Wake / keep-alive for the Render free trial API.
-# Retries through cold starts (often 30–60s). Exit 0 only when status is ok.
+# Retries through cold starts (often 30–90s). Exit 0 only when status is ok.
 #
 # Usage:
 #   ./scripts/wake-trial-api.sh
 #   HEALTH_URL=https://obic-trial-api.onrender.com/v1/health ./scripts/wake-trial-api.sh
 #
-# Optional macOS launchd (every 8 min): see docs/ANDROID-TRIAL-STAGING.md
+# Optional macOS launchd (every 5 min): see docs/ANDROID-TRIAL-STAGING.md
 
 set -euo pipefail
 
 HEALTH_URL="${HEALTH_URL:-https://obic-trial-api.onrender.com/v1/health}"
-MAX_ATTEMPTS="${MAX_ATTEMPTS:-12}"
+MAX_ATTEMPTS="${MAX_ATTEMPTS:-16}"
 CONNECT_TIMEOUT="${CONNECT_TIMEOUT:-30}"
 MAX_TIME="${MAX_TIME:-90}"
-SLEEP_BETWEEN="${SLEEP_BETWEEN:-8}"
+SLEEP_BETWEEN="${SLEEP_BETWEEN:-6}"
+
+# Prefer a quick warm ping first; fall back to full retry loop on failure.
+quick_ping() {
+  local tmp http_code curl_rc body
+  tmp="$(mktemp)"
+  set +e
+  http_code="$(
+    curl -sS -L \
+      --connect-timeout 10 \
+      --max-time 20 \
+      -o "$tmp" \
+      -w "%{http_code}" \
+      "$HEALTH_URL" 2>/dev/null
+  )"
+  curl_rc=$?
+  set -e
+  body="$(cat "$tmp" 2>/dev/null || true)"
+  rm -f "$tmp"
+  if [ "$curl_rc" -eq 0 ] && [ "$http_code" = "200" ]; then
+    if echo "$body" | grep -qE '"status"[[:space:]]*:[[:space:]]*"ok"'; then
+      echo "HTTP 200 (quick)"
+      echo "$body"
+      return 0
+    fi
+  fi
+  return 1
+}
 
 echo "Wake trial API: $HEALTH_URL"
 echo "Attempts: $MAX_ATTEMPTS  (connect ${CONNECT_TIMEOUT}s / total ${MAX_TIME}s each)"
+
+if quick_ping; then
+  ai_note=""
+  body="$(curl -sS -L --connect-timeout 10 --max-time 20 "$HEALTH_URL" 2>/dev/null || true)"
+  if echo "$body" | grep -qE '"ai"[[:space:]]*:[[:space:]]*"on"'; then
+    ai_note=" (ai:on)"
+  fi
+  echo ""
+  echo "OK — trial API awake${ai_note}"
+  exit 0
+fi
+
+echo "Quick ping missed — full cold-start retry loop…"
 
 attempt=1
 body=""

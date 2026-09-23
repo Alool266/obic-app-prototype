@@ -10,7 +10,7 @@ One release APK + one public HTTPS API. Works on **cellular or any Wi‑Fi** wit
 | API base (baked into APK) | `https://obic-trial-api.onrender.com` (Flutter adds `/v1`) |
 | APK | `~/Desktop/obic/deliverables/OBIC-trial-staging.apk` (~77 MB) |
 | Host | Render free (Singapore) — sleeps when idle (~15 min) |
-| Keep-alive | GitHub Actions cron every 10 min → `GET /v1/health` (see below) |
+| Keep-alive | GitHub Actions cron every 5 min → `GET /v1/health` (see below) |
 
 ## Keep-alive (wake so demos don’t cold-start)
 
@@ -21,19 +21,19 @@ Render **free** spins down after ~15 minutes idle. Cold start is often **30–60
 | Piece | Path |
 |-------|------|
 | Script | `scripts/wake-trial-api.sh` — retries, long timeouts, exit 0 only on `"status":"ok"` (`ai` optional) |
-| GitHub Actions | `.github/workflows/wake-trial-api.yml` — cron `*/10 * * * *` + manual **Run workflow** |
+| GitHub Actions | `.github/workflows/wake-trial-api.yml` — cron `*/5 * * * *` + manual **Run workflow** |
 
 ```bash
 # Manual wake (Mac / CI / phone demo prep)
 ./scripts/wake-trial-api.sh
 ```
 
-After merge to the default branch, Actions runs ~every 10 minutes and keeps the trial API warm. If Actions is disabled or delayed, run the script locally before a demo.
+After merge to the default branch, Actions runs ~every 5 minutes and keeps the trial API warm. If Actions is disabled or delayed, run the script locally before a demo.
 
 ### Optional: macOS launchd (local backup)
 
 If you want the Mac to ping even when GitHub cron is late, create
-`~/Library/LaunchAgents/com.obic.wake-trial-api.plist`:
+`~/Library/LaunchAgents/com.obic.wake-trial-api.plist` (StartInterval 300 = 5 min):
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
