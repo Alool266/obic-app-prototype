@@ -1,0 +1,39 @@
+# Made by Dr Ali
+# OBIC Android trial staging — free Render Web Service + Postgres.
+# Deploy: connect this repo in Render Dashboard → Blueprints, or:
+#   render blueprints … (after `render login`)
+# Secrets (JWT_*) are set in the dashboard / CLI — never commit real values.
+
+databases:
+  - name: obic-trial-db
+    plan: free
+    databaseName: obic
+    user: obic
+
+services:
+  - type: web
+    name: obic-trial-api
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerfilePath: ./services/api/Dockerfile
+    dockerContext: ./services/api
+    healthCheckPath: /v1/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: ADMIN_REQUIRE_TOTP
+        value: "false"
+      - key: TRUST_PROXY
+        value: "true"
+      - key: TYPEORM_SYNCHRONIZE
+        value: "false"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: obic-trial-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      # Redis unset on purpose for free trial (API reports redis: skipped).

@@ -1,14 +1,70 @@
 .DS_Store
+**/.DS_Store
+
+# Env & secrets
 .env
 .env.*
+!.env.example
+ai.env
+**/ai.env
+agora.env
+**/agora.env
 *.pem
 *.key
-node_modules/
-.vscode/
-.idea/
+*.p12
+*.mobileprovision
+
 # Never commit Desktop deal / PRD / staff secrets
 deal.rtf
 *.docx
 系统.xlsx
 *.xlsx
 Untitled*.rtf
+
+# Node / Nest / Next
+node_modules/
+dist/
+build/
+.next/
+out/
+coverage/
+*.tsbuildinfo
+.npm
+.pnpm-store/
+
+# Flutter / Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+**/ios/Pods/
+**/ios/.symlinks/
+**/ios/Flutter/Flutter.framework
+**/ios/Flutter/Flutter.podspec
+**/android/.gradle/
+**/android/local.properties
+**/android/app/debug/
+**/android/app/profile/
+**/android/app/release/
+*.iml
+*.apk
+*.aab
+*.ipa
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*~
+
+# Logs / OS
+*.log
+npm-debug.log*
+yarn-error.log*
+.AppleDouble
+.LSOverride
+
+# Local CJK font extracts for PDF print (regenerate from system Hiragino)
+docs/fonts/

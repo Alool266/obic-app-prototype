@@ -64,6 +64,8 @@ launchctl load ~/Library/LaunchAgents/com.obic.wake-trial-api.plist
 
 If the app feels slow after idle, open https://obic-trial-api.onrender.com/v1/health in the phone browser first and wait for `"status":"ok"` (and `"ai":"on"` if testing AI).
 
+**Client stays responsive during cold start:** the app must not block navigation or clear the session while Render wakes (often 30–60s). Session tokens persist on network errors; show skeletons / “waking server…” instead of killing the session. Free Render cold start is the main *server* lag — keep HTTP polls paused in background and prefer realtime WS when connected (`MessageSyncGate`).
+
 ## Install (Android)
 
 1. Copy `OBIC-trial-staging.apk` to the phone (AirDrop / Drive / USB / cable).
@@ -129,6 +131,12 @@ cp build/app/outputs/flutter-apk/app-release.apk \
   ~/Desktop/obic/deliverables/OBIC-trial-staging.apk
 ```
 
+## Chat GPS + file attach (M5.3)
+
+- **Location share:** Messages → thread → **+** → Location. Allows GPS → text pin with **Amap (高德)** first when China (zh locale / CN region / CN placemark), then Apple Maps, then Google. Amap `position=` is **lng,lat** + `coordinate=wgs84`. Deny permission → toast, no send.
+- **Image / PDF:** **+** → Album / File → pick → Send. Uploads via `POST /v1/uploads`, then `sendMessage` with real `attachmentUrl` (no `stub://`).
+- **Trial media durability:** files ≤ ~12MB stored in Postgres (`uploaded_files`) so they survive Render redeploy; larger files are disk-only (ephemeral on free trial).
+
 ## Ops notes (developers)
 
 - Blueprint: repo-root `render.yaml` → service `obic-trial-api`, DB `obic-trial-db`.
@@ -138,23 +146,27 @@ cp build/app/outputs/flutter-apk/app-release.apk \
 
 ### Phase 5 OBIC AI on trial API
 
-Render CLI cannot set env vars (no `env` command; dashboard API key required). In **Render → obic-trial-api → Environment**, set (values from `~/.config/obic/ai.env` — never commit):
+Render CLI cannot set env vars (no `env` command; use Dashboard API / `~/.render/cli.yaml` key). In **Render → obic-trial-api → Environment**, set (values from `~/.config/obic/ai.env` — never commit):
 
 ```
 AI_ENABLED=true
 AI_PROVIDER=groq
 AI_API_KEY=<from ~/.config/obic/ai.env>
-AI_MODEL=openai/gpt-oss-20b
+AI_MODEL=qwen/qwen3.8-27b
 ```
 
-(`AI_MODEL` override is recommended; repo default is also `openai/gpt-oss-20b` — Groq rejected the old `llama-3.1-8b-instant`.)
+Then redeploy. Confirm: `curl -sS https://obic-trial-api.onrender.com/v1/health` → `"ai":"on"`.
 
-Then redeploy a build that includes Phase 5 AI (`GET /v1/ai/status`, health `ai: "on"`). Confirm:
+### Phase 5 Agora on trial API
 
-```bash
-curl -sS https://obic-trial-api.onrender.com/v1/health
-# expect "ai":"on","aiProvider":"groq"
+Same service (from `~/.config/obic/agora.env` — never commit certificate):
+
 ```
+AGORA_APP_ID=<from ~/.config/obic/agora.env>
+AGORA_APP_CERTIFICATE=<from ~/.config/obic/agora.env>
+```
+
+Confirm health `"agora":"on"`. Mobile (Android + iOS) uses trial HTTPS; mic/camera prompts are system dialogs (Info.plist / AndroidManifest already wired).
 
 ## Form2 workflow (locked 19 Sep 2026)
 

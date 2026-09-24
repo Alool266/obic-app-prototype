@@ -1,0 +1,11 @@
+# Made by Dr Ali
+# Keep secrets and local uploads out of the image.
+
+node_modules
+dist
+coverage
+.env
+.env.*
+uploads
+*.log
+.git

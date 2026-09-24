@@ -1,0 +1,10 @@
+# Made by Dr Ali — Nest API local ignores (root .gitignore also covers these)
+node_modules/
+dist/
+coverage/
+.env
+*.log
+
+# Runtime upload files only (keep src/uploads/ in git)
+/uploads/
+!.gitkeep
