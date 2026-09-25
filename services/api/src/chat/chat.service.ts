@@ -81,6 +81,8 @@ export class ChatService {
     });
     const out = [];
     for (const p of mine) {
+      // WeChat hide — omit from main list until unhidden.
+      if (p.hidden) continue;
       const peers = await this.participants.find({
         where: { conversationId: p.conversationId },
         relations: { user: true },
@@ -89,11 +91,13 @@ export class ChatService {
         where: { conversationId: p.conversationId },
         order: { createdAt: 'DESC' },
       });
-      const unreadCount = await this.countUnread(
-        p.conversationId,
-        actor.userId,
-        p.lastReadAt,
-      );
+      const unreadCount = p.muted
+        ? 0
+        : await this.countUnread(
+            p.conversationId,
+            actor.userId,
+            p.lastReadAt,
+          );
       out.push({
         id: p.conversationId,
         kind: p.conversation.kind,
@@ -102,6 +106,8 @@ export class ChatService {
         aiAutoReplyEnabled: p.conversation.aiAutoReplyEnabled ?? true,
         updatedAt: p.conversation.updatedAt,
         unreadCount,
+        muted: Boolean(p.muted),
+        hidden: Boolean(p.hidden),
         participants: peers.map((x) => ({
           userId: x.userId,
           name: x.user?.name ?? null,
@@ -239,15 +245,60 @@ export class ChatService {
   }
 
   async listMessages(actor: AuthUser, conversationId: string) {
-    await this.requireParticipant(actor.userId, conversationId);
-    const rows = await this.messages.find({
-      where: { conversationId },
-      relations: { sender: true },
-      order: { createdAt: 'ASC' },
-      take: 200,
-    });
+    const part = await this.requireParticipant(actor.userId, conversationId);
+    // Clear history for me — only show messages after clearedBefore.
+    const qb = this.messages
+      .createQueryBuilder('m')
+      .leftJoinAndSelect('m.sender', 'sender')
+      .where('m.conversation_id = :conversationId', { conversationId })
+      .orderBy('m.created_at', 'ASC')
+      .take(200);
+    if (part.clearedBefore) {
+      qb.andWhere('m.created_at > :clearedBefore', {
+        clearedBefore: part.clearedBefore,
+      });
+    }
+    const rows = await qb.getMany();
     await this.markThreadRead(actor.userId, conversationId);
+    // Opening chat unhides (WeChat: viewing brings it back to the list).
+    if (part.hidden) {
+      part.hidden = false;
+      await this.participants.save(part);
+    }
     return rows.map((m) => this.messageDto(m));
+  }
+
+  /**
+   * WeChat chat prefs: mute (no notifs/badges), hide (omit from list),
+   * clearHistory (clearedBefore = now), delete (= hide + clear).
+   */
+  async updateThreadPrefs(
+    actor: AuthUser,
+    conversationId: string,
+    dto: {
+      muted?: boolean;
+      hidden?: boolean;
+      clearHistory?: boolean;
+      deleteChat?: boolean;
+    },
+  ) {
+    const part = await this.requireParticipant(actor.userId, conversationId);
+    if (dto.muted !== undefined) part.muted = dto.muted;
+    if (dto.hidden !== undefined) part.hidden = dto.hidden;
+    if (dto.clearHistory === true || dto.deleteChat === true) {
+      part.clearedBefore = new Date();
+    }
+    if (dto.deleteChat === true) {
+      part.hidden = true;
+      part.muted = true;
+    }
+    await this.participants.save(part);
+    return {
+      conversationId,
+      muted: part.muted,
+      hidden: part.hidden,
+      clearedBefore: part.clearedBefore,
+    };
   }
 
   async sendMessage(actor: AuthUser, conversationId: string, dto: SendMessageDto) {
@@ -339,12 +390,15 @@ export class ChatService {
   ) {
     const peers = await this.participants.find({
       where: { conversationId },
-      select: ['userId'],
+      select: ['userId', 'muted'],
     });
+    const allIds = peers.map((p) => p.userId);
+    const badgeIds = peers.filter((p) => !p.muted).map((p) => p.userId);
     this.realtime.publishChatMessage({
-      userIds: peers.map((p) => p.userId),
+      userIds: allIds,
       conversationId,
       message,
+      badgeUserIds: badgeIds,
     });
   }
 
@@ -946,8 +1000,16 @@ export class ChatService {
     }
     if (!notifyIds.length) return;
 
+    // Skip muted recipients (WeChat mute chat).
+    const parts = await this.participants.find({
+      where: notifyIds.map((userId) => ({ conversationId, userId })),
+    });
+    const muted = new Set(parts.filter((p) => p.muted).map((p) => p.userId));
+    const liveIds = notifyIds.filter((id) => !muted.has(id));
+    if (!liveIds.length) return;
+
     await this.notifications.createForUsers({
-      userIds: notifyIds,
+      userIds: liveIds,
       kind: next ? NotificationKind.OrderStatus : NotificationKind.Message,
       title: next ? 'Order status updated' : 'New order message',
       body: next

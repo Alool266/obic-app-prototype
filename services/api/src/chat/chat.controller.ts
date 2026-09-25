@@ -24,6 +24,7 @@ import {
   CreateThreadDto,
   RequestStaffDto,
   SendMessageDto,
+  UpdateThreadPrefsDto,
 } from './dto/chat.dto';
 
 @Controller('chat')
@@ -47,6 +48,15 @@ export class ChatController {
     @Param('id', ParseUUIDPipe) id: string,
   ) {
     return this.chat.listMessages(actor, id);
+  }
+
+  @Patch('threads/:id/prefs')
+  updateThreadPrefs(
+    @CurrentUser() actor: AuthUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateThreadPrefsDto,
+  ) {
+    return this.chat.updateThreadPrefs(actor, id, dto);
   }
 
   @Post('threads/:id/messages')

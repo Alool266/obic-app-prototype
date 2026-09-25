@@ -24,6 +24,8 @@ export interface PublicUser {
   obicIdChangedAt: Date | null;
   /** Earliest time a change is allowed (null if never set or already eligible). */
   obicIdNextChangeAt: Date | null;
+  /** Moments album cover URL. */
+  momentsCoverUrl: string | null;
   /**
    * Stored Ops flag. Clients: SuperAdmin always may open Ops;
    * Employees only when this is true. Customers never.
@@ -57,6 +59,7 @@ export function toPublicUser(user: User): PublicUser {
     obicIdChangedAt: changedAt,
     obicIdNextChangeAt:
       nextAt && nextAt.getTime() > now ? nextAt : null,
+    momentsCoverUrl: user.momentsCoverUrl ?? null,
     opsAccess: Boolean(user.opsAccess),
     offersAccess: Boolean(user.offersAccess),
     addresses: Array.isArray(user.addresses) ? user.addresses : [],

@@ -27,6 +27,8 @@ export class RealtimeService {
     userIds: string[];
     conversationId: string;
     message: Record<string, unknown>;
+    /** If set, badge:hint only goes to these users (muted chat = skip). */
+    badgeUserIds?: string[];
   }) {
     const unique = [...new Set(options.userIds)].filter(Boolean);
     if (!unique.length || !this.emitter) return;
@@ -34,10 +36,15 @@ export class RealtimeService {
       conversationId: options.conversationId,
       message: options.message,
     });
-    this.emitter.emitToUsers(unique, RT_BADGE_HINT, {
-      reason: 'chat',
-      conversationId: options.conversationId,
-    });
+    const badgeIds = [
+      ...new Set(options.badgeUserIds ?? options.userIds),
+    ].filter(Boolean);
+    if (badgeIds.length) {
+      this.emitter.emitToUsers(badgeIds, RT_BADGE_HINT, {
+        reason: 'chat',
+        conversationId: options.conversationId,
+      });
+    }
   }
 
   publishNotification(options: {

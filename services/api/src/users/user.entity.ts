@@ -69,6 +69,14 @@ export class User {
   @Column({ name: 'obic_id_changed_at', type: 'timestamptz', nullable: true })
   obicIdChangedAt!: Date | null;
 
+  /** Moments album cover (WeChat-style header image). */
+  @Column({ name: 'moments_cover_url', type: 'varchar', length: 1024, nullable: true })
+  momentsCoverUrl!: string | null;
+
+  /** Soft-delete / deactivate — login rejected when set. */
+  @Column({ name: 'deleted_at', type: 'timestamptz', nullable: true })
+  deletedAt!: Date | null;
+
   /**
    * Internal Ops desk access for Employees (SuperAdmin always allowed in API/UI).
    * Default false — SuperAdmin must grant per employee from Staff desk.

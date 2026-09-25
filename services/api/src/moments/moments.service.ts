@@ -24,6 +24,7 @@ import {
   canViewerSeeMoment,
   momentVisibilityForRole,
 } from './moment-visibility';
+import { momentNotifyCandidateMode } from './moment-fanout';
 import { MomentComment } from './moment-comment.entity';
 import { MomentLike } from './moment-like.entity';
 import { MomentNotifyPrefsService } from './moment-notify-prefs.service';
@@ -133,29 +134,41 @@ export class MomentsService {
     );
     saved.author = author ?? undefined!;
 
-    if (isStaff) {
-      const preview =
-        body.slice(0, 180) ||
-        (media[0]?.name ? `Shared ${media[0].name}` : 'New OBIC update');
-      // Honor server Moments mute prefs (global + per-friend).
+    // WeChat Moments: fan-out to friends (customers) or all users (staff/official).
+    // Honor mute prefs; never notify the author.
+    const preview =
+      body.slice(0, 180) ||
+      (media[0]?.name ? `Shared ${media[0].name}` : 'New Moments update');
+    let candidateIds: string[];
+    if (momentNotifyCandidateMode(isStaff) === 'all') {
       const allIds: Array<{ id: string }> = await this.users
         .createQueryBuilder('u')
         .select('u.id', 'id')
         .where('u.id <> :authorId', { authorId: actor.userId })
+        .andWhere('u.deleted_at IS NULL')
         .getRawMany();
-      const recipients = await this.notifyPrefs.filterNotifyRecipients(
-        allIds.map((r) => r.id),
-        actor.userId,
+      candidateIds = allIds.map((r) => r.id);
+    } else {
+      candidateIds = (await this.friends.friendIdsOf(actor.userId)).filter(
+        (id) => id !== actor.userId,
       );
-      if (recipients.length) {
-        await this.notifications.createForUsers({
-          userIds: recipients,
-          kind: NotificationKind.Moment,
-          title: 'OBIC update',
-          body: preview,
-          data: { momentId: saved.id },
-        });
-      }
+    }
+    const recipients = await this.notifyPrefs.filterNotifyRecipients(
+      candidateIds,
+      actor.userId,
+    );
+    if (recipients.length) {
+      await this.notifications.createForUsers({
+        userIds: recipients,
+        kind: NotificationKind.Moment,
+        title: isStaff ? 'OBIC update' : `${author?.name ?? 'Friend'} posted`,
+        body: preview,
+        data: {
+          type: 'moment',
+          momentId: saved.id,
+          authorId: actor.userId,
+        },
+      });
     }
 
     return this.toDto(saved, author, [], [], actor.userId);

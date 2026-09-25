@@ -35,6 +35,18 @@ export class ConversationParticipant {
   @Column({ name: 'last_read_at', type: 'timestamptz', nullable: true })
   lastReadAt!: Date | null;
 
+  /** WeChat mute — no notifs/badges for this thread for this user. */
+  @Column({ type: 'boolean', default: false })
+  muted!: boolean;
+
+  /** WeChat hide — omit from thread list until new activity (or unhide). */
+  @Column({ type: 'boolean', default: false })
+  hidden!: boolean;
+
+  /** Clear chat history for me — hide messages at/before this timestamp. */
+  @Column({ name: 'cleared_before', type: 'timestamptz', nullable: true })
+  clearedBefore!: Date | null;
+
   @CreateDateColumn({ name: 'joined_at', type: 'timestamptz' })
   joinedAt!: Date;
 }

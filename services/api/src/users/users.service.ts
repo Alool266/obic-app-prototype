@@ -4,6 +4,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -11,8 +12,10 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
 import { Not, Repository } from 'typeorm';
+import { UserRole } from '../common/enums/user-role.enum';
 import { AuthUser } from '../common/interfaces/auth-user.interface';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { ChangeEmailDto } from './dto/change-email.dto';
 import { UpdateMeDto } from './dto/update-me.dto';
 import { UpdateAddressesDto } from './dto/update-addresses.dto';
 import { decideObicIdChange } from './obic-id.util';
@@ -149,6 +152,81 @@ export class UsersService {
       throw new BadRequestException('New password too short');
     }
     user.passwordHash = await bcrypt.hash(next, BCRYPT_ROUNDS);
+    await this.usersRepo.save(user);
+    return { ok: true };
+  }
+
+  /**
+   * Change email — requires current password.
+   * New email must be unique; old email is freed for re-registration.
+   */
+  async changeEmail(
+    actor: AuthUser,
+    dto: ChangeEmailDto,
+  ): Promise<PublicUser> {
+    const user = await this.usersRepo.findOne({ where: { id: actor.userId } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    if (user.deletedAt) {
+      throw new UnauthorizedException('Account deactivated');
+    }
+    const ok = await bcrypt.compare(dto.currentPassword, user.passwordHash);
+    if (!ok) {
+      throw new UnauthorizedException('Current password is incorrect');
+    }
+    const email = dto.email.trim().toLowerCase();
+    if (!email || !email.includes('@')) {
+      throw new BadRequestException('Invalid email');
+    }
+    if (user.email && user.email.toLowerCase() === email) {
+      return toPublicUser(user);
+    }
+    const taken = await this.usersRepo.findOne({
+      where: { email, id: Not(user.id) },
+    });
+    if (taken) {
+      throw new ConflictException('Email already in use');
+    }
+    user.email = email;
+    await this.usersRepo.save(user);
+    return toPublicUser(user);
+  }
+
+  async updateMomentsCover(
+    actor: AuthUser,
+    coverUrl: string,
+  ): Promise<PublicUser> {
+    const user = await this.usersRepo.findOne({ where: { id: actor.userId } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    if (user.deletedAt) {
+      throw new UnauthorizedException('Account deactivated');
+    }
+    const url = coverUrl.trim();
+    user.momentsCoverUrl = url.length === 0 ? null : url.slice(0, 1024);
+    await this.usersRepo.save(user);
+    return toPublicUser(user);
+  }
+
+  /**
+   * Soft-delete / deactivate own account (WeChat-style).
+   * Login rejected while deletedAt is set.
+   */
+  async deleteMe(actor: AuthUser): Promise<{ ok: true }> {
+    const user = await this.usersRepo.findOne({ where: { id: actor.userId } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    if (user.role === UserRole.SuperAdmin) {
+      throw new BadRequestException('SuperAdmin cannot self-delete');
+    }
+    user.deletedAt = new Date();
+    user.passwordHash = await bcrypt.hash(
+      `deleted-${user.id}-${Date.now()}`,
+      BCRYPT_ROUNDS,
+    );
     await this.usersRepo.save(user);
     return { ok: true };
   }

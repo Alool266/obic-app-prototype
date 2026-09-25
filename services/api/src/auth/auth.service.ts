@@ -100,6 +100,9 @@ export class AuthService {
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
+    if (user.deletedAt) {
+      throw new UnauthorizedException('Account deactivated');
+    }
 
     const ok = await bcrypt.compare(dto.password, user.passwordHash);
     if (!ok) {

@@ -1,6 +1,6 @@
 // Made by Dr Ali
 
-import { IsIn, IsOptional, IsString, IsUUID, MaxLength, ValidateIf } from 'class-validator';
+import { IsBoolean, IsIn, IsOptional, IsString, IsUUID, MaxLength, ValidateIf } from 'class-validator';
 
 export class CreateThreadDto {
   /** Peer user id for a direct thread (omit for support). */
@@ -94,4 +94,24 @@ export class RequestStaffDto {
   @IsString()
   @MaxLength(500)
   note?: string;
+}
+
+export class UpdateThreadPrefsDto {
+  @IsOptional()
+  @IsBoolean()
+  muted?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  hidden?: boolean;
+
+  /** Clear local history for me (server clears via clearedBefore). */
+  @IsOptional()
+  @IsBoolean()
+  clearHistory?: boolean;
+
+  /** Hide + mute + clear (WeChat delete chat). */
+  @IsOptional()
+  @IsBoolean()
+  deleteChat?: boolean;
 }
