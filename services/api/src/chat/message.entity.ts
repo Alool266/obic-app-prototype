@@ -16,6 +16,10 @@ export enum AttachmentKind {
   None = 'none',
   Image = 'image',
   File = 'file',
+  /** Voice note (m4a/aac/mp3…) from hold-to-talk. */
+  Audio = 'audio',
+  /** Short video clip from camera/gallery. */
+  Video = 'video',
 }
 
 @Entity({ name: 'messages' })

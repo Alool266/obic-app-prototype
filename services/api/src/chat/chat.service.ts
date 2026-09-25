@@ -325,7 +325,10 @@ export class ChatService {
       }
     }
     if (
-      (kind === AttachmentKind.Image || kind === AttachmentKind.File) &&
+      (kind === AttachmentKind.Image ||
+        kind === AttachmentKind.File ||
+        kind === AttachmentKind.Audio ||
+        kind === AttachmentKind.Video) &&
       !attachmentUrl
     ) {
       throw new BadRequestException('attachmentUrl required for attachments');

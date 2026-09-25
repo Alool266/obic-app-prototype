@@ -127,4 +127,27 @@ describe('ChatService sendMessage attachment URL', () => {
     });
     expect(messages.save).toHaveBeenCalled();
   });
+
+  it('accepts audio and video kinds with https URL', async () => {
+    await service.sendMessage(actor, 'c1', {
+      attachmentKind: 'audio',
+      attachmentName: 'voice_12s.m4a',
+      attachmentUrl: 'https://example.com/uploads/v.m4a',
+    });
+    await service.sendMessage(actor, 'c1', {
+      attachmentKind: 'video',
+      attachmentName: 'clip.mp4',
+      attachmentUrl: 'https://example.com/uploads/c.mp4',
+    });
+    expect(messages.save).toHaveBeenCalledTimes(2);
+  });
+
+  it('requires attachmentUrl for audio kind', async () => {
+    await expect(
+      service.sendMessage(actor, 'c1', {
+        attachmentKind: 'audio',
+        attachmentName: 'voice.m4a',
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
 });

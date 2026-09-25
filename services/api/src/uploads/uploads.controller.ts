@@ -34,6 +34,14 @@ const ALLOWED = new Set([
   '.mov',
   '.m4v',
   '.webm',
+  // audio / voice notes
+  '.m4a',
+  '.aac',
+  '.mp3',
+  '.wav',
+  '.ogg',
+  '.amr',
+  '.caf',
   // docs / misc
   '.pdf',
   '.doc',
@@ -47,12 +55,15 @@ const ALLOWED = new Set([
   '.rar',
 ]);
 
-function kindFromExt(ext: string): 'image' | 'video' | 'file' {
+function kindFromExt(ext: string): 'image' | 'video' | 'audio' | 'file' {
   const e = ext.toLowerCase();
   if (['.jpg', '.jpeg', '.png', '.gif', '.webp', '.heic'].includes(e)) {
     return 'image';
   }
   if (['.mp4', '.mov', '.m4v', '.webm'].includes(e)) return 'video';
+  if (['.m4a', '.aac', '.mp3', '.wav', '.ogg', '.amr', '.caf'].includes(e)) {
+    return 'audio';
+  }
   return 'file';
 }
 

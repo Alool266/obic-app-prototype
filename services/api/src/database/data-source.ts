@@ -54,6 +54,7 @@ import { ProfileAndMomentNotifyPrefs1765430000000 } from './migrations/176543000
 import { UserObicId1765440000000 } from './migrations/1765440000000-UserObicId';
 import { WechatParitySettings1765450000000 } from './migrations/1765450000000-WechatParitySettings';
 import { UserVerification1765460000000 } from './migrations/1765460000000-UserVerification';
+import { ChatAudioVideoAttachments1765470000000 } from './migrations/1765470000000-ChatAudioVideoAttachments';
 import { UploadedFile } from '../uploads/uploaded-file.entity';
 import { AiAssistantMessage } from '../ai/assistant-message.entity';
 import { AiAssistantThread } from '../ai/assistant-thread.entity';
@@ -140,6 +141,7 @@ export default new DataSource({
     UserObicId1765440000000,
     WechatParitySettings1765450000000,
     UserVerification1765460000000,
+    ChatAudioVideoAttachments1765470000000,
   ],
   synchronize: false,
 });

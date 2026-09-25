@@ -31,8 +31,8 @@ export class SendMessageDto {
   body?: string;
 
   @IsOptional()
-  @IsIn(['none', 'image', 'file'])
-  attachmentKind?: 'none' | 'image' | 'file';
+  @IsIn(['none', 'image', 'file', 'audio', 'video'])
+  attachmentKind?: 'none' | 'image' | 'file' | 'audio' | 'video';
 
   @IsOptional()
   @IsString()

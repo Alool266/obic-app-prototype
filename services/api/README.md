@@ -23,12 +23,14 @@ Health: `GET http://localhost:3000/v1/health`
 ## Uploads (Moments + chat M5.3)
 
 `POST /v1/uploads` (JWT, multipart `files`). Public URLs under `/uploads/…`.
+Allowed: images, video (mp4/mov/…), **audio/voice** (m4a/aac/mp3/wav/…), docs.
 
 | Size | Storage on trial |
 |------|------------------|
 | ≤ ~12MB | Postgres `uploaded_files` (bytea) + disk cache — **survives redeploy** |
-| > 12MB | Disk only — **ephemeral** on Render free; use object storage for production video |
+| > 12MB | Disk only — **ephemeral** on Render free; use object storage (S3/GCS) for production video |
 
+Chat `attachmentKind`: `none` | `image` | `file` | **`audio`** | **`video`**.
 Chat `sendMessage` rejects `stub://` / local `file:` URLs; clients must upload first.
 
 ## Phase 1 modules
