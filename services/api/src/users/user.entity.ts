@@ -59,6 +59,17 @@ export class User {
   country!: string | null;
 
   /**
+   * OBIC ID — WeChat-style vanity handle friends use to find/add you.
+   * Stored lowercase; unique when set. First set free; then once per 365 days.
+   */
+  @Column({ name: 'obic_id', type: 'varchar', length: 20, unique: true, nullable: true })
+  obicId!: string | null;
+
+  /** When OBIC ID was last set/changed (server-enforced cooldown). */
+  @Column({ name: 'obic_id_changed_at', type: 'timestamptz', nullable: true })
+  obicIdChangedAt!: Date | null;
+
+  /**
    * Internal Ops desk access for Employees (SuperAdmin always allowed in API/UI).
    * Default false — SuperAdmin must grant per employee from Staff desk.
    */

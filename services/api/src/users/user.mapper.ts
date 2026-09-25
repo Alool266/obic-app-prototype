@@ -4,6 +4,7 @@
 import { UserRole } from '../common/enums/user-role.enum';
 import { UserAddress } from './user-address.interface';
 import { User } from './user.entity';
+import { nextObicIdChangeAt } from './obic-id.util';
 
 export interface PublicUser {
   id: string;
@@ -17,6 +18,12 @@ export interface PublicUser {
   avatarUrl: string | null;
   city: string | null;
   country: string | null;
+  /** WeChat-style vanity ID (lowercase). Null until first set. */
+  obicId: string | null;
+  /** When OBIC ID was last set/changed. */
+  obicIdChangedAt: Date | null;
+  /** Earliest time a change is allowed (null if never set or already eligible). */
+  obicIdNextChangeAt: Date | null;
   /**
    * Stored Ops flag. Clients: SuperAdmin always may open Ops;
    * Employees only when this is true. Customers never.
@@ -32,6 +39,9 @@ export interface PublicUser {
 }
 
 export function toPublicUser(user: User): PublicUser {
+  const changedAt = user.obicIdChangedAt ?? null;
+  const nextAt = nextObicIdChangeAt(changedAt);
+  const now = Date.now();
   return {
     id: user.id,
     email: user.email,
@@ -43,6 +53,10 @@ export function toPublicUser(user: User): PublicUser {
     avatarUrl: user.avatarUrl ?? null,
     city: user.city ?? null,
     country: user.country ?? null,
+    obicId: user.obicId ?? null,
+    obicIdChangedAt: changedAt,
+    obicIdNextChangeAt:
+      nextAt && nextAt.getTime() > now ? nextAt : null,
     opsAccess: Boolean(user.opsAccess),
     offersAccess: Boolean(user.offersAccess),
     addresses: Array.isArray(user.addresses) ? user.addresses : [],

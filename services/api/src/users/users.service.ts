@@ -15,6 +15,7 @@ import { AuthUser } from '../common/interfaces/auth-user.interface';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { UpdateMeDto } from './dto/update-me.dto';
 import { UpdateAddressesDto } from './dto/update-addresses.dto';
+import { decideObicIdChange } from './obic-id.util';
 import { UserAddress } from './user-address.interface';
 import { User } from './user.entity';
 import { PublicUser, toPublicUser } from './user.mapper';
@@ -88,6 +89,39 @@ export class UsersService {
     if (dto.country !== undefined) {
       const country = dto.country.trim();
       user.country = country.length === 0 ? null : country;
+    }
+
+    if (dto.obicId !== undefined) {
+      const decision = decideObicIdChange({
+        current: user.obicId,
+        nextRaw: dto.obicId,
+        changedAt: user.obicIdChangedAt,
+      });
+      if (!decision.ok) {
+        if (decision.reason === 'unchanged') {
+          // No-op — leave row as-is.
+        } else if (decision.reason === 'invalid') {
+          throw new BadRequestException(
+            'OBIC ID must be 6–20 chars, start with a letter, and use letters, digits, or _',
+          );
+        } else {
+          const when = decision.nextAt
+            ? decision.nextAt.toISOString().slice(0, 10)
+            : 'later';
+          throw new BadRequestException(
+            `OBIC ID can only be changed once every 365 days. Next change available on ${when}.`,
+          );
+        }
+      } else {
+        const taken = await this.usersRepo.findOne({
+          where: { obicId: decision.normalized, id: Not(user.id) },
+        });
+        if (taken) {
+          throw new ConflictException('OBIC ID already in use');
+        }
+        user.obicId = decision.normalized;
+        user.obicIdChangedAt = new Date();
+      }
     }
 
     await this.usersRepo.save(user);

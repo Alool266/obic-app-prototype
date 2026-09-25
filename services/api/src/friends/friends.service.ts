@@ -80,14 +80,17 @@ export class FriendsService {
       /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
         query,
       );
+    const obicIdExact = query.toLowerCase();
     const rows = await this.users.find({
       where: isUuid
         ? { id: query }
         : [
+            { obicId: obicIdExact },
             { phone: query },
             { phone: ILike(`%${query}%`) },
             { name: ILike(`%${query}%`) },
             { email: ILike(`%${query}%`) },
+            { obicId: ILike(`%${obicIdExact}%`) },
           ],
       take: 20,
     });
@@ -102,6 +105,7 @@ export class FriendsService {
         staffTitle: u.staffTitle ?? null,
         branchLabel: u.branchLabel ?? null,
         avatarUrl: u.avatarUrl ?? null,
+        obicId: u.obicId ?? null,
       }));
   }
 

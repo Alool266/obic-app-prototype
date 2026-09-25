@@ -51,6 +51,7 @@ import { UploadedFilesAndMomentSoftDelete1765400000000 } from './migrations/1765
 import { MomentVisibility1765410000000 } from './migrations/1765410000000-MomentVisibility';
 import { Phase5AiDeepen1765420000000 } from './migrations/1765420000000-Phase5AiDeepen';
 import { ProfileAndMomentNotifyPrefs1765430000000 } from './migrations/1765430000000-ProfileAndMomentNotifyPrefs';
+import { UserObicId1765440000000 } from './migrations/1765440000000-UserObicId';
 import { UploadedFile } from '../uploads/uploaded-file.entity';
 import { AiAssistantMessage } from '../ai/assistant-message.entity';
 import { AiAssistantThread } from '../ai/assistant-thread.entity';
@@ -130,6 +131,7 @@ export default new DataSource({
     MomentVisibility1765410000000,
     Phase5AiDeepen1765420000000,
     ProfileAndMomentNotifyPrefs1765430000000,
+    UserObicId1765440000000,
   ],
   synchronize: false,
 });

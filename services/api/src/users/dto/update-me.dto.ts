@@ -1,5 +1,6 @@
 // Made by Dr Ali
-// Self profile update — name / phone / city / country. Never role, email, or password here.
+// Self profile update — name / phone / city / country / OBIC ID.
+// Never role, email, or password here.
 
 import { IsOptional, IsString, Matches, MaxLength, MinLength } from 'class-validator';
 
@@ -30,4 +31,18 @@ export class UpdateMeDto {
   @IsString()
   @MaxLength(120)
   country?: string;
+
+  /**
+   * OBIC ID (WeChat-style). First set free; later changes once per 365 days.
+   * Cannot be cleared once set. Server normalizes to lowercase.
+   */
+  @IsOptional()
+  @IsString()
+  @MinLength(6)
+  @MaxLength(20)
+  @Matches(/^[a-zA-Z][a-zA-Z0-9_]{5,19}$/, {
+    message:
+      'OBIC ID must be 6–20 chars, start with a letter, and use letters, digits, or _',
+  })
+  obicId?: string;
 }
