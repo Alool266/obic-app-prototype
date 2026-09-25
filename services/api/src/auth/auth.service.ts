@@ -5,6 +5,7 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -12,10 +13,17 @@ import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
 import { createHash, randomBytes, randomUUID } from 'crypto';
-import { IsNull, Repository } from 'typeorm';
+import { IsNull, Not, Repository } from 'typeorm';
+import { AuthUser } from '../common/interfaces/auth-user.interface';
 import { UserRole } from '../common/enums/user-role.enum';
+import { StartPhoneVerifyDto } from '../users/dto/start-phone-verify.dto';
 import { User } from '../users/user.entity';
 import { PublicUser, toPublicUser } from '../users/user.mapper';
+import { isChinaRegionCode } from './china-cohort.util';
+import {
+  CHINA_PHONE_ONLY_MSG,
+  normalizeChinaMobile,
+} from './china-phone.util';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { TotpVerifyDto } from './dto/totp-verify.dto';
@@ -23,10 +31,6 @@ import { ObicJwtPayload } from './jwt-payload.interface';
 import { RefreshSession } from './refresh-session.entity';
 import { TotpCryptoService } from './totp/totp-crypto.service';
 import { TotpService } from './totp/totp.service';
-import {
-  CHINA_PHONE_ONLY_MSG,
-  normalizeChinaMobile,
-} from './china-phone.util';
 import {
   VerificationService,
   VerifyPendingResult,
@@ -74,7 +78,19 @@ export class AuthService {
   async register(dto: RegisterDto): Promise<RegisterResult> {
     const email = this.normalizeEmail(dto.email);
     const phone = this.normalizePhoneRegister(dto.phone);
-    this.requireEmailOrPhone(email, phone);
+    const chinaRegister =
+      isChinaRegionCode(dto.regionCountry) || dto.locale === 'zh';
+
+    // China cohort: mainland mobile + SMS OTP required (no email-only signup).
+    if (chinaRegister) {
+      if (!phone) {
+        throw new BadRequestException(
+          'China registration requires a China mainland mobile number',
+        );
+      }
+    } else {
+      this.requireEmailOrPhone(email, phone);
+    }
 
     if (email) {
       const taken = await this.usersRepo.exist({ where: { email } });
@@ -92,19 +108,59 @@ export class AuthService {
       passwordHash,
       name: dto.name.trim(),
       role: UserRole.Customer,
+      country: chinaRegister
+        ? (dto.regionCountry?.trim().toUpperCase() || 'CN')
+        : null,
       emailVerifiedAt: null,
       phoneVerifiedAt: null,
     });
     await this.usersRepo.save(user);
 
-    const channel = email ? 'email' : 'phone';
-    const destination = (email ?? phone)!;
+    // China register always verifies phone first; otherwise email if present.
+    const channel: 'email' | 'phone' =
+      chinaRegister || (phone && !email) ? 'phone' : 'email';
+    const destination = (channel === 'phone' ? phone : email)!;
     return this.verification.startChallenge({
       user,
       channel,
       purpose: 'register',
       destination,
       backupEmail: email,
+      locale: dto.locale,
+    });
+  }
+
+  /**
+   * Logged-in: start SMS OTP to add/verify China mainland mobile.
+   * Completing via /auth/verify-otp sets phone + phoneVerifiedAt.
+   */
+  async startPhoneVerify(
+    actor: AuthUser,
+    dto: StartPhoneVerifyDto,
+  ): Promise<VerifyPendingResult> {
+    const user = await this.usersRepo.findOne({ where: { id: actor.userId } });
+    if (!user || user.deletedAt) {
+      throw new NotFoundException('User not found');
+    }
+    const phone = normalizeChinaMobile(dto.phone);
+    if (!phone) {
+      throw new BadRequestException(CHINA_PHONE_ONLY_MSG);
+    }
+    const taken = await this.usersRepo.exist({
+      where: { phone, id: Not(user.id) },
+    });
+    if (taken) {
+      throw new ConflictException('Phone already registered');
+    }
+
+    // Pending value applied on OTP success (change_phone purpose).
+    return this.verification.startChallenge({
+      user,
+      channel: 'phone',
+      purpose: 'change_phone',
+      destination: phone,
+      pendingValue: phone,
+      backupEmail: user.email,
       locale: dto.locale,
     });
   }

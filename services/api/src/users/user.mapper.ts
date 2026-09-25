@@ -5,6 +5,7 @@ import { UserRole } from '../common/enums/user-role.enum';
 import { UserAddress } from './user-address.interface';
 import { User } from './user.entity';
 import { nextObicIdChangeAt } from './obic-id.util';
+import { needsPhoneVerification } from '../auth/china-cohort.util';
 
 export interface PublicUser {
   id: string;
@@ -38,6 +39,11 @@ export interface PublicUser {
   offersAccess: boolean;
   emailVerified: boolean;
   phoneVerified: boolean;
+  /**
+   * China cohort without verified mainland mobile — soft-block chat/orders
+   * until the user completes SMS OTP.
+   */
+  needsPhoneVerification: boolean;
   addresses: UserAddress[];
   createdAt: Date;
 }
@@ -66,6 +72,7 @@ export function toPublicUser(user: User): PublicUser {
     offersAccess: Boolean(user.offersAccess),
     emailVerified: Boolean(user.emailVerifiedAt),
     phoneVerified: Boolean(user.phoneVerifiedAt),
+    needsPhoneVerification: needsPhoneVerification(user),
     addresses: Array.isArray(user.addresses) ? user.addresses : [],
     createdAt: user.createdAt,
   };

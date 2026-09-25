@@ -4,7 +4,6 @@
 import {
   BadRequestException,
   ConflictException,
-  ForbiddenException,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -12,6 +11,12 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
 import { IsNull, Not, Repository } from 'typeorm';
+import {
+  isChinaMobile,
+  normalizeChinaMobile,
+  CHINA_PHONE_ONLY_MSG,
+} from '../auth/china-phone.util';
+import { normalizeRegionCode } from '../auth/china-cohort.util';
 import { UserRole } from '../common/enums/user-role.enum';
 import { AuthUser } from '../common/interfaces/auth-user.interface';
 import { ChangePasswordDto } from './dto/change-password.dto';
@@ -75,10 +80,22 @@ export class UsersService {
     }
 
     if (dto.phone !== undefined) {
-      const phone = dto.phone.trim();
-      if (phone.length === 0) {
+      const raw = dto.phone.trim();
+      if (raw.length === 0) {
         user.phone = null;
+        user.phoneVerifiedAt = null;
       } else {
+        // Profile phone edits that look like China mobile must go through OTP.
+        const cn = normalizeChinaMobile(raw);
+        if (cn) {
+          throw new BadRequestException(
+            'Use phone verification OTP to set a China mainland number',
+          );
+        }
+        if (isChinaMobile(raw)) {
+          throw new BadRequestException(CHINA_PHONE_ONLY_MSG);
+        }
+        const phone = raw;
         const taken = await this.usersRepo.findOne({
           where: { phone, id: Not(user.id) },
         });
@@ -86,6 +103,7 @@ export class UsersService {
           throw new ConflictException('Phone already in use');
         }
         user.phone = phone;
+        user.phoneVerifiedAt = null;
       }
     }
 
@@ -95,8 +113,13 @@ export class UsersService {
     }
 
     if (dto.country !== undefined) {
-      const country = dto.country.trim();
-      user.country = country.length === 0 ? null : country;
+      const raw = dto.country.trim();
+      if (raw.length === 0) {
+        user.country = null;
+      } else {
+        // Prefer ISO code when recognizable; otherwise store trimmed label.
+        user.country = normalizeRegionCode(raw) ?? raw.slice(0, 120);
+      }
     }
 
     if (dto.obicId !== undefined) {

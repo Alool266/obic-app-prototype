@@ -1,9 +1,13 @@
 // Made by Dr Ali
 // Auth HTTP surface — register / login / refresh / logout under /v1/auth.
 
-import { Body, Controller, HttpCode, Post } from '@nestjs/common';
+import { Body, Controller, HttpCode, Post, UseGuards } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { AuthUser } from '../common/interfaces/auth-user.interface';
+import { StartPhoneVerifyDto } from '../users/dto/start-phone-verify.dto';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { LogoutDto, RefreshDto } from './dto/refresh.dto';
@@ -28,9 +32,12 @@ export class AuthController {
   @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @ApiOperation({
     summary: 'Login with email or phone + password',
-    description: 'Returns access + refresh tokens. Never send real passwords in docs.',
+    description:
+      'Returns access + refresh tokens. Never send real passwords in docs.',
   })
-  @ApiOkResponse({ description: 'accessToken, refreshToken, user (no password)' })
+  @ApiOkResponse({
+    description: 'accessToken, refreshToken, user (no password)',
+  })
   login(@Body() dto: LoginDto) {
     return this.authService.login(dto);
   }
@@ -52,6 +59,20 @@ export class AuthController {
   @ApiOperation({ summary: 'Resend verification OTP (60s cooldown)' })
   resendOtp(@Body() dto: ResendOtpDto) {
     return this.authService.resendOtp(dto.verifySession);
+  }
+
+  @Post('phone/start')
+  @HttpCode(200)
+  @UseGuards(JwtAuthGuard)
+  @Throttle({ default: { limit: 8, ttl: 60_000 } })
+  @ApiOperation({
+    summary: 'Start China mainland phone SMS OTP (logged-in add/verify)',
+  })
+  startPhoneVerify(
+    @CurrentUser() actor: AuthUser,
+    @Body() dto: StartPhoneVerifyDto,
+  ) {
+    return this.authService.startPhoneVerify(actor, dto);
   }
 
   @Post('totp/verify')

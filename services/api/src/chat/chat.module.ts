@@ -6,6 +6,7 @@ import { User } from '../users/user.entity';
 import { AiModule } from '../ai/ai.module';
 import { ModerationModule } from '../moderation/moderation.module';
 import { OrdersModule } from '../orders/orders.module';
+import { PhoneVerifiedGuard } from '../common/guards/phone-verified.guard';
 import { AuditLog } from './audit-log.entity';
 import { ChatController } from './chat.controller';
 import { ChatService } from './chat.service';
@@ -33,7 +34,7 @@ import { RealtimeModule } from '../realtime/realtime.module';
     RealtimeModule,
   ],
   controllers: [ChatController],
-  providers: [ChatService],
+  providers: [ChatService, PhoneVerifiedGuard],
   exports: [ChatService],
 })
 export class ChatModule {}

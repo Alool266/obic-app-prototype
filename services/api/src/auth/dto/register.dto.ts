@@ -42,4 +42,13 @@ export class RegisterDto {
   @IsString()
   @IsIn(['ar', 'en', 'zh'])
   locale?: string;
+
+  /**
+   * Client region (ISO 3166-1 alpha-2). When CN/HK/MO (or zh locale),
+   * register requires a China mainland mobile + SMS OTP.
+   */
+  @IsOptional()
+  @IsString()
+  @MaxLength(8)
+  regionCountry?: string;
 }

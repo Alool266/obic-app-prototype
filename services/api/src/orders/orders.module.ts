@@ -5,6 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConversationParticipant } from '../chat/conversation-participant.entity';
 import { Conversation } from '../chat/conversation.entity';
 import { Message } from '../chat/message.entity';
+import { PhoneVerifiedGuard } from '../common/guards/phone-verified.guard';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { OffersModule } from '../offers/offers.module';
 import { RealtimeModule } from '../realtime/realtime.module';
@@ -30,7 +31,7 @@ import { OrdersService } from './orders.service';
     RealtimeModule,
   ],
   controllers: [OrdersController],
-  providers: [OrdersService, OrderChatService],
+  providers: [OrdersService, OrderChatService, PhoneVerifiedGuard],
   exports: [OrderChatService],
 })
 export class OrdersModule {}
