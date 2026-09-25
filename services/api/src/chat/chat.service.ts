@@ -8,7 +8,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { In, MoreThan, Repository } from 'typeorm';
 import { UserRole } from '../common/enums/user-role.enum';
 import { AuthUser } from '../common/interfaces/auth-user.interface';
 import { User } from '../users/user.entity';
@@ -246,24 +246,25 @@ export class ChatService {
 
   async listMessages(actor: AuthUser, conversationId: string) {
     const part = await this.requireParticipant(actor.userId, conversationId);
-    // Clear history for me — only show messages after clearedBefore.
-    const qb = this.messages
-      .createQueryBuilder('m')
-      .leftJoinAndSelect('m.sender', 'sender')
-      .where('m.conversation_id = :conversationId', { conversationId })
-      .orderBy('m.created_at', 'ASC')
-      .take(200);
-    if (part.clearedBefore) {
-      qb.andWhere('m.created_at > :clearedBefore', {
-        clearedBefore: part.clearedBefore,
-      });
-    }
-    const rows = await qb.getMany();
-    await this.markThreadRead(actor.userId, conversationId);
-    // Opening chat unhides (WeChat: viewing brings it back to the list).
-    if (part.hidden) {
-      part.hidden = false;
-      await this.participants.save(part);
+    // Same find()+relations path as oversight — QueryBuilder join+take was
+    // 500ing on trial (Postgres) while admin transcript still loaded.
+    const rows = await this.messages.find({
+      where: part.clearedBefore
+        ? { conversationId, createdAt: MoreThan(part.clearedBefore) }
+        : { conversationId },
+      relations: { sender: true },
+      order: { createdAt: 'ASC' },
+      take: 200,
+    });
+    try {
+      await this.markThreadRead(actor.userId, conversationId);
+      // Opening chat unhides (WeChat: viewing brings it back to the list).
+      if (part.hidden) {
+        part.hidden = false;
+        await this.participants.save(part);
+      }
+    } catch {
+      // Soft-fail: never block reading the transcript on read-state updates.
     }
     return rows.map((m) => this.messageDto(m));
   }
