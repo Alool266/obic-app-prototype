@@ -11,14 +11,19 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
-import { Not, Repository } from 'typeorm';
+import { IsNull, Not, Repository } from 'typeorm';
 import { UserRole } from '../common/enums/user-role.enum';
 import { AuthUser } from '../common/interfaces/auth-user.interface';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { ChangeEmailDto } from './dto/change-email.dto';
+import { DeleteMeDto } from './dto/delete-me.dto';
 import { UpdateMeDto } from './dto/update-me.dto';
 import { UpdateAddressesDto } from './dto/update-addresses.dto';
 import { decideObicIdChange } from './obic-id.util';
+import {
+  canSuperAdminSelfDelete,
+  LAST_SUPERADMIN_SELF_DELETE_MSG,
+} from './superadmin-self-delete';
 import { UserAddress } from './user-address.interface';
 import { User } from './user.entity';
 import { PublicUser, toPublicUser } from './user.mapper';
@@ -212,21 +217,34 @@ export class UsersService {
 
   /**
    * Soft-delete / deactivate own account (WeChat-style).
-   * Login rejected while deletedAt is set.
+   * Requires current password. Password hash kept so admin restore → same login.
+   * SuperAdmin: allowed only when another active SuperAdmin remains.
    */
-  async deleteMe(actor: AuthUser): Promise<{ ok: true }> {
+  async deleteMe(actor: AuthUser, dto: DeleteMeDto): Promise<{ ok: true }> {
     const user = await this.usersRepo.findOne({ where: { id: actor.userId } });
     if (!user) {
       throw new NotFoundException('User not found');
     }
+    if (user.deletedAt) {
+      throw new BadRequestException('Account already deactivated');
+    }
+    const ok = await bcrypt.compare(dto.currentPassword, user.passwordHash);
+    if (!ok) {
+      throw new UnauthorizedException('Current password is incorrect');
+    }
     if (user.role === UserRole.SuperAdmin) {
-      throw new BadRequestException('SuperAdmin cannot self-delete');
+      const otherSas = await this.usersRepo.count({
+        where: {
+          role: UserRole.SuperAdmin,
+          id: Not(user.id),
+          deletedAt: IsNull(),
+        },
+      });
+      if (!canSuperAdminSelfDelete(otherSas)) {
+        throw new BadRequestException(LAST_SUPERADMIN_SELF_DELETE_MSG);
+      }
     }
     user.deletedAt = new Date();
-    user.passwordHash = await bcrypt.hash(
-      `deleted-${user.id}-${Date.now()}`,
-      BCRYPT_ROUNDS,
-    );
     await this.usersRepo.save(user);
     return { ok: true };
   }

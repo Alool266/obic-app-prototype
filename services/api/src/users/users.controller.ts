@@ -18,6 +18,7 @@ import { ChangePasswordDto } from './dto/change-password.dto';
 import { UpdateAvatarDto } from './dto/update-avatar.dto';
 import { UpdateAddressesDto } from './dto/update-addresses.dto';
 import { UpdateMeDto } from './dto/update-me.dto';
+import { DeleteMeDto } from './dto/delete-me.dto';
 import { UpdateMomentsCoverDto } from './dto/update-moments-cover.dto';
 import { UsersService } from './users.service';
 
@@ -72,8 +73,8 @@ export class UsersController {
 
   @Delete('me')
   @UseGuards(JwtAuthGuard)
-  deleteMe(@CurrentUser() actor: AuthUser) {
-    return this.usersService.deleteMe(actor);
+  deleteMe(@CurrentUser() actor: AuthUser, @Body() dto: DeleteMeDto) {
+    return this.usersService.deleteMe(actor, dto);
   }
 
   @Put('me/addresses')

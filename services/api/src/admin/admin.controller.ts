@@ -118,6 +118,32 @@ export class AdminController {
     return this.admin.updateStaffProfile(actor, id, dto);
   }
 
+  @Get('users/deactivated')
+  @ApiOperation({
+    summary: 'List soft-deleted accounts',
+    description:
+      'SuperAdmin or Employee with Ops ACL. Search by email/phone/name/OBIC ID.',
+  })
+  listDeactivated(
+    @CurrentUser() actor: AuthUser,
+    @Query('q') q?: string,
+  ) {
+    return this.admin.listDeactivatedUsers(actor, q);
+  }
+
+  @Post('users/:id/restore')
+  @ApiOperation({
+    summary: 'Restore a soft-deleted account',
+    description:
+      'Clears deletedAt. User can sign in with the same password. Audited.',
+  })
+  restoreUser(
+    @CurrentUser() actor: AuthUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.admin.restoreUser(actor, id);
+  }
+
   @Get('oversight/chats')
   @Roles(UserRole.SuperAdmin)
   @ApiOperation({

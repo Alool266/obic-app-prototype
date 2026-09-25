@@ -327,8 +327,11 @@ export class AdminService {
 
     const rows = await this.users.find({
       where: isSa
-        ? [{ role: UserRole.Employee }, { role: UserRole.SuperAdmin }]
-        : { role: UserRole.Employee },
+        ? [
+            { role: UserRole.Employee, deletedAt: IsNull() },
+            { role: UserRole.SuperAdmin, deletedAt: IsNull() },
+          ]
+        : { role: UserRole.Employee, deletedAt: IsNull() },
       order: { createdAt: 'ASC' },
     });
     await this.writeAudit(actor.userId, 'admin_list_staff', 'user', null, {
@@ -336,6 +339,71 @@ export class AdminService {
       scope: isSa ? 'full' : 'reassign_directory',
     });
     return rows.map((u) => toPublicUser(u));
+  }
+
+  /**
+   * Soft-deleted / deactivated accounts — SuperAdmin or Employee with Ops ACL.
+   */
+  async listDeactivatedUsers(actor: AuthUser, q?: string) {
+    const staff = await this.requireStaff(actor);
+    if (!canOpenInternalOps(staff)) {
+      throw new ForbiddenException('SuperAdmin or Ops staff only');
+    }
+
+    const qb = this.users
+      .createQueryBuilder('u')
+      .where('u.deletedAt IS NOT NULL')
+      .orderBy('u.deletedAt', 'DESC')
+      .take(200);
+
+    const needle = (q ?? '').trim();
+    if (needle.length) {
+      qb.andWhere(
+        '(u.email ILIKE :q OR u.phone ILIKE :q OR u.name ILIKE :q OR u.obicId ILIKE :q)',
+        { q: `%${needle}%` },
+      );
+    }
+
+    const rows = await qb.getMany();
+    await this.writeAudit(
+      actor.userId,
+      'admin_list_deactivated',
+      'user',
+      null,
+      { count: rows.length, q: needle.length ? true : false },
+    );
+    return rows.map((u) => ({
+      ...toPublicUser(u),
+      deletedAt: u.deletedAt,
+    }));
+  }
+
+  /**
+   * Clear deletedAt so the user can sign in again with the same password.
+   */
+  async restoreUser(actor: AuthUser, userId: string) {
+    const staff = await this.requireStaff(actor);
+    if (!canOpenInternalOps(staff)) {
+      throw new ForbiddenException('SuperAdmin or Ops staff only');
+    }
+
+    const target = await this.users.findOne({ where: { id: userId } });
+    if (!target) throw new NotFoundException('User not found');
+    if (!target.deletedAt) {
+      throw new BadRequestException('Account is already active');
+    }
+
+    target.deletedAt = null;
+    await this.users.save(target);
+    await this.writeAudit(staff.id, 'admin_restore_user', 'user', userId, {
+      email: Boolean(target.email),
+      phone: Boolean(target.phone),
+      role: target.role,
+    });
+    return {
+      ...toPublicUser(target),
+      deletedAt: null as Date | null,
+    };
   }
 
   /**
