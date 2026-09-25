@@ -9,6 +9,9 @@ import { UserRole } from '../common/enums/user-role.enum';
 import { User } from '../users/user.entity';
 import { AuthService } from './auth.service';
 import { RefreshSession } from './refresh-session.entity';
+import { TotpCryptoService } from './totp/totp-crypto.service';
+import { TotpService } from './totp/totp.service';
+import { VerificationService } from './verification.service';
 
 jest.mock('bcrypt', () => ({
   compare: jest.fn(),
@@ -25,7 +28,14 @@ describe('AuthService.login', () => {
     save: jest.fn(async (row: unknown) => row),
   };
   const jwt = {
+    sign: jest.fn(() => 'test-access-token'),
     signAsync: jest.fn(async () => 'test-access-token'),
+  };
+  const verification = {
+    primaryChannel: jest.fn(() => null),
+    startChallenge: jest.fn(),
+    verifyCode: jest.fn(),
+    resend: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -36,10 +46,15 @@ describe('AuthService.login', () => {
         { provide: JwtService, useValue: jwt },
         {
           provide: ConfigService,
-          useValue: { get: (k: string) => (k === 'JWT_EXPIRES_IN' ? '15m' : undefined) },
+          useValue: {
+            get: (k: string) => (k === 'JWT_EXPIRES_IN' ? '15m' : undefined),
+          },
         },
         { provide: getRepositoryToken(User), useValue: usersRepo },
         { provide: getRepositoryToken(RefreshSession), useValue: sessionsRepo },
+        { provide: TotpCryptoService, useValue: { decrypt: jest.fn() } },
+        { provide: TotpService, useValue: { verify: jest.fn() } },
+        { provide: VerificationService, useValue: verification },
       ],
     }).compile();
     service = module.get(AuthService);
@@ -58,6 +73,9 @@ describe('AuthService.login', () => {
       avatarUrl: null,
       opsAccess: false,
       offersAccess: false,
+      emailVerifiedAt: new Date(),
+      phoneVerifiedAt: null,
+      deletedAt: null,
       createdAt: new Date(),
     });
     (bcrypt.compare as jest.Mock).mockResolvedValue(true);
@@ -67,11 +85,16 @@ describe('AuthService.login', () => {
       password: 'password12',
     });
 
-    expect(result.accessToken).toBe('test-access-token');
+    expect('accessToken' in result && result.accessToken).toBe(
+      'test-access-token',
+    );
+    if (!('user' in result)) throw new Error('expected AuthResult');
     expect(result.tokenType).toBe('Bearer');
     expect(result.user.email).toBe('customer@example.com');
     expect(result.user.role).toBe(UserRole.Customer);
-    expect((result.user as { passwordHash?: string }).passwordHash).toBeUndefined();
+    expect(
+      (result.user as { passwordHash?: string }).passwordHash,
+    ).toBeUndefined();
     expect(sessionsRepo.save).toHaveBeenCalled();
   });
 
@@ -81,6 +104,7 @@ describe('AuthService.login', () => {
       email: 'customer@example.com',
       passwordHash: 'hashed',
       role: UserRole.Customer,
+      deletedAt: null,
     });
     (bcrypt.compare as jest.Mock).mockResolvedValue(false);
 

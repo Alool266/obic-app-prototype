@@ -11,12 +11,17 @@ import { AuthService } from './auth.service';
 import { JwtStrategy } from './jwt.strategy';
 import { RefreshSession } from './refresh-session.entity';
 import { TotpModule } from './totp/totp.module';
+import { MailSenderService } from './mail-sender.service';
+import { SmsSenderService } from './sms-sender.service';
+import { VerificationChallenge } from './verification-challenge.entity';
+import { VerificationService } from './verification.service';
+import { User } from '../users/user.entity';
 
 @Module({
   imports: [
     UsersModule,
     TotpModule,
-    TypeOrmModule.forFeature([RefreshSession]),
+    TypeOrmModule.forFeature([RefreshSession, VerificationChallenge, User]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
@@ -37,7 +42,13 @@ import { TotpModule } from './totp/totp.module';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy],
-  exports: [AuthService, JwtModule],
+  providers: [
+    AuthService,
+    JwtStrategy,
+    MailSenderService,
+    SmsSenderService,
+    VerificationService,
+  ],
+  exports: [AuthService, JwtModule, VerificationService],
 })
 export class AuthModule {}

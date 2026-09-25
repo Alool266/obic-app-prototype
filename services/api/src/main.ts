@@ -1,7 +1,7 @@
 // Made by Dr Ali
 // OBIC API bootstrap — Helmet, global validation, /v1 prefix. Secrets only via env.
 
-import { ClassSerializerInterceptor, ValidationPipe } from '@nestjs/common';
+import { BadRequestException, ClassSerializerInterceptor, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory, Reflector } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
@@ -11,6 +11,7 @@ import { join } from 'path';
 import type { NextFunction, Request, Response } from 'express';
 import { loadOptionalAiEnvFiles } from './ai/ai-env.loader';
 import { loadOptionalAgoraEnvFiles } from './calls/agora-env.loader';
+import { loadOptionalMailEnvFiles } from './auth/mail-env.loader';
 import { AppModule } from './app.module';
 import { parseCorsOrigins } from './common/admin-security';
 import { UploadsService } from './uploads/uploads.service';
@@ -18,6 +19,7 @@ import { UploadsService } from './uploads/uploads.service';
 async function bootstrap() {
   loadOptionalAiEnvFiles();
   loadOptionalAgoraEnvFiles();
+  loadOptionalMailEnvFiles();
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const config = app.get(ConfigService);
 
@@ -78,11 +80,26 @@ async function bootstrap() {
   app.setGlobalPrefix('v1');
 
   // Reject malformed bodies early; strip unknown fields.
+  // Human-readable validation errors (no raw class-validator dumps for clients).
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
       forbidNonWhitelisted: true,
       transform: true,
+      exceptionFactory: (errors) => {
+        const msgs = errors.flatMap((e) => {
+          if (e.constraints) return Object.values(e.constraints);
+          // Nested / whitelist failures
+          if (e.property) {
+            return [`Invalid field: ${e.property}`];
+          }
+          return ['Invalid request'];
+        });
+        const unique = [...new Set(msgs.filter(Boolean))];
+        return new BadRequestException(
+          unique.length === 1 ? unique[0] : unique,
+        );
+      },
     }),
   );
 

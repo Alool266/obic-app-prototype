@@ -53,6 +53,7 @@ import { Phase5AiDeepen1765420000000 } from './migrations/1765420000000-Phase5Ai
 import { ProfileAndMomentNotifyPrefs1765430000000 } from './migrations/1765430000000-ProfileAndMomentNotifyPrefs';
 import { UserObicId1765440000000 } from './migrations/1765440000000-UserObicId';
 import { WechatParitySettings1765450000000 } from './migrations/1765450000000-WechatParitySettings';
+import { UserVerification1765460000000 } from './migrations/1765460000000-UserVerification';
 import { UploadedFile } from '../uploads/uploaded-file.entity';
 import { AiAssistantMessage } from '../ai/assistant-message.entity';
 import { AiAssistantThread } from '../ai/assistant-thread.entity';
@@ -60,6 +61,7 @@ import { AppSetting } from '../ai/app-setting.entity';
 import { MomentFriendMute } from '../moments/moment-friend-mute.entity';
 import { MomentNotifyPrefs } from '../moments/moment-notify-prefs.entity';
 import { BugReport } from '../moderation/bug-report.entity';
+import { VerificationChallenge } from '../auth/verification-challenge.entity';
 
 // Load services/api/.env then repo-root .env (local only — never commit secrets).
 loadEnv({ path: resolve(__dirname, '../../.env') });
@@ -99,6 +101,7 @@ export default new DataSource({
     BannedWord,
     ContentReport,
     BugReport,
+    VerificationChallenge,
     UploadedFile,
     AiAssistantThread,
     AiAssistantMessage,
@@ -136,6 +139,7 @@ export default new DataSource({
     ProfileAndMomentNotifyPrefs1765430000000,
     UserObicId1765440000000,
     WechatParitySettings1765450000000,
+    UserVerification1765460000000,
   ],
   synchronize: false,
 });

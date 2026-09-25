@@ -77,6 +77,14 @@ export class User {
   @Column({ name: 'deleted_at', type: 'timestamptz', nullable: true })
   deletedAt!: Date | null;
 
+  /** Email OTP verified (register / change). */
+  @Column({ name: 'email_verified_at', type: 'timestamptz', nullable: true })
+  emailVerifiedAt!: Date | null;
+
+  /** Phone OTP verified (register / change). */
+  @Column({ name: 'phone_verified_at', type: 'timestamptz', nullable: true })
+  phoneVerifiedAt!: Date | null;
+
   /**
    * Internal Ops desk access for Employees (SuperAdmin always allowed in API/UI).
    * Default false — SuperAdmin must grant per employee from Staff desk.

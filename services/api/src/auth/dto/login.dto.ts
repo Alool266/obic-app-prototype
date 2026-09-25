@@ -22,8 +22,8 @@ export class LoginDto {
   @ApiPropertyOptional({ example: '+8613800138000' })
   @ValidateIf((o: LoginDto) => !o.email)
   @IsString()
-  @Matches(/^\+?[0-9]{8,15}$/, {
-    message: 'phone must be 8–15 digits, optional leading +',
+  @Matches(/^(?:\+?86)?1[3-9]\d{9}$|^\+?[0-9]{8,15}$/, {
+    message: 'Phone verification supports China numbers only for now',
   })
   @IsOptional()
   phone?: string;

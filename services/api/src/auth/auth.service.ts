@@ -23,6 +23,14 @@ import { ObicJwtPayload } from './jwt-payload.interface';
 import { RefreshSession } from './refresh-session.entity';
 import { TotpCryptoService } from './totp/totp-crypto.service';
 import { TotpService } from './totp/totp.service';
+import {
+  CHINA_PHONE_ONLY_MSG,
+  normalizeChinaMobile,
+} from './china-phone.util';
+import {
+  VerificationService,
+  VerifyPendingResult,
+} from './verification.service';
 
 const BCRYPT_ROUNDS = 12;
 const REFRESH_TTL_MS = 1000 * 60 * 60 * 24 * 30; // 30 days
@@ -46,7 +54,8 @@ export interface TotpPendingResult {
   expiresIn: string;
 }
 
-export type LoginResult = AuthResult | TotpPendingResult;
+export type LoginResult = AuthResult | TotpPendingResult | VerifyPendingResult;
+export type RegisterResult = AuthResult | VerifyPendingResult;
 
 @Injectable()
 export class AuthService {
@@ -59,11 +68,12 @@ export class AuthService {
     private readonly sessionsRepo: Repository<RefreshSession>,
     private readonly totpCrypto: TotpCryptoService,
     private readonly totp: TotpService,
+    private readonly verification: VerificationService,
   ) {}
 
-  async register(dto: RegisterDto): Promise<AuthResult> {
+  async register(dto: RegisterDto): Promise<RegisterResult> {
     const email = this.normalizeEmail(dto.email);
-    const phone = this.normalizePhone(dto.phone);
+    const phone = this.normalizePhoneRegister(dto.phone);
     this.requireEmailOrPhone(email, phone);
 
     if (email) {
@@ -82,14 +92,26 @@ export class AuthService {
       passwordHash,
       name: dto.name.trim(),
       role: UserRole.Customer,
+      emailVerifiedAt: null,
+      phoneVerifiedAt: null,
     });
     await this.usersRepo.save(user);
-    return this.issueAuthResult(user);
+
+    const channel = email ? 'email' : 'phone';
+    const destination = (email ?? phone)!;
+    return this.verification.startChallenge({
+      user,
+      channel,
+      purpose: 'register',
+      destination,
+      backupEmail: email,
+      locale: dto.locale,
+    });
   }
 
   async login(dto: LoginDto): Promise<LoginResult> {
     const email = this.normalizeEmail(dto.email);
-    const phone = this.normalizePhone(dto.phone);
+    const phone = this.normalizePhoneLogin(dto.phone);
     this.requireEmailOrPhone(email, phone);
 
     const user = email
@@ -117,7 +139,39 @@ export class AuthService {
       return this.issueTotpChallenge(user);
     }
 
+    const channel = this.verification.primaryChannel(user);
+    if (channel) {
+      const destination =
+        channel === 'email' ? user.email! : user.phone!;
+      return this.verification.startChallenge({
+        user,
+        channel,
+        purpose: 'login',
+        destination,
+        backupEmail: user.email,
+      });
+    }
+
     return this.issueAuthResult(user);
+  }
+
+  async verifyOtp(opts: {
+    verifySession: string;
+    code: string;
+  }): Promise<AuthResult> {
+    const { userId } = await this.verification.verifyCode(
+      opts.verifySession,
+      opts.code,
+    );
+    const user = await this.usersRepo.findOne({ where: { id: userId } });
+    if (!user || user.deletedAt) {
+      throw new UnauthorizedException('Account unavailable');
+    }
+    return this.issueAuthResult(user);
+  }
+
+  async resendOtp(verifySession: string): Promise<VerifyPendingResult> {
+    return this.verification.resend(verifySession);
   }
 
   async verifyTotpLogin(dto: TotpVerifyDto): Promise<AuthResult> {
@@ -278,9 +332,23 @@ export class AuthService {
     return email.trim().toLowerCase();
   }
 
-  private normalizePhone(phone?: string): string | null {
+  /** Register: China mainland mobile only. */
+  private normalizePhoneRegister(phone?: string): string | null {
     if (!phone?.trim()) return null;
-    // Keep digits and optional leading +.
+    const normalized = normalizeChinaMobile(phone);
+    if (!normalized) {
+      throw new BadRequestException(CHINA_PHONE_ONLY_MSG);
+    }
+    return normalized;
+  }
+
+  /**
+   * Login: prefer China E.164; fall back to cleaned digits for grandfathered rows.
+   */
+  private normalizePhoneLogin(phone?: string): string | null {
+    if (!phone?.trim()) return null;
+    const cn = normalizeChinaMobile(phone);
+    if (cn) return cn;
     const cleaned = phone.trim().replace(/[^\d+]/g, '');
     return cleaned.length ? cleaned : null;
   }

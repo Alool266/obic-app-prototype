@@ -1,8 +1,9 @@
 // Made by Dr Ali
-// Register — email OR phone + password + name (Customer by default).
+// Register — email OR China mainland phone + password + name.
 
 import {
   IsEmail,
+  IsIn,
   IsOptional,
   IsString,
   Matches,
@@ -17,10 +18,11 @@ export class RegisterDto {
   @IsOptional()
   email?: string;
 
+  /** China mainland mobile only (+86 / 1[3-9]xxxxxxxxx). */
   @ValidateIf((o: RegisterDto) => !o.email)
   @IsString()
-  @Matches(/^\+?[0-9]{8,15}$/, {
-    message: 'phone must be 8–15 digits, optional leading +',
+  @Matches(/^(?:\+?86)?1[3-9]\d{9}$/, {
+    message: 'Phone verification supports China numbers only for now',
   })
   @IsOptional()
   phone?: string;
@@ -34,4 +36,10 @@ export class RegisterDto {
   @MinLength(2)
   @MaxLength(120)
   name!: string;
+
+  /** Optional UI locale for OTP email (ar | en | zh). */
+  @IsOptional()
+  @IsString()
+  @IsIn(['ar', 'en', 'zh'])
+  locale?: string;
 }

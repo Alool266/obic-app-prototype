@@ -36,6 +36,8 @@ export interface PublicUser {
    * Employees only when this is true. Customers never.
    */
   offersAccess: boolean;
+  emailVerified: boolean;
+  phoneVerified: boolean;
   addresses: UserAddress[];
   createdAt: Date;
 }
@@ -62,6 +64,8 @@ export function toPublicUser(user: User): PublicUser {
     momentsCoverUrl: user.momentsCoverUrl ?? null,
     opsAccess: Boolean(user.opsAccess),
     offersAccess: Boolean(user.offersAccess),
+    emailVerified: Boolean(user.emailVerifiedAt),
+    phoneVerified: Boolean(user.phoneVerifiedAt),
     addresses: Array.isArray(user.addresses) ? user.addresses : [],
     createdAt: user.createdAt,
   };

@@ -9,6 +9,7 @@ import { LoginDto } from './dto/login.dto';
 import { LogoutDto, RefreshDto } from './dto/refresh.dto';
 import { RegisterDto } from './dto/register.dto';
 import { TotpVerifyDto } from './dto/totp-verify.dto';
+import { ResendOtpDto, VerifyOtpDto } from './dto/verify-otp.dto';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -32,6 +33,25 @@ export class AuthController {
   @ApiOkResponse({ description: 'accessToken, refreshToken, user (no password)' })
   login(@Body() dto: LoginDto) {
     return this.authService.login(dto);
+  }
+
+  @Post('verify-otp')
+  @HttpCode(200)
+  @Throttle({ default: { limit: 20, ttl: 60_000 } })
+  @ApiOperation({ summary: 'Complete register/login after email or phone OTP' })
+  verifyOtp(@Body() dto: VerifyOtpDto) {
+    return this.authService.verifyOtp({
+      verifySession: dto.verifySession,
+      code: dto.code,
+    });
+  }
+
+  @Post('resend-otp')
+  @HttpCode(200)
+  @Throttle({ default: { limit: 8, ttl: 60_000 } })
+  @ApiOperation({ summary: 'Resend verification OTP (60s cooldown)' })
+  resendOtp(@Body() dto: ResendOtpDto) {
+    return this.authService.resendOtp(dto.verifySession);
   }
 
   @Post('totp/verify')
