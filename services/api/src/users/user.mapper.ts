@@ -5,7 +5,7 @@ import { UserRole } from '../common/enums/user-role.enum';
 import { UserAddress } from './user-address.interface';
 import { User } from './user.entity';
 import { nextObicIdChangeAt } from './obic-id.util';
-import { needsPhoneVerification } from '../auth/china-cohort.util';
+import { needsEmailVerification, needsPhoneVerification } from '../auth/china-cohort.util';
 
 export interface PublicUser {
   id: string;
@@ -40,8 +40,12 @@ export interface PublicUser {
   emailVerified: boolean;
   phoneVerified: boolean;
   /**
+   * China cohort without verified email — soft-block until email OTP.
+   */
+  needsEmailVerification: boolean;
+  /**
    * China cohort without verified mainland mobile — soft-block chat/orders
-   * until the user completes SMS OTP.
+   * until the user completes phone OTP (trial: code emailed; SMS later).
    */
   needsPhoneVerification: boolean;
   addresses: UserAddress[];
@@ -72,6 +76,7 @@ export function toPublicUser(user: User): PublicUser {
     offersAccess: Boolean(user.offersAccess),
     emailVerified: Boolean(user.emailVerifiedAt),
     phoneVerified: Boolean(user.phoneVerifiedAt),
+    needsEmailVerification: needsEmailVerification(user),
     needsPhoneVerification: needsPhoneVerification(user),
     addresses: Array.isArray(user.addresses) ? user.addresses : [],
     createdAt: user.createdAt,

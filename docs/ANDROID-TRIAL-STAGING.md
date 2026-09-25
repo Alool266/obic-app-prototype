@@ -131,11 +131,20 @@ cp build/app/outputs/flutter-apk/app-release.apk \
   ~/Desktop/obic/deliverables/OBIC-trial-staging.apk
 ```
 
+## Phone OTP / SMS (trial vs production)
+
+- **Trial (now):** Phone binding verified with an **email code** (Resend). UI says so honestly — no “SMS sent” claims, no on-screen trial OTP clutter.
+- Free +86 SMS is rare; mainland SMS later costs about **¥0.05/message** (Aliyun/Tencent). Leave SMS env unset on trial.
+- **Production:** Set Aliyun or Tencent SMS env vars (see root `.env.example`). Twilio needs paid + geo permissions for China.
+- Env keys: `~/.config/obic/mail.env` locally; Render → `obic-trial-api` → Environment.
+
 ## Chat GPS + file attach (M5.3)
 
 - **Location share:** Messages → thread → **+** → Location. Allows GPS → text pin with **Amap (高德)** first when China (zh locale / CN region / CN placemark), then Apple Maps, then Google. Amap `position=` is **lng,lat** + `coordinate=wgs84`. Deny permission → toast, no send.
 - **Image / PDF:** **+** → Album / File → pick → Send. Uploads via `POST /v1/uploads`, then `sendMessage` with real `attachmentUrl` (no `stub://`).
-- **Trial media durability:** files ≤ ~12MB stored in Postgres (`uploaded_files`) so they survive Render redeploy; larger files are disk-only (ephemeral on free trial).
+- **Voice (required):** Mic icon beside composer (or **+** → Voice) → hold-to-talk → release to send (slide up to cancel). Uploads as `attachmentKind: audio`, tap bubble to play.
+- **Video (required):** **+** → Video → gallery or record (≤60s). Soft warn if >12MB (trial durability); hard reject >80MB. Playable inline bubble.
+- **Trial media durability:** files ≤ ~12MB stored in Postgres (`uploaded_files`) so they survive Render redeploy; larger files are disk-only (ephemeral on free trial) until S3/GCS.
 
 ## Ops notes (developers)
 

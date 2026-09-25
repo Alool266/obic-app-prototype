@@ -16,6 +16,7 @@ import { createHash, randomBytes, randomUUID } from 'crypto';
 import { IsNull, Not, Repository } from 'typeorm';
 import { AuthUser } from '../common/interfaces/auth-user.interface';
 import { UserRole } from '../common/enums/user-role.enum';
+import { StartEmailVerifyDto } from '../users/dto/start-email-verify.dto';
 import { StartPhoneVerifyDto } from '../users/dto/start-phone-verify.dto';
 import { User } from '../users/user.entity';
 import { PublicUser, toPublicUser } from '../users/user.mapper';
@@ -88,6 +89,11 @@ export class AuthService {
           'China registration requires a China mainland mobile number',
         );
       }
+      if (!email) {
+        throw new BadRequestException(
+          'EMAIL_REQUIRED_FOR_PHONE_VERIFY',
+        );
+      }
     } else {
       this.requireEmailOrPhone(email, phone);
     }
@@ -116,9 +122,13 @@ export class AuthService {
     });
     await this.usersRepo.save(user);
 
-    // China register always verifies phone first; otherwise email if present.
-    const channel: 'email' | 'phone' =
-      chinaRegister || (phone && !email) ? 'phone' : 'email';
+    // China: verify email first (Resend), then phone gate after login.
+    // Non-China: email if present, else phone.
+    const channel: 'email' | 'phone' = chinaRegister
+      ? 'email'
+      : phone && !email
+        ? 'phone'
+        : 'email';
     const destination = (channel === 'phone' ? phone : email)!;
     return this.verification.startChallenge({
       user,
@@ -131,8 +141,8 @@ export class AuthService {
   }
 
   /**
-   * Logged-in: start SMS OTP to add/verify China mainland mobile.
-   * Completing via /auth/verify-otp sets phone + phoneVerifiedAt.
+   * Logged-in: start OTP to add/verify China mainland mobile.
+   * Trial (no SMS keys): code emailed to account email. Completing OTP sets phone.
    */
   async startPhoneVerify(
     actor: AuthUser,
@@ -153,14 +163,73 @@ export class AuthService {
       throw new ConflictException('Phone already registered');
     }
 
-    // Pending value applied on OTP success (change_phone purpose).
+    // Trial phone verify needs an email inbox for the OTP.
+    let backupEmail = user.email?.trim() || null;
+    if (!backupEmail) {
+      const incoming = this.normalizeEmail(dto.email);
+      if (!incoming) {
+        throw new BadRequestException('EMAIL_REQUIRED_FOR_PHONE_VERIFY');
+      }
+      const emailTaken = await this.usersRepo.exist({
+        where: { email: incoming, id: Not(user.id) },
+      });
+      if (emailTaken) {
+        throw new ConflictException('Email already in use');
+      }
+      user.email = incoming;
+      await this.usersRepo.save(user);
+      backupEmail = incoming;
+    }
+
     return this.verification.startChallenge({
       user,
       channel: 'phone',
       purpose: 'change_phone',
       destination: phone,
       pendingValue: phone,
-      backupEmail: user.email,
+      backupEmail,
+      locale: dto.locale,
+    });
+  }
+
+  /**
+   * Logged-in: start email OTP (China cohort must verify email before full use).
+   */
+  async startEmailVerify(
+    actor: AuthUser,
+    dto: StartEmailVerifyDto,
+  ): Promise<VerifyPendingResult> {
+    const user = await this.usersRepo.findOne({ where: { id: actor.userId } });
+    if (!user || user.deletedAt) {
+      throw new NotFoundException('User not found');
+    }
+
+    let email = user.email?.trim() || null;
+    if (!email) {
+      const incoming = this.normalizeEmail(dto.email);
+      if (!incoming) {
+        throw new BadRequestException('EMAIL_REQUIRED_FOR_PHONE_VERIFY');
+      }
+      const emailTaken = await this.usersRepo.exist({
+        where: { email: incoming, id: Not(user.id) },
+      });
+      if (emailTaken) {
+        throw new ConflictException('Email already in use');
+      }
+      user.email = incoming;
+      await this.usersRepo.save(user);
+      email = incoming;
+    }
+
+    if (user.emailVerifiedAt) {
+      throw new BadRequestException('Email already verified');
+    }
+
+    return this.verification.startChallenge({
+      user,
+      channel: 'email',
+      purpose: 'login',
+      destination: email,
       locale: dto.locale,
     });
   }

@@ -3,6 +3,7 @@ import { isChinaMobile, normalizeChinaMobile } from './china-phone.util';
 import {
   isChinaCohort,
   isChinaRegionCode,
+  needsEmailVerification,
   needsPhoneVerification,
   normalizeRegionCode,
   PHONE_VERIFICATION_REQUIRED_MSG,
@@ -23,6 +24,32 @@ describe('china-cohort.util', () => {
       true,
     );
     expect(isChinaCohort({ country: 'YE', phone: null })).toBe(false);
+    // Language alone is not a cohort signal (no locale field on user).
+    expect(isChinaCohort({ country: 'US', phone: null })).toBe(false);
+  });
+
+  it('needsEmailVerification for China cohort until email verified', () => {
+    expect(
+      needsEmailVerification({
+        country: 'CN',
+        phone: null,
+        emailVerifiedAt: null,
+      }),
+    ).toBe(true);
+    expect(
+      needsEmailVerification({
+        country: 'CN',
+        phone: '+8613812345678',
+        emailVerifiedAt: new Date(),
+      }),
+    ).toBe(false);
+    expect(
+      needsEmailVerification({
+        country: 'YE',
+        phone: null,
+        emailVerifiedAt: null,
+      }),
+    ).toBe(false);
   });
 
   it('needsPhoneVerification until CN mobile verified', () => {

@@ -29,10 +29,13 @@ export interface VerifyPendingResult {
   requiresVerification: true;
   verifySession: string;
   channel: VerificationChannel;
+  /** Where the code was actually delivered (email mask when trial email path). */
   destinationMasked: string;
+  /** Phone being bound — LTR in clients; set when channel is phone. */
+  phoneMasked?: string;
   expiresIn: string;
   delivery: string;
-  /** Trial only — never in production when real providers are configured. */
+  /** Only when delivery is log + VERIFICATION_DEBUG — never for email_backup. */
   debugCode?: string;
 }
 
@@ -81,6 +84,7 @@ export class VerificationService {
     const expiresAt = new Date(now.getTime() + OTP_TTL_MS);
 
     let delivery = 'log';
+    let deliveryEmail: string | null = null;
     if (opts.channel === 'email') {
       const sent = await this.mail.sendOtpEmail({
         to: opts.destination,
@@ -88,16 +92,26 @@ export class VerificationService {
         purpose: opts.purpose,
         locale: opts.locale,
       });
-      delivery = sent.ok ? sent.via : 'log';
+      if (!sent.ok) {
+        throw new BadRequestException('EMAIL_SEND_FAILED');
+      }
+      delivery = sent.via;
     } else {
+      const backup = opts.backupEmail ?? opts.user.email;
       const sent = await this.sms.sendOtpSms({
         toPhone: opts.destination,
         code,
         purpose: opts.purpose,
-        backupEmail: opts.backupEmail ?? opts.user.email,
+        backupEmail: backup,
         locale: opts.locale,
       });
-      delivery = sent.ok ? sent.via : 'log';
+      if (!sent.ok) {
+        throw new BadRequestException(sent.error || 'SMS_SEND_FAILED');
+      }
+      delivery = sent.via;
+      if (delivery === 'email_backup') {
+        deliveryEmail = (backup ?? '').trim() || null;
+      }
     }
 
     const row = this.challenges.create({
@@ -110,7 +124,8 @@ export class VerificationService {
       lastSentAt: now,
       attempts: 0,
       pendingValue: opts.pendingValue ?? null,
-      debugCode: delivery === 'log' || delivery === 'email_backup' ? code : null,
+      // Never store plaintext for email delivery — code is in the inbox.
+      debugCode: delivery === 'log' ? code : null,
       delivery,
     });
     await this.challenges.save(row);
@@ -126,15 +141,26 @@ export class VerificationService {
       { expiresIn: '15m' },
     );
 
+    // Never expose debugCode when email/SMS actually delivered the OTP.
     const exposeDebug =
-      delivery === 'log' ||
+      delivery === 'log' &&
       this.config.get<string>('VERIFICATION_DEBUG') === 'true';
+
+    const phoneMasked =
+      opts.channel === 'phone'
+        ? this.mask(opts.destination, 'phone')
+        : undefined;
+    const destinationMasked =
+      delivery === 'email_backup' && deliveryEmail
+        ? this.mask(deliveryEmail, 'email')
+        : this.mask(opts.destination, opts.channel);
 
     return {
       requiresVerification: true,
       verifySession,
       channel: opts.channel,
-      destinationMasked: this.mask(opts.destination, opts.channel),
+      destinationMasked,
+      ...(phoneMasked ? { phoneMasked } : {}),
       expiresIn: '15m',
       delivery,
       ...(exposeDebug ? { debugCode: code } : {}),
@@ -258,6 +284,8 @@ export class VerificationService {
       return `${head}***@${d}`;
     }
     if (dest.length <= 4) return '****';
-    return `${dest.slice(0, 3)}****${dest.slice(-2)}`;
+    // LRM isolates keep +86… LTR in Arabic/RTL UIs (Flutter also wraps LTR).
+    const masked = `${dest.slice(0, 3)}****${dest.slice(-2)}`;
+    return `\u200E${masked}\u200E`;
   }
 }

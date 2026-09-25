@@ -10,8 +10,10 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import {
+  needsEmailVerification,
   needsPhoneVerification,
   PHONE_VERIFICATION_REQUIRED_MSG,
+  EMAIL_VERIFICATION_REQUIRED_MSG,
 } from '../../auth/china-cohort.util';
 import { AuthUser } from '../interfaces/auth-user.interface';
 import { User } from '../../users/user.entity';
@@ -30,8 +32,13 @@ export class PhoneVerifiedGuard implements CanActivate {
 
     const user = await this.users.findOne({ where: { id: actor.userId } });
     if (!user) return true;
-    if (!needsPhoneVerification(user)) return true;
+    if (needsEmailVerification(user)) {
+      throw new ForbiddenException(EMAIL_VERIFICATION_REQUIRED_MSG);
+    }
+    if (needsPhoneVerification(user)) {
+      throw new ForbiddenException(PHONE_VERIFICATION_REQUIRED_MSG);
+    }
 
-    throw new ForbiddenException(PHONE_VERIFICATION_REQUIRED_MSG);
+    return true;
   }
 }

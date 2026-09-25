@@ -1,7 +1,8 @@
 // Made by Dr Ali
-// Start China phone SMS OTP for logged-in users (add / re-verify).
+// Start China phone OTP for logged-in users (add / re-verify).
+// Trial: code goes to account email; production may use SMS when env keys set.
 
-import { IsIn, IsOptional, IsString, Matches } from 'class-validator';
+import { IsEmail, IsIn, IsOptional, IsString, Matches } from 'class-validator';
 
 export class StartPhoneVerifyDto {
   /** China mainland mobile only (+86 / 1[3-9]xxxxxxxxx). */
@@ -10,6 +11,14 @@ export class StartPhoneVerifyDto {
     message: 'Phone verification supports China numbers only for now',
   })
   phone!: string;
+
+  /**
+   * Required when the account has no email yet (trial sends OTP to email).
+   * Ignored if the user already has an email on file.
+   */
+  @IsOptional()
+  @IsEmail()
+  email?: string;
 
   @IsOptional()
   @IsString()

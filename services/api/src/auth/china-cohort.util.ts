@@ -43,11 +43,23 @@ export function isChinaRegionCode(raw?: string | null): boolean {
  * User is in the China verification cohort when:
  * - profile country is CN/HK/MO (or common names), or
  * - account already has a China mainland mobile (+86).
+ * Locale / UI language is never a signal (diaspora may use Chinese UI abroad).
  */
 export function isChinaCohort(user: Pick<User, 'country' | 'phone'>): boolean {
   if (isChinaRegionCode(user.country)) return true;
   if (isChinaMobile(user.phone)) return true;
   return false;
+}
+
+/**
+ * China cohort must verify email before full use (Resend OTP).
+ * Non-China users are not newly forced — register/login email rules stay as-is.
+ */
+export function needsEmailVerification(
+  user: Pick<User, 'country' | 'phone' | 'emailVerifiedAt'>,
+): boolean {
+  if (!isChinaCohort(user)) return false;
+  return !user.emailVerifiedAt;
 }
 
 /**
@@ -60,6 +72,9 @@ export function needsPhoneVerification(
   if (!user.phone || !isChinaMobile(user.phone)) return true;
   return !user.phoneVerifiedAt;
 }
+
+export const EMAIL_VERIFICATION_REQUIRED_MSG =
+  'EMAIL_VERIFICATION_REQUIRED';
 
 export const PHONE_VERIFICATION_REQUIRED_MSG =
   'PHONE_VERIFICATION_REQUIRED';

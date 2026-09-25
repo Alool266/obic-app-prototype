@@ -7,6 +7,7 @@ import { Throttle } from '@nestjs/throttler';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { AuthUser } from '../common/interfaces/auth-user.interface';
+import { StartEmailVerifyDto } from '../users/dto/start-email-verify.dto';
 import { StartPhoneVerifyDto } from '../users/dto/start-phone-verify.dto';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
@@ -66,13 +67,27 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @Throttle({ default: { limit: 8, ttl: 60_000 } })
   @ApiOperation({
-    summary: 'Start China mainland phone SMS OTP (logged-in add/verify)',
+    summary: 'Start China mainland phone OTP (logged-in add/verify)',
   })
   startPhoneVerify(
     @CurrentUser() actor: AuthUser,
     @Body() dto: StartPhoneVerifyDto,
   ) {
     return this.authService.startPhoneVerify(actor, dto);
+  }
+
+  @Post('email/start')
+  @HttpCode(200)
+  @UseGuards(JwtAuthGuard)
+  @Throttle({ default: { limit: 8, ttl: 60_000 } })
+  @ApiOperation({
+    summary: 'Start email OTP for logged-in user (China cohort required)',
+  })
+  startEmailVerify(
+    @CurrentUser() actor: AuthUser,
+    @Body() dto: StartEmailVerifyDto,
+  ) {
+    return this.authService.startEmailVerify(actor, dto);
   }
 
   @Post('totp/verify')
