@@ -50,6 +50,14 @@ export class User {
   @Column({ name: 'avatar_url', type: 'varchar', length: 1024, nullable: true })
   avatarUrl!: string | null;
 
+  /** Profile city (self-service). */
+  @Column({ type: 'varchar', length: 120, nullable: true })
+  city!: string | null;
+
+  /** Profile country (self-service). */
+  @Column({ type: 'varchar', length: 120, nullable: true })
+  country!: string | null;
+
   /**
    * Internal Ops desk access for Employees (SuperAdmin always allowed in API/UI).
    * Default false — SuperAdmin must grant per employee from Staff desk.

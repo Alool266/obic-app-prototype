@@ -5,6 +5,7 @@ import { Body, Controller, Get, Patch, Put, UseGuards } from '@nestjs/common';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { AuthUser } from '../common/interfaces/auth-user.interface';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { UpdateAvatarDto } from './dto/update-avatar.dto';
 import { UpdateAddressesDto } from './dto/update-addresses.dto';
 import { UpdateMeDto } from './dto/update-me.dto';
@@ -24,6 +25,15 @@ export class UsersController {
   @UseGuards(JwtAuthGuard)
   updateMe(@CurrentUser() actor: AuthUser, @Body() dto: UpdateMeDto) {
     return this.usersService.updateMe(actor, dto);
+  }
+
+  @Patch('me/password')
+  @UseGuards(JwtAuthGuard)
+  changePassword(
+    @CurrentUser() actor: AuthUser,
+    @Body() dto: ChangePasswordDto,
+  ) {
+    return this.usersService.changePassword(actor, dto);
   }
 
   @Patch('me/avatar')

@@ -50,10 +50,13 @@ import { Phase5Ai1765390000000 } from './migrations/1765390000000-Phase5Ai';
 import { UploadedFilesAndMomentSoftDelete1765400000000 } from './migrations/1765400000000-UploadedFilesAndMomentSoftDelete';
 import { MomentVisibility1765410000000 } from './migrations/1765410000000-MomentVisibility';
 import { Phase5AiDeepen1765420000000 } from './migrations/1765420000000-Phase5AiDeepen';
+import { ProfileAndMomentNotifyPrefs1765430000000 } from './migrations/1765430000000-ProfileAndMomentNotifyPrefs';
 import { UploadedFile } from '../uploads/uploaded-file.entity';
 import { AiAssistantMessage } from '../ai/assistant-message.entity';
 import { AiAssistantThread } from '../ai/assistant-thread.entity';
 import { AppSetting } from '../ai/app-setting.entity';
+import { MomentFriendMute } from '../moments/moment-friend-mute.entity';
+import { MomentNotifyPrefs } from '../moments/moment-notify-prefs.entity';
 
 // Load services/api/.env then repo-root .env (local only — never commit secrets).
 loadEnv({ path: resolve(__dirname, '../../.env') });
@@ -84,6 +87,8 @@ export default new DataSource({
     Moment,
     MomentLike,
     MomentComment,
+    MomentNotifyPrefs,
+    MomentFriendMute,
     Notification,
     Friendship,
     FriendRequest,
@@ -124,6 +129,7 @@ export default new DataSource({
     UploadedFilesAndMomentSoftDelete1765400000000,
     MomentVisibility1765410000000,
     Phase5AiDeepen1765420000000,
+    ProfileAndMomentNotifyPrefs1765430000000,
   ],
   synchronize: false,
 });

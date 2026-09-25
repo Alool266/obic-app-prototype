@@ -15,6 +15,8 @@ export interface PublicUser {
   staffTitle: string | null;
   branchLabel: string | null;
   avatarUrl: string | null;
+  city: string | null;
+  country: string | null;
   /**
    * Stored Ops flag. Clients: SuperAdmin always may open Ops;
    * Employees only when this is true. Customers never.
@@ -39,6 +41,8 @@ export function toPublicUser(user: User): PublicUser {
     staffTitle: user.staffTitle ?? null,
     branchLabel: user.branchLabel ?? null,
     avatarUrl: user.avatarUrl ?? null,
+    city: user.city ?? null,
+    country: user.country ?? null,
     opsAccess: Boolean(user.opsAccess),
     offersAccess: Boolean(user.offersAccess),
     addresses: Array.isArray(user.addresses) ? user.addresses : [],

@@ -6,15 +6,20 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import * as bcrypt from 'bcrypt';
 import { Not, Repository } from 'typeorm';
 import { AuthUser } from '../common/interfaces/auth-user.interface';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { UpdateMeDto } from './dto/update-me.dto';
 import { UpdateAddressesDto } from './dto/update-addresses.dto';
 import { UserAddress } from './user-address.interface';
 import { User } from './user.entity';
 import { PublicUser, toPublicUser } from './user.mapper';
+
+const BCRYPT_ROUNDS = 12;
 
 @Injectable()
 export class UsersService {
@@ -75,8 +80,43 @@ export class UsersService {
       }
     }
 
+    if (dto.city !== undefined) {
+      const city = dto.city.trim();
+      user.city = city.length === 0 ? null : city;
+    }
+
+    if (dto.country !== undefined) {
+      const country = dto.country.trim();
+      user.country = country.length === 0 ? null : country;
+    }
+
     await this.usersRepo.save(user);
     return toPublicUser(user);
+  }
+
+  /**
+   * Change own password — requires current password.
+   * Security: JWT subject only; never log the new password.
+   */
+  async changePassword(
+    actor: AuthUser,
+    dto: ChangePasswordDto,
+  ): Promise<{ ok: true }> {
+    const user = await this.usersRepo.findOne({ where: { id: actor.userId } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    const ok = await bcrypt.compare(dto.currentPassword, user.passwordHash);
+    if (!ok) {
+      throw new UnauthorizedException('Current password is incorrect');
+    }
+    const next = dto.newPassword.trim();
+    if (next.length < 8) {
+      throw new BadRequestException('New password too short');
+    }
+    user.passwordHash = await bcrypt.hash(next, BCRYPT_ROUNDS);
+    await this.usersRepo.save(user);
+    return { ok: true };
   }
 
   /** Replace saved delivery addresses (max 20). */

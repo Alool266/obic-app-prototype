@@ -26,6 +26,7 @@ import {
 } from './moment-visibility';
 import { MomentComment } from './moment-comment.entity';
 import { MomentLike } from './moment-like.entity';
+import { MomentNotifyPrefsService } from './moment-notify-prefs.service';
 import { Moment } from './moment.entity';
 
 @Injectable()
@@ -42,6 +43,7 @@ export class MomentsService {
     private readonly notifications: NotificationsService,
     private readonly moderation: ModerationService,
     private readonly friends: FriendsService,
+    private readonly notifyPrefs: MomentNotifyPrefsService,
   ) {}
 
   async listFeed(limit = 50, viewerId?: string | null) {
@@ -135,12 +137,25 @@ export class MomentsService {
       const preview =
         body.slice(0, 180) ||
         (media[0]?.name ? `Shared ${media[0].name}` : 'New OBIC update');
-      await this.notifications.createForAllUsersExcept(actor.userId, {
-        kind: NotificationKind.Moment,
-        title: 'OBIC update',
-        body: preview,
-        data: { momentId: saved.id },
-      });
+      // Honor server Moments mute prefs (global + per-friend).
+      const allIds: Array<{ id: string }> = await this.users
+        .createQueryBuilder('u')
+        .select('u.id', 'id')
+        .where('u.id <> :authorId', { authorId: actor.userId })
+        .getRawMany();
+      const recipients = await this.notifyPrefs.filterNotifyRecipients(
+        allIds.map((r) => r.id),
+        actor.userId,
+      );
+      if (recipients.length) {
+        await this.notifications.createForUsers({
+          userIds: recipients,
+          kind: NotificationKind.Moment,
+          title: 'OBIC update',
+          body: preview,
+          data: { momentId: saved.id },
+        });
+      }
     }
 
     return this.toDto(saved, author, [], [], actor.userId);

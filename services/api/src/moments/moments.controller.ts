@@ -1,5 +1,6 @@
 // Made by Dr Ali
 // GET /v1/moments public browse; write actions require JWT.
+// Notify-prefs routes registered before :id so they are not captured.
 
 import {
   Body,
@@ -7,6 +8,7 @@ import {
   Delete,
   Param,
   ParseUUIDPipe,
+  Patch,
   Post,
   Get,
   Req,
@@ -19,11 +21,49 @@ import { OptionalJwtAuthGuard } from '../common/guards/optional-jwt-auth.guard';
 import { AuthUser } from '../common/interfaces/auth-user.interface';
 import { CreateMomentCommentDto } from './dto/create-moment-comment.dto';
 import { CreateMomentDto } from './dto/create-moment.dto';
+import { UpdateMomentNotifyPrefsDto } from './dto/moment-notify-prefs.dto';
+import { MomentNotifyPrefsService } from './moment-notify-prefs.service';
 import { MomentsService } from './moments.service';
 
 @Controller('moments')
 export class MomentsController {
-  constructor(private readonly moments: MomentsService) {}
+  constructor(
+    private readonly moments: MomentsService,
+    private readonly notifyPrefs: MomentNotifyPrefsService,
+  ) {}
+
+  @Get('notify-prefs')
+  @UseGuards(JwtAuthGuard)
+  getNotifyPrefs(@CurrentUser() actor: AuthUser) {
+    return this.notifyPrefs.getMine(actor);
+  }
+
+  @Patch('notify-prefs')
+  @UseGuards(JwtAuthGuard)
+  updateNotifyPrefs(
+    @CurrentUser() actor: AuthUser,
+    @Body() dto: UpdateMomentNotifyPrefsDto,
+  ) {
+    return this.notifyPrefs.updateMine(actor, dto);
+  }
+
+  @Post('notify-prefs/muted-friends/:friendId')
+  @UseGuards(JwtAuthGuard)
+  muteFriend(
+    @CurrentUser() actor: AuthUser,
+    @Param('friendId', ParseUUIDPipe) friendId: string,
+  ) {
+    return this.notifyPrefs.muteFriend(actor, friendId);
+  }
+
+  @Delete('notify-prefs/muted-friends/:friendId')
+  @UseGuards(JwtAuthGuard)
+  unmuteFriend(
+    @CurrentUser() actor: AuthUser,
+    @Param('friendId', ParseUUIDPipe) friendId: string,
+  ) {
+    return this.notifyPrefs.unmuteFriend(actor, friendId);
+  }
 
   @Get()
   @UseGuards(OptionalJwtAuthGuard)
