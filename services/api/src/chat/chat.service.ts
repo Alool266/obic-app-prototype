@@ -8,7 +8,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, MoreThan, Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { UserRole } from '../common/enums/user-role.enum';
 import { AuthUser } from '../common/interfaces/auth-user.interface';
 import { User } from '../users/user.entity';
@@ -246,16 +246,33 @@ export class ChatService {
 
   async listMessages(actor: AuthUser, conversationId: string) {
     const part = await this.requireParticipant(actor.userId, conversationId);
-    // Same find()+relations path as oversight — QueryBuilder join+take was
-    // 500ing on trial (Postgres) while admin transcript still loaded.
-    const rows = await this.messages.find({
-      where: part.clearedBefore
-        ? { conversationId, createdAt: MoreThan(part.clearedBefore) }
-        : { conversationId },
-      relations: { sender: true },
-      order: { createdAt: 'ASC' },
-      take: 200,
-    });
+    // TypeORM find({ relations, order, take }) + FindOperator (MoreThan) throws
+    // `databaseName` of undefined on Postgres (trial). QueryBuilder join+take
+    // had the same failure. Load rows without join, attach senders separately.
+    const qb = this.messages
+      .createQueryBuilder('m')
+      .where('m.conversation_id = :conversationId', { conversationId })
+      .orderBy('m.created_at', 'ASC')
+      .take(200);
+    if (part.clearedBefore) {
+      qb.andWhere('m.created_at > :clearedBefore', {
+        clearedBefore: part.clearedBefore,
+      });
+    }
+    const rows = await qb.getMany();
+    const senderIds = [
+      ...new Set(rows.map((m) => m.senderId).filter(Boolean)),
+    ];
+    if (senderIds.length) {
+      const senders = await this.users.find({
+        where: { id: In(senderIds) },
+      });
+      const byId = new Map(senders.map((u) => [u.id, u]));
+      for (const m of rows) {
+        const s = byId.get(m.senderId);
+        if (s) m.sender = s;
+      }
+    }
     try {
       await this.markThreadRead(actor.userId, conversationId);
       // Opening chat unhides (WeChat: viewing brings it back to the list).
