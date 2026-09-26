@@ -60,6 +60,7 @@ import { MomentCommentMedia1765490000000 } from './migrations/1765490000000-Mome
 import { MomentPrivacyAcl1765500000000 } from './migrations/1765500000000-MomentPrivacyAcl';
 import { MomentCommentSoftDelete1765510000000 } from './migrations/1765510000000-MomentCommentSoftDelete';
 import { ChatPinUnreadRecall1765520000000 } from './migrations/1765520000000-ChatPinUnreadRecall';
+import { PerUserChannelsAndEngagement1765540000000 } from './migrations/1765540000000-PerUserChannelsAndEngagement';
 import { UploadedFile } from '../uploads/uploaded-file.entity';
 import { AiAssistantMessage } from '../ai/assistant-message.entity';
 import { AiAssistantThread } from '../ai/assistant-thread.entity';
@@ -72,6 +73,8 @@ import { VerificationChallenge } from '../auth/verification-challenge.entity';
 import { Channel } from '../channels/channel.entity';
 import { ChannelFollow } from '../channels/channel-follow.entity';
 import { ChannelVideo } from '../channels/channel-video.entity';
+import { ChannelVideoComment } from '../channels/channel-video-comment.entity';
+import { ChannelVideoLike } from '../channels/channel-video-like.entity';
 
 // Load services/api/.env then repo-root .env (local only — never commit secrets).
 loadEnv({ path: resolve(__dirname, '../../.env') });
@@ -120,6 +123,8 @@ export default new DataSource({
     Channel,
     ChannelFollow,
     ChannelVideo,
+    ChannelVideoLike,
+    ChannelVideoComment,
   ],
   migrations: [
     InitAuth1765068000000,
@@ -160,6 +165,7 @@ export default new DataSource({
     MomentPrivacyAcl1765500000000,
     MomentCommentSoftDelete1765510000000,
     ChatPinUnreadRecall1765520000000,
+    PerUserChannelsAndEngagement1765540000000,
   ],
   synchronize: false,
 });

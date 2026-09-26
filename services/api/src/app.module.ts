@@ -15,6 +15,7 @@ import { AiModule } from './ai/ai.module';
 import { AuthModule } from './auth/auth.module';
 import { loadOptionalAgoraEnvFiles } from './calls/agora-env.loader';
 import { CallsModule } from './calls/calls.module';
+import { ChannelsModule } from './channels/channels.module';
 import { ChatModule } from './chat/chat.module';
 import { CommonModule } from './common/common.module';
 import { AdminIpAllowlistMiddleware } from './common/middleware/admin-ip-allowlist.middleware';
@@ -97,6 +98,7 @@ loadOptionalAgoraEnvFiles();
     OrdersModule,
     ChatModule,
     CallsModule,
+    ChannelsModule,
     AiModule,
     MomentsModule,
     ModerationModule,
