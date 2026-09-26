@@ -11,21 +11,31 @@ export type MintRtcTokenInput = {
   ttlSeconds: number;
 };
 
+/**
+ * Mint an RTC token (AccessToken2).
+ *
+ * IMPORTANT: agora-token's RtcTokenBuilder2 expects tokenExpire / privilegeExpire
+ * as **relative seconds from now** (e.g. 3600), NOT absolute Unix timestamps.
+ * Passing `Date.now()/1000 + ttl` overflows signed int32 when Agora adds
+ * issueTs + privilege → join fails with invalid/expired token (UI used to
+ * mis-label that as a generic network error).
+ */
 export function mintRtcToken(input: MintRtcTokenInput): {
   token: string;
   expiresAt: string;
 } {
-  const expire = Math.floor(Date.now() / 1000) + input.ttlSeconds;
+  const ttl = Math.max(60, Math.floor(input.ttlSeconds));
   const token = RtcTokenBuilder.buildTokenWithUid(
     input.appId,
     input.appCertificate,
     input.channelName,
     input.uid,
     RtcRole.PUBLISHER,
-    expire,
-    expire,
+    ttl,
+    ttl,
   );
-  return { token, expiresAt: new Date(expire * 1000).toISOString() };
+  const expiresAt = new Date(Date.now() + ttl * 1000).toISOString();
+  return { token, expiresAt };
 }
 
 /** Stable Agora uid (1..2^31-1) from OBIC user UUID — never 0. */

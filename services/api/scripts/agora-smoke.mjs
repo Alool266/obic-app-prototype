@@ -69,15 +69,16 @@ try {
   const { RtcRole, RtcTokenBuilder } = require('agora-token');
   const channel = 'obic_smoke_channel';
   const uid = 42;
-  const expire = Math.floor(Date.now() / 1000) + 600;
+  // AccessToken2: relative TTL seconds from now (NOT absolute Unix ts).
+  const ttlSeconds = 600;
   const token = RtcTokenBuilder.buildTokenWithUid(
     appId,
     cert,
     channel,
     uid,
     RtcRole.PUBLISHER,
-    expire,
-    expire,
+    ttlSeconds,
+    ttlSeconds,
   );
   console.log('Agora smoke: OK');
   console.log(`  appId length: ${appId.length}`);
