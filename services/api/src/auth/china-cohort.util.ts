@@ -1,10 +1,18 @@
 // Made by Dr Ali
 // China cohort — CN / HK / MO region or China mainland mobile.
 
+import { UserRole } from '../common/enums/user-role.enum';
 import { isChinaMobile } from './china-phone.util';
 import { User } from '../users/user.entity';
 
 const CHINA_REGION_CODES = new Set(['CN', 'HK', 'MO']);
+
+/** SuperAdmin is never blocked by China email/phone verification gates. */
+export function isVerificationExempt(
+  user: Pick<User, 'role'> | { role?: string | null },
+): boolean {
+  return user.role === UserRole.SuperAdmin;
+}
 
 /** Normalize profile country / ISO code → uppercase alpha-2 when possible. */
 export function normalizeRegionCode(raw?: string | null): string | null {
@@ -54,20 +62,26 @@ export function isChinaCohort(user: Pick<User, 'country' | 'phone'>): boolean {
 /**
  * China cohort must verify email before full use (Resend OTP).
  * Non-China users are not newly forced — register/login email rules stay as-is.
+ * SuperAdmin is exempt (staff desk must not be blocked by China gates).
  */
 export function needsEmailVerification(
-  user: Pick<User, 'country' | 'phone' | 'emailVerifiedAt'>,
+  user: Pick<User, 'country' | 'phone' | 'emailVerifiedAt'> &
+    Partial<Pick<User, 'role'>>,
 ): boolean {
+  if (isVerificationExempt(user)) return false;
   if (!isChinaCohort(user)) return false;
   return !user.emailVerifiedAt;
 }
 
 /**
  * China cohort must have a verified China mainland mobile before full use.
+ * SuperAdmin is exempt.
  */
 export function needsPhoneVerification(
-  user: Pick<User, 'country' | 'phone' | 'phoneVerifiedAt'>,
+  user: Pick<User, 'country' | 'phone' | 'phoneVerifiedAt'> &
+    Partial<Pick<User, 'role'>>,
 ): boolean {
+  if (isVerificationExempt(user)) return false;
   if (!isChinaCohort(user)) return false;
   if (!user.phone || !isChinaMobile(user.phone)) return true;
   return !user.phoneVerifiedAt;

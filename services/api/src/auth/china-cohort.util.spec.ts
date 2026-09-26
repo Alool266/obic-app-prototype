@@ -1,4 +1,5 @@
 // Made by Dr Ali
+import { UserRole } from '../common/enums/user-role.enum';
 import { isChinaMobile, normalizeChinaMobile } from './china-phone.util';
 import {
   isChinaCohort,
@@ -84,5 +85,41 @@ describe('china-cohort.util', () => {
     expect(isChinaMobile('+8613812345678')).toBe(true);
     expect(normalizeChinaMobile('13812345678')).toBe('+8613812345678');
     expect(PHONE_VERIFICATION_REQUIRED_MSG).toBe('PHONE_VERIFICATION_REQUIRED');
+  });
+
+  it('SuperAdmin skips email and phone verification gates', () => {
+    expect(
+      needsEmailVerification({
+        role: UserRole.SuperAdmin,
+        country: 'CN',
+        phone: null,
+        emailVerifiedAt: null,
+      }),
+    ).toBe(false);
+    expect(
+      needsPhoneVerification({
+        role: UserRole.SuperAdmin,
+        country: 'CN',
+        phone: null,
+        phoneVerifiedAt: null,
+      }),
+    ).toBe(false);
+    // Employee / Customer still gated.
+    expect(
+      needsEmailVerification({
+        role: UserRole.Employee,
+        country: 'CN',
+        phone: null,
+        emailVerifiedAt: null,
+      }),
+    ).toBe(true);
+    expect(
+      needsPhoneVerification({
+        role: UserRole.Customer,
+        country: 'CN',
+        phone: null,
+        phoneVerifiedAt: null,
+      }),
+    ).toBe(true);
   });
 });
