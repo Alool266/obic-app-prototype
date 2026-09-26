@@ -38,6 +38,16 @@ export class CallsController {
     return this.calls.createCall(actor, dto);
   }
 
+  /**
+   * Active incoming rings for this user (HTTP backup when Socket.IO missed
+   * the push — common on free Render / brief lifecycle flaps).
+   */
+  @Get('incoming')
+  @Throttle({ default: { limit: 60, ttl: 60_000 } })
+  incoming(@CurrentUser() actor: AuthUser) {
+    return this.calls.listIncoming(actor);
+  }
+
   /** Mint / refresh RTC token for an existing call (callee accept). */
   @Post(':id/token')
   @HttpCode(200)

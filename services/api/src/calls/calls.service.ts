@@ -152,7 +152,79 @@ export class CallsService {
       throw new NotFoundException('Call not found or expired');
     }
     await this.requireParticipant(actor.userId, session.conversationId);
-    return this.mintForUser(session, actor.userId);
+    const join = this.mintForUser(session, actor.userId);
+    this.logger.log(
+      `call token minted id=${callId} uid=${join.uid} user=${actor.userId}`,
+    );
+    return join;
+  }
+
+  /**
+   * Rings still open for this user as callee (not creator). Used by mobile
+   * poll so a missed Socket.IO `call:incoming` still shows the accept UI.
+   */
+  async listIncoming(actor: AuthUser): Promise<
+    Array<{
+      callId: string;
+      conversationId: string;
+      channelName: string;
+      mode: CallMode;
+      fromUserId: string;
+      fromName: string;
+      fromAvatarUrl: string | null;
+      conversationKind: string;
+      conversationTitle: string | null;
+      isGroup: boolean;
+      createdAt: string;
+      expiresAt: string;
+    }>
+  > {
+    this.pruneExpired();
+    const out: Array<{
+      callId: string;
+      conversationId: string;
+      channelName: string;
+      mode: CallMode;
+      fromUserId: string;
+      fromName: string;
+      fromAvatarUrl: string | null;
+      conversationKind: string;
+      conversationTitle: string | null;
+      isGroup: boolean;
+      createdAt: string;
+      expiresAt: string;
+    }> = [];
+
+    for (const session of this.sessions.values()) {
+      if (session.ended) continue;
+      if (session.createdBy === actor.userId) continue;
+      if (session.expiresAt.getTime() < Date.now()) continue;
+      const p = await this.participants.findOne({
+        where: {
+          conversationId: session.conversationId,
+          userId: actor.userId,
+        },
+      });
+      if (!p) continue;
+      const caller = await this.users.findOne({
+        where: { id: session.createdBy },
+      });
+      out.push({
+        callId: session.id,
+        conversationId: session.conversationId,
+        channelName: session.channelName,
+        mode: session.mode,
+        fromUserId: session.createdBy,
+        fromName: caller?.name ?? 'OBIC',
+        fromAvatarUrl: caller?.avatarUrl ?? null,
+        conversationKind: session.conversationKind,
+        conversationTitle: session.conversationTitle,
+        isGroup: session.conversationKind === 'group',
+        createdAt: session.createdAt.toISOString(),
+        expiresAt: session.expiresAt.toISOString(),
+      });
+    }
+    return out;
   }
 
   async endCall(actor: AuthUser, callId: string) {

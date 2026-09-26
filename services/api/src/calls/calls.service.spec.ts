@@ -152,6 +152,52 @@ describe('CallsService ACL', () => {
     );
   });
 
+  it('listIncoming: callee sees ring; caller does not', async () => {
+    conversations.findOne.mockResolvedValue({
+      id: convId,
+      kind: 'direct',
+      title: null,
+    });
+    participants.findOne.mockImplementation(async (opts: {
+      where?: { userId?: string };
+    }) => {
+      const uid = opts?.where?.userId;
+      if (uid === memberId || uid === strangerId) {
+        return { conversationId: convId, userId: uid };
+      }
+      return null;
+    });
+    participants.find.mockResolvedValue([
+      { userId: memberId },
+      { userId: strangerId },
+    ]);
+    users.findOne.mockResolvedValue({
+      id: memberId,
+      name: 'Ali',
+      avatarUrl: null,
+    });
+
+    await service.createCall(
+      { userId: memberId, role: UserRole.Customer },
+      { conversationId: convId, mode: 'voice' },
+    );
+
+    const forCaller = await service.listIncoming({
+      userId: memberId,
+      role: UserRole.Customer,
+    });
+    expect(forCaller).toEqual([]);
+
+    const forCallee = await service.listIncoming({
+      userId: strangerId,
+      role: UserRole.Customer,
+    });
+    expect(forCallee).toHaveLength(1);
+    expect(forCallee[0].mode).toBe('voice');
+    expect(forCallee[0].fromUserId).toBe(memberId);
+    expect(forCallee[0].fromName).toBe('Ali');
+  });
+
   it('createCall group: member rings all other members', async () => {
     conversations.findOne.mockResolvedValue({
       id: convId,
