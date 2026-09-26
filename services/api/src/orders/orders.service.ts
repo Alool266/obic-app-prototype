@@ -1,6 +1,7 @@
 // Made by Dr Ali
 // Orders — create/list for the authenticated user only (JWT subject).
 // Optional offerId links a hotel/flight request and notifies offers staff.
+// GET listMine also includes support / team-talk threads (WeChat-style طلباتي).
 
 import {
   BadRequestException,
@@ -10,6 +11,13 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { OBIC_AI_USER_ID } from '../ai/obic-ai.constants';
+import { AuditLog } from '../chat/audit-log.entity';
+import { ConversationParticipant } from '../chat/conversation-participant.entity';
+import {
+  Conversation,
+  ConversationKind,
+} from '../chat/conversation.entity';
 import { AuthUser } from '../common/interfaces/auth-user.interface';
 import { UserRole } from '../common/enums/user-role.enum';
 import {
@@ -30,6 +38,9 @@ import {
 
 const DEFAULT_BRANCH = 'Yiwu';
 
+/** Support / team-talk row status for My Requests (طلباتي). */
+export type SupportRequestStatus = 'Open' | 'WithAgent' | 'Closed';
+
 @Injectable()
 export class OrdersService {
   constructor(
@@ -37,6 +48,12 @@ export class OrdersService {
     private readonly ordersRepo: Repository<Order>,
     @InjectRepository(User)
     private readonly usersRepo: Repository<User>,
+    @InjectRepository(Conversation)
+    private readonly conversations: Repository<Conversation>,
+    @InjectRepository(ConversationParticipant)
+    private readonly participants: Repository<ConversationParticipant>,
+    @InjectRepository(AuditLog)
+    private readonly auditLogs: Repository<AuditLog>,
     private readonly servicesService: ServicesService,
     private readonly offersService: OffersService,
     private readonly notifications: NotificationsService,
@@ -207,13 +224,140 @@ export class OrdersService {
     });
   }
 
+  /**
+   * Unified My Requests (طلباتي): service orders + support/team-talk threads.
+   * No status/branch filter — every product-owned request for this JWT user.
+   */
   async listMine(actor: AuthUser) {
     const rows = await this.ordersRepo.find({
       where: { userId: actor.userId },
       relations: { service: true },
       order: { createdAt: 'DESC' },
     });
-    return rows.map((o) => this.toDto(o, o.service?.slug));
+    const orderItems = rows.map((o) => ({
+      ...this.toDto(o, o.service?.slug),
+      type: 'order' as const,
+      title:
+        o.subServiceNameEn ??
+        o.service?.nameEn ??
+        o.service?.slug ??
+        null,
+    }));
+
+    const supportItems = await this.listSupportRequestRows(actor.userId);
+    const merged = [...orderItems, ...supportItems];
+    merged.sort((a, b) => {
+      const ta = new Date(a.updatedAt).getTime();
+      const tb = new Date(b.updatedAt).getTime();
+      return tb - ta;
+    });
+    return merged;
+  }
+
+  /** Support conversations where this customer is a participant. */
+  private async listSupportRequestRows(userId: string) {
+    const mine = await this.participants.find({
+      where: { userId },
+      relations: { conversation: true },
+    });
+    const supportConvs = mine
+      .map((p) => p.conversation)
+      .filter(
+        (c): c is Conversation =>
+          Boolean(c) && c.kind === ConversationKind.Support,
+      );
+    // One row per conversation (reuse-support keeps a single thread).
+    const byId = new Map<string, Conversation>();
+    for (const c of supportConvs) byId.set(c.id, c);
+
+    const out: Array<{
+      type: 'support';
+      id: string;
+      conversationId: string;
+      serviceId: null;
+      serviceSlug: 'support';
+      subServiceId: string | null;
+      subServiceNameEn: string | null;
+      subServiceNameAr: string | null;
+      formData: null;
+      offerId: null;
+      status: SupportRequestStatus;
+      preferredBranch: string | null;
+      notes: string | null;
+      assignedEmployeeId: string | null;
+      title: string;
+      createdAt: Date;
+      updatedAt: Date;
+    }> = [];
+
+    for (const conv of byId.values()) {
+      const peers = await this.participants.find({
+        where: { conversationId: conv.id },
+        relations: { user: true },
+      });
+      const staff = peers.filter((p) => {
+        if (p.userId === userId) return false;
+        if (p.userId === OBIC_AI_USER_ID) return false;
+        const role = p.user?.role;
+        return role === UserRole.Employee || role === UserRole.SuperAdmin;
+      });
+      const handoff = await this.latestSupportHandoffMeta(conv.id);
+      const status = this.supportStatus(conv, staff.length > 0);
+      out.push({
+        type: 'support',
+        id: conv.id,
+        conversationId: conv.id,
+        serviceId: null,
+        serviceSlug: 'support',
+        subServiceId: handoff?.serviceKey ?? handoff?.desk ?? null,
+        subServiceNameEn: null,
+        subServiceNameAr: null,
+        formData: null,
+        offerId: null,
+        status,
+        preferredBranch: handoff?.branch ?? null,
+        notes: handoff?.note ?? null,
+        assignedEmployeeId: staff[0]?.userId ?? null,
+        title: conv.title?.trim() || 'OBIC Support',
+        createdAt: conv.createdAt,
+        updatedAt: conv.updatedAt,
+      });
+    }
+    return out;
+  }
+
+  private supportStatus(
+    conv: Conversation,
+    hasStaff: boolean,
+  ): SupportRequestStatus {
+    // Closed: AI paused and no staff left (rare; keep visible).
+    if (!conv.aiAutoReplyEnabled && !hasStaff) return 'Closed';
+    if (hasStaff) return 'WithAgent';
+    return 'Open';
+  }
+
+  private async latestSupportHandoffMeta(conversationId: string): Promise<{
+    branch?: string | null;
+    desk?: string | null;
+    serviceKey?: string | null;
+    note?: string | null;
+  } | null> {
+    const row = await this.auditLogs.findOne({
+      where: {
+        action: 'chat_request_staff',
+        resourceType: 'conversation',
+        resourceId: conversationId,
+      },
+      order: { createdAt: 'DESC' },
+    });
+    if (!row?.meta || typeof row.meta !== 'object') return null;
+    const m = row.meta;
+    return {
+      branch: typeof m.branch === 'string' ? m.branch : null,
+      desk: typeof m.desk === 'string' ? m.desk : null,
+      serviceKey: typeof m.serviceKey === 'string' ? m.serviceKey : null,
+      note: typeof m.note === 'string' ? m.note : null,
+    };
   }
 
   async getMine(actor: AuthUser, orderId: string) {
@@ -302,3 +446,4 @@ export class OrdersService {
     };
   }
 }
+

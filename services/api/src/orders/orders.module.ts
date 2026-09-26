@@ -2,6 +2,7 @@
 
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { AuditLog } from '../chat/audit-log.entity';
 import { ConversationParticipant } from '../chat/conversation-participant.entity';
 import { Conversation } from '../chat/conversation.entity';
 import { Message } from '../chat/message.entity';
@@ -24,6 +25,7 @@ import { OrdersService } from './orders.service';
       Conversation,
       ConversationParticipant,
       Message,
+      AuditLog,
     ]),
     ServicesModule,
     OffersModule,
