@@ -136,6 +136,18 @@ export class FriendsService {
       throw new ConflictException('Already friends');
     }
 
+    // WeChat: if they already requested you, accepting is the right action.
+    const reciprocal = await this.requests.findOne({
+      where: {
+        fromUserId: target.id,
+        toUserId: me.id,
+        status: FriendRequestStatus.Pending,
+      },
+    });
+    if (reciprocal) {
+      return this.accept(actor, reciprocal.id);
+    }
+
     const existing = await this.requests.findOne({
       where: {
         fromUserId: me.id,
@@ -147,11 +159,14 @@ export class FriendsService {
       throw new ConflictException('Request already pending');
     }
 
+    const note = dto.message?.trim().slice(0, 120) || null;
+
     const saved = await this.requests.save(
       this.requests.create({
         fromUserId: me.id,
         toUserId: target.id,
         status: FriendRequestStatus.Pending,
+        message: note,
       }),
     );
 
@@ -159,7 +174,9 @@ export class FriendsService {
       userIds: [target.id],
       kind: NotificationKind.FriendRequest,
       title: 'Friend request',
-      body: `${me.name} sent you a friend request`,
+      body: note
+        ? `${me.name}: ${note}`
+        : `${me.name} sent you a friend request`,
       data: { requestId: saved.id, fromUserId: me.id },
     });
 
@@ -253,6 +270,7 @@ export class FriendsService {
       status: r.status,
       fromUserId: r.fromUserId,
       toUserId: r.toUserId,
+      message: r.message ?? null,
       from: from ? toPublicUser(from) : null,
       to: to ? toPublicUser(to) : null,
       createdAt: r.createdAt,

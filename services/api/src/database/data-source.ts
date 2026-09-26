@@ -61,6 +61,7 @@ import { MomentPrivacyAcl1765500000000 } from './migrations/1765500000000-Moment
 import { MomentCommentSoftDelete1765510000000 } from './migrations/1765510000000-MomentCommentSoftDelete';
 import { ChatPinUnreadRecall1765520000000 } from './migrations/1765520000000-ChatPinUnreadRecall';
 import { PerUserChannelsAndEngagement1765540000000 } from './migrations/1765540000000-PerUserChannelsAndEngagement';
+import { FriendRequestMessage1765560000000 } from './migrations/1765560000000-FriendRequestMessage';
 import { UploadedFile } from '../uploads/uploaded-file.entity';
 import { AiAssistantMessage } from '../ai/assistant-message.entity';
 import { AiAssistantThread } from '../ai/assistant-thread.entity';
@@ -166,6 +167,7 @@ export default new DataSource({
     MomentCommentSoftDelete1765510000000,
     ChatPinUnreadRecall1765520000000,
     PerUserChannelsAndEngagement1765540000000,
+    FriendRequestMessage1765560000000,
   ],
   synchronize: false,
 });

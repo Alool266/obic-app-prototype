@@ -12,4 +12,10 @@ export class SendFriendRequestDto {
   @IsString()
   @MaxLength(32)
   phone?: string;
+
+  /** Optional verification note shown on the recipient’s New Friends inbox. */
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  message?: string;
 }

@@ -43,6 +43,10 @@ export class FriendRequest {
   })
   status!: FriendRequestStatus;
 
+  /** Optional WeChat-style verification note from the sender. */
+  @Column({ type: 'varchar', length: 120, nullable: true })
+  message!: string | null;
+
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt!: Date;
 
