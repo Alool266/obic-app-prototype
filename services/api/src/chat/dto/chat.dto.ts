@@ -105,6 +105,16 @@ export class UpdateThreadPrefsDto {
   @IsBoolean()
   hidden?: boolean;
 
+  /** WeChat pin to top of chat list. */
+  @IsOptional()
+  @IsBoolean()
+  pinned?: boolean;
+
+  /** WeChat mark as unread (list badge until re-opened). */
+  @IsOptional()
+  @IsBoolean()
+  markUnread?: boolean;
+
   /** Clear local history for me (server clears via clearedBefore). */
   @IsOptional()
   @IsBoolean()

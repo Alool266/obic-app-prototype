@@ -62,6 +62,10 @@ export class Message {
   @Column({ name: 'is_ai', type: 'boolean', default: false })
   isAi!: boolean;
 
+  /** WeChat recall — set when sender recalls within the allowed window. */
+  @Column({ name: 'recalled_at', type: 'timestamptz', nullable: true })
+  recalledAt!: Date | null;
+
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt!: Date;
 }

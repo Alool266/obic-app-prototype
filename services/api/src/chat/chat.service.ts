@@ -91,13 +91,17 @@ export class ChatService {
         where: { conversationId: p.conversationId },
         order: { createdAt: 'DESC' },
       });
-      const unreadCount = p.muted
+      let unreadCount = p.muted
         ? 0
         : await this.countUnread(
             p.conversationId,
             actor.userId,
             p.lastReadAt,
           );
+      // WeChat “mark as unread” keeps a badge even when there are no peer msgs.
+      if (!p.muted && p.forceUnread) {
+        unreadCount = Math.max(unreadCount, 1);
+      }
       out.push({
         id: p.conversationId,
         kind: p.conversation.kind,
@@ -108,6 +112,7 @@ export class ChatService {
         unreadCount,
         muted: Boolean(p.muted),
         hidden: Boolean(p.hidden),
+        pinned: Boolean(p.pinned),
         participants: peers.map((x) => ({
           userId: x.userId,
           name: x.user?.name ?? null,
@@ -117,10 +122,13 @@ export class ChatService {
         lastMessage: last
           ? {
               id: last.id,
-              body: last.body,
-              attachmentKind: last.attachmentKind,
+              body: last.recalledAt ? '' : last.body,
+              attachmentKind: last.recalledAt
+                ? AttachmentKind.None
+                : last.attachmentKind,
               senderId: last.senderId,
               isAi: last.isAi ?? false,
+              recalled: Boolean(last.recalledAt),
               createdAt: last.createdAt,
             }
           : null,
@@ -128,6 +136,9 @@ export class ChatService {
       });
     }
     out.sort((a, b) => {
+      const pinA = a.pinned ? 1 : 0;
+      const pinB = b.pinned ? 1 : 0;
+      if (pinA !== pinB) return pinB - pinA;
       const ta = a.lastMessage?.createdAt?.getTime() ?? a.updatedAt.getTime();
       const tb = b.lastMessage?.createdAt?.getTime() ?? b.updatedAt.getTime();
       return tb - ta;
@@ -249,17 +260,19 @@ export class ChatService {
     // TypeORM find({ relations, order, take }) + FindOperator (MoreThan) throws
     // `databaseName` of undefined on Postgres (trial). QueryBuilder join+take
     // had the same failure. Load rows without join, attach senders separately.
+    // IMPORTANT: take newest 200 (DESC) then reverse — ASC+take returned the
+    // oldest window and hid fresh sends on re-enter for long support threads.
     const qb = this.messages
       .createQueryBuilder('m')
       .where('m.conversation_id = :conversationId', { conversationId })
-      .orderBy('m.created_at', 'ASC')
+      .orderBy('m.created_at', 'DESC')
       .take(200);
     if (part.clearedBefore) {
       qb.andWhere('m.created_at > :clearedBefore', {
         clearedBefore: part.clearedBefore,
       });
     }
-    const rows = await qb.getMany();
+    const rows = (await qb.getMany()).reverse();
     const senderIds = [
       ...new Set(rows.map((m) => m.senderId).filter(Boolean)),
     ];
@@ -287,8 +300,7 @@ export class ChatService {
   }
 
   /**
-   * WeChat chat prefs: mute (no notifs/badges), hide (omit from list),
-   * clearHistory (clearedBefore = now), delete (= hide + clear).
+   * WeChat chat prefs: mute, hide, pin, markUnread, clearHistory, delete.
    */
   async updateThreadPrefs(
     actor: AuthUser,
@@ -296,6 +308,8 @@ export class ChatService {
     dto: {
       muted?: boolean;
       hidden?: boolean;
+      pinned?: boolean;
+      markUnread?: boolean;
       clearHistory?: boolean;
       deleteChat?: boolean;
     },
@@ -303,20 +317,71 @@ export class ChatService {
     const part = await this.requireParticipant(actor.userId, conversationId);
     if (dto.muted !== undefined) part.muted = dto.muted;
     if (dto.hidden !== undefined) part.hidden = dto.hidden;
+    if (dto.pinned !== undefined) part.pinned = dto.pinned;
+    if (dto.markUnread === true) {
+      part.forceUnread = true;
+      // Push lastReadAt behind any existing messages so countUnread ≥ peer msgs.
+      part.lastReadAt = new Date(0);
+    }
     if (dto.clearHistory === true || dto.deleteChat === true) {
       part.clearedBefore = new Date();
     }
     if (dto.deleteChat === true) {
       part.hidden = true;
       part.muted = true;
+      part.pinned = false;
+      part.forceUnread = false;
     }
     await this.participants.save(part);
     return {
       conversationId,
       muted: part.muted,
       hidden: part.hidden,
+      pinned: part.pinned,
+      forceUnread: part.forceUnread,
       clearedBefore: part.clearedBefore,
     };
+  }
+
+  /** WeChat recall — sender only, within 2 minutes. */
+  async recallMessage(
+    actor: AuthUser,
+    conversationId: string,
+    messageId: string,
+  ) {
+    await this.requireParticipant(actor.userId, conversationId);
+    const msg = await this.messages.findOne({
+      where: { id: messageId, conversationId },
+      relations: { sender: true },
+    });
+    if (!msg) throw new NotFoundException('Message not found');
+    if (msg.senderId !== actor.userId) {
+      throw new ForbiddenException('Only the sender can recall');
+    }
+    if (msg.recalledAt) {
+      return this.messageDto(msg);
+    }
+    const ageMs = Date.now() - new Date(msg.createdAt).getTime();
+    const windowMs = 2 * 60 * 1000;
+    if (ageMs > windowMs) {
+      throw new BadRequestException('Recall window expired');
+    }
+    msg.recalledAt = new Date();
+    msg.body = '';
+    msg.attachmentKind = AttachmentKind.None;
+    msg.attachmentName = null;
+    msg.attachmentUrl = null;
+    await this.messages.save(msg);
+    const dto = this.messageDto(msg);
+    await this.publishChatMessage(conversationId, dto);
+    await this.writeAudit(
+      actor.userId,
+      'chat_recall_message',
+      'message',
+      messageId,
+      { conversationId },
+    );
+    return dto;
   }
 
   async sendMessage(actor: AuthUser, conversationId: string, dto: SendMessageDto) {
@@ -927,7 +992,7 @@ export class ChatService {
   private async markThreadRead(userId: string, conversationId: string) {
     await this.participants.update(
       { conversationId, userId },
-      { lastReadAt: new Date() },
+      { lastReadAt: new Date(), forceUnread: false },
     );
   }
 
@@ -1103,17 +1168,20 @@ export class ChatService {
   }
 
   private messageDto(m: Message) {
+    const recalled = Boolean(m.recalledAt);
     return {
       id: m.id,
       conversationId: m.conversationId,
       senderId: m.senderId,
       senderName: m.sender?.name ?? null,
       senderAvatarUrl: m.sender?.avatarUrl ?? null,
-      body: m.body,
-      attachmentKind: m.attachmentKind,
-      attachmentName: m.attachmentName,
-      attachmentUrl: m.attachmentUrl,
+      body: recalled ? '' : m.body,
+      attachmentKind: recalled ? AttachmentKind.None : m.attachmentKind,
+      attachmentName: recalled ? null : m.attachmentName,
+      attachmentUrl: recalled ? null : m.attachmentUrl,
       isAi: m.isAi ?? false,
+      recalled,
+      recalledAt: m.recalledAt ?? null,
       createdAt: m.createdAt,
     };
   }
@@ -1282,17 +1350,17 @@ export class ChatService {
       );
     }
 
-    if (!ids.length) {
-      const ops = await this.users.find({
-        where: {
-          role: UserRole.Employee,
-          opsAccess: true,
-          branchLabel: branch,
-        },
-        take: 5,
-      });
-      for (const u of ops) push(u);
-    }
+    // Always include opsAccess staff at the chosen branch (vault Employee desk).
+    // Does not widen to other branches — Hangzhou ops still cannot see Yiwu chats.
+    const opsAtBranch = await this.users.find({
+      where: {
+        role: UserRole.Employee,
+        opsAccess: true,
+        branchLabel: branch,
+      },
+      take: 8,
+    });
+    for (const u of opsAtBranch) push(u);
 
     if (!ids.length) {
       const branchStaff = await this.users.find({

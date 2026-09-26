@@ -44,7 +44,7 @@ describe('ChatService.requestStaff', () => {
   };
   const users = {
     findOne: jest.fn(),
-    find: jest.fn(),
+    find: jest.fn().mockResolvedValue([]),
   };
   const auditLogs = {
     save: jest.fn(),

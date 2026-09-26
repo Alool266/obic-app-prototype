@@ -69,6 +69,16 @@ export class ChatController {
     return this.chat.sendMessage(actor, id, dto);
   }
 
+  /** WeChat recall — sender only, within 2 minutes. */
+  @Post('threads/:id/messages/:messageId/recall')
+  recallMessage(
+    @CurrentUser() actor: AuthUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('messageId', ParseUUIDPipe) messageId: string,
+  ) {
+    return this.chat.recallMessage(actor, id, messageId);
+  }
+
   /** Staff override: pause or resume AI auto-reply on this thread. */
   @Patch('threads/:id/ai-auto-reply')
   @UseGuards(RolesGuard)

@@ -55,14 +55,23 @@ import { UserObicId1765440000000 } from './migrations/1765440000000-UserObicId';
 import { WechatParitySettings1765450000000 } from './migrations/1765450000000-WechatParitySettings';
 import { UserVerification1765460000000 } from './migrations/1765460000000-UserVerification';
 import { ChatAudioVideoAttachments1765470000000 } from './migrations/1765470000000-ChatAudioVideoAttachments';
+import { MomentsCoverFocusAndChannels1765480000000 } from './migrations/1765480000000-MomentsCoverFocusAndChannels';
+import { MomentCommentMedia1765490000000 } from './migrations/1765490000000-MomentCommentMedia';
+import { MomentPrivacyAcl1765500000000 } from './migrations/1765500000000-MomentPrivacyAcl';
+import { MomentCommentSoftDelete1765510000000 } from './migrations/1765510000000-MomentCommentSoftDelete';
+import { ChatPinUnreadRecall1765520000000 } from './migrations/1765520000000-ChatPinUnreadRecall';
 import { UploadedFile } from '../uploads/uploaded-file.entity';
 import { AiAssistantMessage } from '../ai/assistant-message.entity';
 import { AiAssistantThread } from '../ai/assistant-thread.entity';
 import { AppSetting } from '../ai/app-setting.entity';
+import { MomentFriendHide } from '../moments/moment-friend-hide.entity';
 import { MomentFriendMute } from '../moments/moment-friend-mute.entity';
 import { MomentNotifyPrefs } from '../moments/moment-notify-prefs.entity';
 import { BugReport } from '../moderation/bug-report.entity';
 import { VerificationChallenge } from '../auth/verification-challenge.entity';
+import { Channel } from '../channels/channel.entity';
+import { ChannelFollow } from '../channels/channel-follow.entity';
+import { ChannelVideo } from '../channels/channel-video.entity';
 
 // Load services/api/.env then repo-root .env (local only — never commit secrets).
 loadEnv({ path: resolve(__dirname, '../../.env') });
@@ -95,6 +104,7 @@ export default new DataSource({
     MomentComment,
     MomentNotifyPrefs,
     MomentFriendMute,
+    MomentFriendHide,
     Notification,
     Friendship,
     FriendRequest,
@@ -107,6 +117,9 @@ export default new DataSource({
     AiAssistantThread,
     AiAssistantMessage,
     AppSetting,
+    Channel,
+    ChannelFollow,
+    ChannelVideo,
   ],
   migrations: [
     InitAuth1765068000000,
@@ -142,6 +155,11 @@ export default new DataSource({
     WechatParitySettings1765450000000,
     UserVerification1765460000000,
     ChatAudioVideoAttachments1765470000000,
+    MomentsCoverFocusAndChannels1765480000000,
+    MomentCommentMedia1765490000000,
+    MomentPrivacyAcl1765500000000,
+    MomentCommentSoftDelete1765510000000,
+    ChatPinUnreadRecall1765520000000,
   ],
   synchronize: false,
 });

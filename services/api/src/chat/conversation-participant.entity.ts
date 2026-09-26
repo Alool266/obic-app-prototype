@@ -43,6 +43,17 @@ export class ConversationParticipant {
   @Column({ type: 'boolean', default: false })
   hidden!: boolean;
 
+  /** WeChat pin — sort to top of thread list for this user. */
+  @Column({ type: 'boolean', default: false })
+  pinned!: boolean;
+
+  /**
+   * WeChat “mark as unread” — keep a list badge until the thread is opened again.
+   * Cleared in markThreadRead.
+   */
+  @Column({ name: 'force_unread', type: 'boolean', default: false })
+  forceUnread!: boolean;
+
   /** Clear chat history for me — hide messages at/before this timestamp. */
   @Column({ name: 'cleared_before', type: 'timestamptz', nullable: true })
   clearedBefore!: Date | null;
