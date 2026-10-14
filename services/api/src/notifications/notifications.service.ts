@@ -10,6 +10,7 @@ import {
   Notification,
   NotificationKind,
 } from './notification.entity';
+import { PushService } from './push.service';
 
 @Injectable()
 export class NotificationsService {
@@ -17,7 +18,17 @@ export class NotificationsService {
     @InjectRepository(Notification)
     private readonly repo: Repository<Notification>,
     private readonly realtime: RealtimeService,
+    private readonly push: PushService,
   ) {}
+
+  pushAlert(options: {
+    userIds: string[];
+    title: string;
+    body: string;
+    data?: Record<string, unknown>;
+  }) {
+    void this.push.sendToUsers(options);
+  }
 
   async listMine(actor: AuthUser, limit = 50) {
     const rows = await this.repo.find({

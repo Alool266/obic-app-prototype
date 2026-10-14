@@ -486,6 +486,29 @@ export class ChatService {
       message,
       badgeUserIds: badgeIds,
     });
+    const senderId =
+      typeof message.senderId === 'string' ? message.senderId : '';
+    const title =
+      typeof message.senderName === 'string' && message.senderName.trim()
+        ? message.senderName.trim()
+        : 'OBIC';
+    const rawBody = typeof message.body === 'string' ? message.body.trim() : '';
+    const preview = rawBody.length > 140 ? `${rawBody.slice(0, 137)}…` : rawBody;
+    const targets = this.realtime.filterNotViewing(
+      badgeIds.filter((id) => id && id !== senderId),
+      conversationId,
+    );
+    if (targets.length) {
+      void this.notifications.pushAlert({
+        userIds: targets,
+        title,
+        body: preview || 'New message',
+        data: {
+          kind: 'message',
+          conversationId,
+        },
+      });
+    }
   }
 
   /**

@@ -17,6 +17,7 @@ import { Moment } from '../moments/moment.entity';
 import { MomentComment } from '../moments/moment-comment.entity';
 import { MomentLike } from '../moments/moment-like.entity';
 import { Notification } from '../notifications/notification.entity';
+import { PushDevice } from '../notifications/push-device.entity';
 import { Offer } from '../offers/offer.entity';
 import { Order } from '../orders/order.entity';
 import { Service } from '../services/service.entity';
@@ -62,6 +63,7 @@ import { MomentCommentSoftDelete1765510000000 } from './migrations/1765510000000
 import { ChatPinUnreadRecall1765520000000 } from './migrations/1765520000000-ChatPinUnreadRecall';
 import { PerUserChannelsAndEngagement1765540000000 } from './migrations/1765540000000-PerUserChannelsAndEngagement';
 import { FriendRequestMessage1765560000000 } from './migrations/1765560000000-FriendRequestMessage';
+import { PushDevices1765830000000 } from './migrations/1765830000000-PushDevices';
 import { UploadedFile } from '../uploads/uploaded-file.entity';
 import { AiAssistantMessage } from '../ai/assistant-message.entity';
 import { AiAssistantThread } from '../ai/assistant-thread.entity';
@@ -110,6 +112,7 @@ export default new DataSource({
     MomentFriendMute,
     MomentFriendHide,
     Notification,
+    PushDevice,
     Friendship,
     FriendRequest,
     Offer,
@@ -168,6 +171,7 @@ export default new DataSource({
     ChatPinUnreadRecall1765520000000,
     PerUserChannelsAndEngagement1765540000000,
     FriendRequestMessage1765560000000,
+    PushDevices1765830000000,
   ],
   synchronize: false,
 });

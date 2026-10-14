@@ -16,6 +16,7 @@ import { ConversationParticipant } from '../chat/conversation-participant.entity
 import { Conversation } from '../chat/conversation.entity';
 import { AuthUser } from '../common/interfaces/auth-user.interface';
 import { RealtimeService } from '../realtime/realtime.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { User } from '../users/user.entity';
 import {
   agoraUidFromUserId,
@@ -67,6 +68,7 @@ export class CallsService {
   constructor(
     private readonly config: CallsConfig,
     private readonly realtime: RealtimeService,
+    private readonly notifications: NotificationsService,
     @InjectRepository(Conversation)
     private readonly conversations: Repository<Conversation>,
     @InjectRepository(ConversationParticipant)
@@ -138,6 +140,28 @@ export class CallsService {
         isGroup,
       },
     });
+    if (calleeIds.length) {
+      void this.notifications.pushAlert({
+        userIds: calleeIds,
+        title: caller?.name ?? 'OBIC',
+        body:
+          dto.mode === 'video'
+            ? 'Incoming video call'
+            : 'Incoming voice call',
+        data: {
+          kind: 'call',
+          callId,
+          conversationId: dto.conversationId,
+          channelName,
+          mode: dto.mode,
+          fromUserId: actor.userId,
+          fromName: caller?.name ?? 'OBIC',
+          conversationKind: conv.kind,
+          conversationTitle: conv.title ?? '',
+          isGroup: isGroup ? '1' : '0',
+        },
+      });
+    }
 
     this.logger.log(
       `call created id=${callId} mode=${dto.mode} kind=${conv.kind} conv=${dto.conversationId} ring=${calleeIds.length}`,
@@ -237,14 +261,29 @@ export class CallsService {
     const peers = await this.participants.find({
       where: { conversationId: session.conversationId },
     });
+    const peerIds = peers.map((p) => p.userId);
     this.realtime.publishCallEnded({
-      userIds: peers.map((p) => p.userId),
+      userIds: peerIds,
       payload: {
         callId,
         conversationId: session.conversationId,
         endedBy: actor.userId,
       },
     });
+    const notify = peerIds.filter((id) => id !== actor.userId);
+    if (notify.length) {
+      void this.notifications.pushAlert({
+        userIds: notify,
+        title: 'OBIC',
+        body: '',
+        data: {
+          kind: 'call_ended',
+          callId,
+          conversationId: session.conversationId,
+          endedBy: actor.userId,
+        },
+      });
+    }
     return { ok: true, callId };
   }
 
