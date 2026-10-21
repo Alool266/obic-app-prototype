@@ -1011,6 +1011,28 @@ a.btn-primary:hover {
   margin-bottom: 6px;
 }
 
+.web-logo-img {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  flex: none;
+  box-shadow: 0 4px 14px rgba(2, 6, 23, 0.35);
+}
+
+.login-logo {
+  width: 72px;
+  height: 72px;
+  border-radius: 18px;
+  box-shadow: 0 12px 32px rgba(2, 6, 23, 0.45);
+}
+
+.login-brand-logo {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  flex: none;
+}
+
 .login-brand > span {
   width: 36px;
   height: 36px;

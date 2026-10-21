@@ -20,6 +20,7 @@ const jakarta = Plus_Jakarta_Sans({
 export const metadata: Metadata = {
   title: 'OBIC Admin',
   description: 'OBIC staff desk — Made by Dr Ali',
+  icons: { icon: '/obic-logo.png', apple: '/obic-logo.png' },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

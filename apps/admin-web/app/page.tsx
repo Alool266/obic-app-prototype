@@ -65,11 +65,15 @@ export default function LoginPage() {
     <div className="login-stage" dir={pageDir(lang)} lang={lang}>
       <div className="login-layout">
         <aside className="login-aside">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img className="login-logo" src="/obic-logo.png" alt="OBIC" width={72} height={72} />
           <h2>{t(lang, 'brand')}</h2>
           <p>{t(lang, 'loginAside')}</p>
         </aside>
       <form className="login-card" onSubmit={onSubmit}>
         <div className="login-brand">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img className="login-brand-logo" src="/obic-logo.png" alt="OBIC" width={46} height={46} />
           <div>
             <h1>{t(lang, 'loginTitle')}</h1>
             <p className="muted">

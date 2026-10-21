@@ -317,7 +317,11 @@ export function AdminShell({ active, me, children, onLangChange }: Props) {
       <div className="web-shell">
         <aside className="web-side">
           <div className="web-logo-row">
-            <div className="web-logo">{t(lang, 'brand')}</div>
+            <div className="web-logo">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img className="web-logo-img" src="/obic-logo.png" alt="OBIC" width={34} height={34} />
+              <strong>{t(lang, 'brand')}</strong>
+            </div>
             <LanguageSwitcher lang={lang} onChange={applyLang} variant="side" />
           </div>
           <input
