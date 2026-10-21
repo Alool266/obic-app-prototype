@@ -33,6 +33,24 @@ export class UpdateMeDto {
   country?: string;
 
   /**
+   * WeChat-style gender. Empty string clears.
+   * Allowed: male | female | other
+   */
+  @IsOptional()
+  @IsString()
+  @MaxLength(16)
+  @Matches(/^(male|female|other)?$/, {
+    message: 'Gender must be male, female, other, or empty',
+  })
+  gender?: string;
+
+  /** What's Up / signature. Empty string clears. */
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  whatsUp?: string;
+
+  /**
    * OBIC ID (WeChat-style). First set free; later changes once per 365 days.
    * Cannot be cleared once set. Server normalizes to lowercase.
    */

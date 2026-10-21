@@ -24,21 +24,31 @@ import {
 import { AiAutoReplyService } from '../ai/ai-auto-reply.service';
 import { ModerationService } from '../moderation/moderation.service';
 import { ReportTargetType } from '../moderation/content-report.entity';
+import { customerAlertDeskEmail } from '../notifications/customer-alert-routing';
+import { FriendsService } from '../friends/friends.service';
 import { NotificationKind } from '../notifications/notification.entity';
 import { NotificationsService } from '../notifications/notifications.service';
 import { Order, OrderStatus } from '../orders/order.entity';
 import { OrderChatService } from '../orders/order-chat.service';
 import {
   branchEmailDesk,
-  deskKeyForServiceSlug,
+  deskKeyForBranchAndService,
 } from '../orders/order-routing';
 import { statusNoteBody } from '../orders/order-status-note';
 import {
+  canUpdateOrderStatus,
+} from '../org/form2-workflow';
+import {
   DEFAULT_SUPPORT_BRANCH,
+  isSecretaryFirstBranch,
   resolveSupportBranch,
   resolveSupportDeskKey,
   supportDeskEmail,
 } from './support-desk-routing';
+import {
+  formatHandoffTitle,
+  requestTopicLabel,
+} from './handoff-title';
 import { RealtimeService } from '../realtime/realtime.service';
 
 export type RequestStaffOptions = {
@@ -71,6 +81,7 @@ export class ChatService {
     private readonly aiAutoReply: AiAutoReplyService,
     private readonly orderChat: OrderChatService,
     private readonly realtime: RealtimeService,
+    private readonly friends: FriendsService,
   ) {}
 
   async listThreads(actor: AuthUser) {
@@ -106,6 +117,7 @@ export class ChatService {
         id: p.conversationId,
         kind: p.conversation.kind,
         title: p.conversation.title ?? null,
+        handoffSummary: p.conversation.handoffSummary ?? null,
         orderId: p.conversation.orderId ?? null,
         aiAutoReplyEnabled: p.conversation.aiAutoReplyEnabled ?? true,
         updatedAt: p.conversation.updatedAt,
@@ -205,13 +217,10 @@ export class ChatService {
     return this.getThreadSummary(conv.id);
   }
 
-  /** Marketing Manager (or any Employee/SA): create a client service group. */
+  /** Any signed-in user can start a group with accepted friends. */
   async createGroup(actor: AuthUser, dto: CreateThreadDto) {
     const me = await this.users.findOne({ where: { id: actor.userId } });
     if (!me) throw new NotFoundException('User not found');
-    if (me.role === UserRole.Customer) {
-      throw new ForbiddenException('Staff only can create service groups');
-    }
 
     const title = (dto.title ?? '').trim();
     if (!title) throw new BadRequestException('Group title required');
@@ -229,8 +238,12 @@ export class ChatService {
       throw new BadRequestException('Group needs at least one other member');
     }
 
+    const friendIds = new Set(await this.friends.friendIdsOf(actor.userId));
     for (const id of memberIds) {
       if (id === actor.userId) continue;
+      if (!friendIds.has(id)) {
+        throw new ForbiddenException('You can only add friends to a group');
+      }
       const u = await this.users.findOne({ where: { id } });
       if (!u) throw new NotFoundException(`Member not found: ${id}`);
     }
@@ -255,7 +268,45 @@ export class ChatService {
     return this.getThreadSummary(conv.id);
   }
 
-  async listMessages(actor: AuthUser, conversationId: string) {
+  /** Add accepted friends to a group the caller is already in. */
+  async addGroupMembers(
+    actor: AuthUser,
+    conversationId: string,
+    userIds: string[],
+  ) {
+    await this.requireParticipant(actor.userId, conversationId);
+    const conv = await this.conversations.findOne({
+      where: { id: conversationId },
+    });
+    if (!conv) throw new NotFoundException('Conversation not found');
+    if (conv.kind !== ConversationKind.Group) {
+      throw new BadRequestException('Only group chats can add members');
+    }
+    const unique = [...new Set(userIds.map((id) => id?.trim()).filter(Boolean))];
+    if (!unique.length) throw new BadRequestException('userIds required');
+    const friendIds = new Set(await this.friends.friendIdsOf(actor.userId));
+    const already = await this.participants.find({
+      where: { conversationId },
+      select: ['userId'],
+    });
+    const present = new Set(already.map((row) => row.userId));
+    const adding = [];
+    for (const id of unique) {
+      if (present.has(id)) continue;
+      if (!friendIds.has(id)) {
+        throw new ForbiddenException('You can only add friends to a group');
+      }
+      const user = await this.users.findOne({ where: { id } });
+      if (!user) throw new NotFoundException(`Member not found: ${id}`);
+      adding.push(
+        this.participants.create({ conversationId, userId: id }),
+      );
+    }
+    if (adding.length) await this.participants.save(adding);
+    return this.getThreadSummary(conversationId);
+  }
+
+  async listMessages(actor: AuthUser, conversationId: string, since?: string) {
     const part = await this.requireParticipant(actor.userId, conversationId);
     // TypeORM find({ relations, order, take }) + FindOperator (MoreThan) throws
     // `databaseName` of undefined on Postgres (trial). QueryBuilder join+take
@@ -271,6 +322,10 @@ export class ChatService {
       qb.andWhere('m.created_at > :clearedBefore', {
         clearedBefore: part.clearedBefore,
       });
+    }
+    const sinceAt = since ? new Date(since) : null;
+    if (sinceAt && !Number.isNaN(sinceAt.getTime())) {
+      qb.andWhere('m.created_at > :since', { since: sinceAt });
     }
     const rows = (await qb.getMany()).reverse();
     const senderIds = [
@@ -486,6 +541,33 @@ export class ChatService {
       message,
       badgeUserIds: badgeIds,
     });
+    const senderId =
+      typeof message.senderId === 'string' ? message.senderId : '';
+    const title =
+      typeof message.senderName === 'string' && message.senderName.trim()
+        ? message.senderName.trim()
+        : 'OBIC';
+    const preview = chatPushPreview(message);
+    const targets = this.realtime.filterNotViewing(
+      badgeIds.filter((id) => id && id !== senderId),
+      conversationId,
+    );
+    if (targets.length) {
+      void this.notifications.pushAlert({
+        userIds: targets,
+        title,
+        body: preview,
+        data: {
+          kind: 'message',
+          conversationId,
+          messageId: typeof message.id === 'string' ? message.id : '',
+          avatarUrl:
+            typeof message.senderAvatarUrl === 'string'
+              ? message.senderAvatarUrl
+              : '',
+        },
+      });
+    }
   }
 
   /**
@@ -547,10 +629,24 @@ export class ChatService {
     const pause = await this.aiAutoReply.pauseForCustomerHandoff(conversationId);
     if (!pause.ok) throw new NotFoundException('Conversation not found');
 
+    const branchForRouting =
+      conv.kind === ConversationKind.Support
+        ? resolveSupportBranch(branchIn)
+        : null;
+
+    // Yiwu: always Secretary desk for routing; keep serviceKey for title/summary.
     const deskKey =
       conv.kind === ConversationKind.Support
-        ? resolveSupportDeskKey(serviceKeyIn)
+        ? isSecretaryFirstBranch(branchForRouting)
+          ? 'secretary'
+          : resolveSupportDeskKey(serviceKeyIn)
         : null;
+
+    const requestLabel = requestTopicLabel({
+      serviceKey: serviceKeyIn,
+      note,
+      orderRef,
+    });
 
     const staffIds =
       conv.kind === ConversationKind.Order
@@ -559,6 +655,7 @@ export class ChatService {
             branch: branchIn,
             deskKey: deskKey ?? undefined,
             requireExplicitBranch: true,
+            secretaryOnly: isSecretaryFirstBranch(branchForRouting),
           });
 
     const addedIds: string[] = [];
@@ -569,15 +666,45 @@ export class ChatService {
       if (added) addedIds.push(staffId);
     }
 
-    // Always notify resolved desk staff (even if already members).
+    // Title: "{customer} — {request}" (support + refresh order thread when known).
+    if (conv.kind === ConversationKind.Support) {
+      const title = formatHandoffTitle(me.name, requestLabel);
+      await this.conversations.update(conversationId, { title });
+      conv.title = title;
+    } else if (conv.kind === ConversationKind.Order && conv.orderId) {
+      const order = await this.orders.findOne({
+        where: { id: conv.orderId },
+        relations: { service: true },
+      });
+      const topic = requestTopicLabel({
+        serviceKey: order?.service?.slug ?? serviceKeyIn,
+        note: note ?? order?.notes,
+        orderRef,
+        serviceName:
+          order?.subServiceNameEn ??
+          order?.service?.nameEn ??
+          null,
+      });
+      const title = formatHandoffTitle(me.name, topic);
+      await this.conversations.update(conversationId, { title });
+      conv.title = title;
+    }
+
+    // Alert the configured desk (default Yiwu Secretary), not every employee.
     const notifyIds = [...new Set(staffIds)].filter(
       (id) => id !== actor.userId && id !== OBIC_AI_USER_ID,
     );
-    if (notifyIds.length) {
+    const alertEmail = customerAlertDeskEmail('handoff');
+    const alertUser = await this.users.findOne({
+      where: { email: alertEmail, role: UserRole.Employee },
+    });
+    const alertIds =
+      alertUser && alertUser.id !== actor.userId ? [alertUser.id] : [];
+    if (alertIds.length) {
       const refBit = orderRef ? ` · ref ${orderRef}` : '';
       const noteBit = note ? ` — ${note}` : '';
       await this.notifications.createForUsers({
-        userIds: notifyIds,
+        userIds: alertIds,
         kind: NotificationKind.Message,
         title: 'Customer requested staff',
         body: `${me.name ?? 'Customer'} asked to talk to staff${refBit}${noteBit}`,
@@ -586,11 +713,12 @@ export class ChatService {
           conversationId,
           kind: conv.kind,
           orderId: conv.orderId ?? null,
-          branch: branchIn,
+          branch: branchIn ?? branchForRouting,
           desk: deskKey,
           serviceKey: serviceKeyIn,
           orderRef,
           note,
+          title: conv.title,
         },
       });
     }
@@ -613,15 +741,36 @@ export class ChatService {
       connectingPosted = Boolean(notice);
     }
 
+    // Secretary briefing (AI when available; structured fallback otherwise).
+    let handoffSummary: string | null = null;
+    try {
+      const briefing = await this.aiAutoReply.generateAndPostHandoffSummary({
+        conversationId,
+        customerUserId: actor.userId,
+        customerName: me.name,
+        locale: clientLocale,
+        branch: branchIn ?? branchForRouting,
+        serviceKey: serviceKeyIn,
+        orderRef,
+        note,
+        requestLabel,
+      });
+      handoffSummary = briefing?.summary ?? null;
+    } catch {
+      handoffSummary = null;
+    }
+
     await this.writeAudit(actor.userId, 'chat_request_staff', 'conversation', conversationId, {
       kind: conv.kind,
       staffIds,
       addedIds,
       notifyCount: notifyIds.length,
-      branch: branchIn,
+      branch: branchIn ?? branchForRouting,
       desk: deskKey,
       serviceKey: serviceKeyIn,
       orderRef,
+      title: conv.title,
+      handoffSummary: Boolean(handoffSummary),
     });
 
     const summary = await this.getThreadSummary(conversationId);
@@ -632,8 +781,9 @@ export class ChatService {
       addedMemberIds: addedIds,
       connectingPosted,
       alreadyHandedOff: !pause.newlyPaused && addedIds.length === 0,
-      branch: branchIn,
+      branch: branchIn ?? branchForRouting,
       desk: deskKey,
+      handoffSummary,
     };
   }
 
@@ -1027,7 +1177,11 @@ export class ChatService {
 
   private async orderMeta(orderId: string | null) {
     if (!orderId) {
-      return { orderStatus: null as string | null, serviceSlug: null as string | null };
+      return {
+        orderStatus: null as string | null,
+        serviceSlug: null as string | null,
+        preferredBranch: null as string | null,
+      };
     }
     const order = await this.orders.findOne({
       where: { id: orderId },
@@ -1036,10 +1190,11 @@ export class ChatService {
     return {
       orderStatus: order?.status ?? null,
       serviceSlug: order?.service?.slug ?? null,
+      preferredBranch: order?.preferredBranch ?? null,
     };
   }
 
-  /** Customer reply while waiting resumes work. Staff reply while assigned starts work. */
+  /** Customer reply while waiting resumes work. Secretary (Yiwu) / assignee reply starts work. */
   private async afterOrderMessage(actor: AuthUser, conversationId: string) {
     const conv = await this.conversations.findOne({
       where: { id: conversationId },
@@ -1054,8 +1209,14 @@ export class ChatService {
     let next: OrderStatus | null = null;
     if (isCustomer && order.status === OrderStatus.WaitingCustomer) {
       next = OrderStatus.InProgress;
-    } else if (isAssignee && order.status === OrderStatus.Assigned) {
-      next = OrderStatus.InProgress;
+    } else if (!isCustomer && order.status === OrderStatus.Assigned) {
+      const staff = await this.users.findOne({ where: { id: actor.userId } });
+      if (
+        staff &&
+        canUpdateOrderStatus(staff, order, { assignedToSelf: isAssignee })
+      ) {
+        next = OrderStatus.InProgress;
+      }
     }
 
     if (next) {
@@ -1144,6 +1305,7 @@ export class ChatService {
       id: conv.id,
       kind: conv.kind,
       title: conv.title ?? null,
+      handoffSummary: conv.handoffSummary ?? null,
       orderId: conv.orderId ?? null,
       aiAutoReplyEnabled: conv.aiAutoReplyEnabled ?? true,
       updatedAt: conv.updatedAt,
@@ -1261,12 +1423,12 @@ export class ChatService {
     return [...ids];
   }
 
-  /** Mirror OrdersService.resolveAssignee — branch desk email then fallbacks. */
+  /** Mirror OrdersService.resolveAssignee — Yiwu → secretary; else service desk. */
   private async resolveOrderAssignee(
     serviceSlug: string,
     branch: string,
   ): Promise<string | null> {
-    const deskKey = deskKeyForServiceSlug(serviceSlug);
+    const deskKey = deskKeyForBranchAndService(branch, serviceSlug);
     const primaryEmail = branchEmailDesk(branch, deskKey);
 
     let emp = await this.users.findOne({
@@ -1275,6 +1437,7 @@ export class ChatService {
 
     if (
       !emp &&
+      !isSecretaryFirstBranch(branch) &&
       (serviceSlug === 'hotels' ||
         serviceSlug === 'flights' ||
         serviceSlug === 'vip')
@@ -1299,8 +1462,187 @@ export class ChatService {
   }
 
   /**
+   * Staff: invite other desk employees into a support/order thread
+   * (Yiwu Secretary adds marketing/finance/…).
+   */
+  async addParticipants(
+    actor: AuthUser,
+    conversationId: string,
+    userIds: string[],
+  ) {
+    const me = await this.users.findOne({
+      where: { id: actor.userId },
+      select: ['id', 'role', 'name', 'branchLabel'],
+    });
+    if (
+      !me ||
+      (me.role !== UserRole.Employee && me.role !== UserRole.SuperAdmin)
+    ) {
+      throw new ForbiddenException('Staff only');
+    }
+
+    const conv = await this.conversations.findOne({
+      where: { id: conversationId },
+    });
+    if (!conv) throw new NotFoundException('Conversation not found');
+    if (
+      conv.kind !== ConversationKind.Support &&
+      conv.kind !== ConversationKind.Order
+    ) {
+      throw new BadRequestException(
+        'Add people is only for support or order chats',
+      );
+    }
+
+    if (me.role !== UserRole.SuperAdmin) {
+      await this.requireParticipant(actor.userId, conversationId);
+    }
+
+    const unique = [...new Set(userIds.map((id) => id?.trim()).filter(Boolean))];
+    if (!unique.length) {
+      throw new BadRequestException('userIds required');
+    }
+    if (unique.length > 20) {
+      throw new BadRequestException('Too many userIds (max 20)');
+    }
+
+    const candidates = await this.users.find({
+      where: { id: In(unique), role: UserRole.Employee },
+    });
+    const byId = new Map(candidates.map((u) => [u.id, u]));
+    const addedIds: string[] = [];
+    const skipped: string[] = [];
+
+    for (const id of unique) {
+      if (id === actor.userId || id === OBIC_AI_USER_ID) {
+        skipped.push(id);
+        continue;
+      }
+      const u = byId.get(id);
+      if (!u) {
+        skipped.push(id);
+        continue;
+      }
+      const added = await this.ensureParticipant(conversationId, id);
+      if (added) addedIds.push(id);
+    }
+
+    if (addedIds.length) {
+      await this.notifications.createForUsers({
+        userIds: addedIds,
+        kind: NotificationKind.Message,
+        title: 'Added to chat',
+        body: `${me.name ?? 'Staff'} added you to ${conv.title ?? 'a support chat'}`,
+        data: {
+          type: 'staff_invite',
+          conversationId,
+          kind: conv.kind,
+          orderId: conv.orderId ?? null,
+        },
+      });
+      await this.writeAudit(
+        actor.userId,
+        'chat_add_participants',
+        'conversation',
+        conversationId,
+        { addedIds, skipped },
+      );
+    }
+
+    return {
+      ...(await this.getThreadSummary(conversationId)),
+      addedMemberIds: addedIds,
+      skippedMemberIds: skipped,
+    };
+  }
+
+  /**
+   * Staff: list same-branch Employees not yet in the thread (invite picker).
+   */
+  async listInviteCandidates(actor: AuthUser, conversationId: string) {
+    const me = await this.users.findOne({
+      where: { id: actor.userId },
+      select: ['id', 'role', 'branchLabel'],
+    });
+    if (
+      !me ||
+      (me.role !== UserRole.Employee && me.role !== UserRole.SuperAdmin)
+    ) {
+      throw new ForbiddenException('Staff only');
+    }
+
+    const conv = await this.conversations.findOne({
+      where: { id: conversationId },
+    });
+    if (!conv) throw new NotFoundException('Conversation not found');
+    if (
+      conv.kind !== ConversationKind.Support &&
+      conv.kind !== ConversationKind.Order
+    ) {
+      throw new BadRequestException(
+        'Invite list is only for support or order chats',
+      );
+    }
+
+    if (me.role !== UserRole.SuperAdmin) {
+      await this.requireParticipant(actor.userId, conversationId);
+    }
+
+    const existing = await this.participants.find({
+      where: { conversationId },
+      select: ['userId'],
+    });
+    const already = new Set(existing.map((p) => p.userId));
+
+    let branch =
+      me.role === UserRole.SuperAdmin
+        ? DEFAULT_SUPPORT_BRANCH
+        : (me.branchLabel ?? '').trim() || DEFAULT_SUPPORT_BRANCH;
+
+    // Prefer order preferredBranch when present.
+    if (conv.orderId) {
+      const order = await this.orders.findOne({
+        where: { id: conv.orderId },
+        select: ['id', 'preferredBranch'],
+      });
+      if (order?.preferredBranch?.trim()) {
+        branch = order.preferredBranch.trim();
+      }
+    }
+
+    const staff = await this.users.find({
+      where: {
+        role: UserRole.Employee,
+        branchLabel: branch,
+      },
+      take: 40,
+      order: { name: 'ASC' },
+    });
+
+    return {
+      branch,
+      candidates: staff
+        .filter(
+          (u) =>
+            u.id !== OBIC_AI_USER_ID &&
+            u.id !== actor.userId &&
+            !already.has(u.id),
+        )
+        .map((u) => ({
+          userId: u.id,
+          name: u.name ?? null,
+          email: u.email ?? null,
+          staffTitle: u.staffTitle ?? null,
+          branchLabel: u.branchLabel ?? null,
+          avatarUrl: u.avatarUrl ?? null,
+        })),
+    };
+  }
+
+  /**
    * Support queue: desk @ branch → secretary @ branch → opsAccess @ branch →
    * any staff @ branch → any opsAccess → SuperAdmin.
+   * Yiwu (secretaryOnly): Secretary only — no auto-join of other desks/ops.
    * Seed: temp.{branch}.{desk}@obic.local
    */
   private async resolveSupportStaffIds(
@@ -1310,6 +1652,8 @@ export class ChatService {
       deskKey?: string | null;
       /** When true, do not fall back to latest-order branch (form already chose). */
       requireExplicitBranch?: boolean;
+      /** Yiwu boss rule: only Secretary; she invites other desks later. */
+      secretaryOnly?: boolean;
     },
   ): Promise<string[]> {
     const preferred = opts?.branch?.trim() || null;
@@ -1322,7 +1666,11 @@ export class ChatService {
       branch = resolveSupportBranch(recent?.preferredBranch);
     }
 
-    const deskKey = resolveSupportDeskKey(opts?.deskKey);
+    const secretaryOnly =
+      opts?.secretaryOnly === true || isSecretaryFirstBranch(branch);
+    const deskKey = secretaryOnly
+      ? 'secretary'
+      : resolveSupportDeskKey(opts?.deskKey);
     const ids: string[] = [];
     const push = (u: User | null | undefined) => {
       if (!u?.id || u.id === OBIC_AI_USER_ID || u.id === customerUserId) return;
@@ -1348,6 +1696,24 @@ export class ChatService {
           },
         }),
       );
+    }
+
+    // Yiwu: stop after Secretary — she invites desks via add-participants.
+    if (secretaryOnly) {
+      if (!ids.length) {
+        const branchStaff = await this.users.find({
+          where: { role: UserRole.Employee, branchLabel: branch },
+          take: 5,
+        });
+        for (const u of branchStaff) push(u);
+      }
+      if (!ids.length) {
+        const admin = await this.users.findOne({
+          where: { role: UserRole.SuperAdmin },
+        });
+        push(admin);
+      }
+      return ids;
     }
 
     // Always include opsAccess staff at the chosen branch (vault Employee desk).
@@ -1386,5 +1752,98 @@ export class ChatService {
     }
 
     return ids;
+  }
+
+  /**
+   * New peer messages since `after`. Used by the Android keep-alive on
+   * phones with no Google Play Services. One indexed-style read, not the
+   * full thread list.
+   */
+  async alertFeed(actor: AuthUser, after?: string) {
+    const parsed = after ? new Date(after) : new Date(Date.now() - 15_000);
+    const start = Number.isNaN(parsed.getTime())
+      ? new Date(Date.now() - 15_000)
+      : parsed;
+    const floor = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const since = start < floor ? floor : start;
+    const serverNow = new Date();
+    const rows = (await this.messages.query(
+      `SELECT m.id,
+              m.conversation_id AS "conversationId",
+              m.body,
+              m.attachment_kind AS "attachmentKind",
+              m.created_at AS "createdAt",
+              u.name AS "senderName",
+              u.avatar_url AS "senderAvatarUrl"
+       FROM messages m
+       INNER JOIN conversation_participants me
+         ON me.conversation_id = m.conversation_id AND me.user_id = $1
+       INNER JOIN users u ON u.id = m.sender_id
+       WHERE m.created_at > $2
+         AND m.sender_id <> $1
+         AND m.recalled_at IS NULL
+         AND me.muted = false
+         AND (me.last_read_at IS NULL OR m.created_at > me.last_read_at)
+         AND (me.cleared_before IS NULL OR m.created_at > me.cleared_before)
+       ORDER BY m.created_at ASC
+       LIMIT 20`,
+      [actor.userId, since],
+    )) as Array<Record<string, unknown>>;
+    const items = rows.map((row) => {
+      const body = typeof row.body === 'string' ? row.body : '';
+      const attachmentKind =
+        typeof row.attachmentKind === 'string' ? row.attachmentKind : '';
+      const created = row.createdAt instanceof Date
+        ? row.createdAt.toISOString()
+        : String(row.createdAt ?? '');
+      return {
+        id: String(row.id ?? ''),
+        conversationId: String(row.conversationId ?? ''),
+        senderName: String(row.senderName ?? ''),
+        senderAvatarUrl: row.senderAvatarUrl ? String(row.senderAvatarUrl) : '',
+        preview: chatPushPreview({ body, attachmentKind }),
+        createdAt: created,
+      };
+    });
+    return { serverNow: serverNow.toISOString(), items };
+  }
+}
+
+/** Lock-screen line. Real text stays as written. Machine bodies become a short Arabic line. */
+function chatPushPreview(message: Record<string, unknown>): string {
+  const raw = typeof message.body === 'string' ? message.body.trim() : '';
+  if (raw.includes('[[obic:call:')) {
+    const video = raw.includes('mode=video');
+    const connected = raw.includes('outcome=ended');
+    const duration = Number(/duration=(\d+)/.exec(raw)?.[1] ?? '0');
+    if (connected && duration > 0) {
+      const minutes = Math.floor(duration / 60);
+      const seconds = String(duration % 60).padStart(2, '0');
+      return video
+        ? `مكالمة فيديو ${minutes}:${seconds}`
+        : `مكالمة صوتية ${minutes}:${seconds}`;
+    }
+    return video ? 'مكالمة فيديو فائتة' : 'مكالمة فائتة';
+  }
+  if (raw.includes('[[obic:sticker:')) return 'ملصق';
+  if (raw.startsWith('[[status]]')) return 'تحديث طلب';
+  if (raw && !raw.startsWith('[[')) {
+    return raw.length > 140 ? `${raw.slice(0, 137)}…` : raw;
+  }
+  const kind =
+    typeof message.attachmentKind === 'string' ? message.attachmentKind : '';
+  switch (kind) {
+    case 'audio':
+      return 'رسالة صوتية';
+    case 'image':
+      return 'صورة';
+    case 'video':
+      return 'فيديو';
+    case 'file':
+      return 'ملف';
+    case 'location':
+      return 'موقع';
+    default:
+      return 'رسالة جديدة';
   }
 }

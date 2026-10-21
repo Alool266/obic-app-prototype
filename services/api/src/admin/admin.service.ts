@@ -24,6 +24,7 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { Order, OrderStatus } from '../orders/order.entity';
 import { OrderChatService } from '../orders/order-chat.service';
 import { User } from '../users/user.entity';
+import { DirectoryService } from '../directory/directory.service';
 import {
   canManageOffers,
   canOpenInternalOps,
@@ -37,8 +38,12 @@ import {
   AdminUpdateStaffRoleDto,
 } from './dto/admin.dto';
 import {
+  SECRETARY_STATUS_FORBIDDEN,
   canReassignOrders,
+  canUpdateOrderStatus,
   isAllowedStatusTransition,
+  isYiwuRequestBranch,
+  isYiwuSecretary,
   orderInReassignScope,
   waitingCustomerNotifyBody,
 } from '../org/form2-workflow';
@@ -60,6 +65,7 @@ export class AdminService {
     private readonly config: ConfigService,
     private readonly aiConfig: AiConfig,
     private readonly aiSettings: AiSettingsService,
+    private readonly directory: DirectoryService,
   ) {}
 
   /** Staff gate — role from DB, never JWT alone. */
@@ -172,6 +178,7 @@ export class AdminService {
     const staff = await this.requireStaff(actor);
     const isSa = staff.role === UserRole.SuperAdmin;
     const reassign = canReassignOrders(staff);
+    const yiwuSec = isYiwuSecretary(staff);
 
     let where:
       | Record<string, unknown>
@@ -179,9 +186,9 @@ export class AdminService {
 
     if (isSa) {
       where = {};
-    } else if (reassign) {
-      const branch = (staff.branchLabel ?? '').trim();
-      // Assigned queue + same-branch pool for off-duty reassignment (Form2 rule 4).
+    } else if (reassign || yiwuSec) {
+      const branch = (staff.branchLabel ?? '').trim() || (yiwuSec ? 'Yiwu' : '');
+      // Assigned queue + same-branch pool (reassign rule 4 / Yiwu Secretary status).
       where = branch
         ? [
             { assignedEmployeeId: staff.id },
@@ -216,9 +223,16 @@ export class AdminService {
 
     const assignedToSelf = order.assignedEmployeeId === staff.id;
     const inReassignScope = orderInReassignScope(order, staff);
+    const yiwuSecretaryScope =
+      isYiwuSecretary(staff) && isYiwuRequestBranch(order.preferredBranch);
 
-    // Visibility: assignee, SuperAdmin, or Form2 reassign role on same branch.
-    if (!isSa && !assignedToSelf && !(reassign && inReassignScope)) {
+    // Visibility: assignee, SuperAdmin, Form2 reassign on branch, or Yiwu Secretary.
+    if (
+      !isSa &&
+      !assignedToSelf &&
+      !(reassign && inReassignScope) &&
+      !yiwuSecretaryScope
+    ) {
       throw new NotFoundException('Order not found');
     }
 
@@ -251,11 +265,15 @@ export class AdminService {
     }
 
     if (dto.status !== undefined) {
-      // Form2 rule 1: assigned Employee may change status alone; SuperAdmin too.
+      // Yiwu: Secretary only (+ SuperAdmin). Other branches: assignee (Form2 rule 1).
       // Close (Completed/Cancelled) from mobile Admin + Admin web — same path (rule 3).
-      if (!isSa && !assignedToSelf) {
+      if (
+        !canUpdateOrderStatus(staff, order, { assignedToSelf })
+      ) {
         throw new ForbiddenException(
-          'Only the assigned employee can change order status',
+          isYiwuRequestBranch(order.preferredBranch)
+            ? SECRETARY_STATUS_FORBIDDEN
+            : 'Only the assigned employee can change order status',
         );
       }
       if (
@@ -554,6 +572,16 @@ export class AdminService {
       const v = (dto.branchLabel ?? '').toString().trim();
       target.branchLabel = v.length ? v : null;
       changes.branchLabel = true;
+    }
+
+    if (dto.departmentId !== undefined) {
+      if (dto.departmentId === null) {
+        target.departmentId = null;
+      } else {
+        await this.directory.requireDepartment(dto.departmentId);
+        target.departmentId = dto.departmentId;
+      }
+      changes.departmentId = true;
     }
 
     if (dto.avatarUrl !== undefined) {

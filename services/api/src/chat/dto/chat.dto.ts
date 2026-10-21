@@ -1,6 +1,6 @@
 // Made by Dr Ali
 
-import { IsBoolean, IsIn, IsOptional, IsString, IsUUID, MaxLength, ValidateIf } from 'class-validator';
+import { IsArray, IsBoolean, IsIn, IsNumber, IsOptional, IsString, IsUUID, MaxLength, ValidateIf } from 'class-validator';
 
 export class CreateThreadDto {
   /** Peer user id for a direct thread (omit for support). */
@@ -71,6 +71,7 @@ export class RequestStaffDto {
   /**
    * Form1/Form2 service slug (visa, business, …) or seed desk key
    * (secretary, marketing, …). Mapped via order-routing deskKeyForServiceSlug.
+   * Yiwu always routes to Secretary regardless of this value.
    */
   @IsOptional()
   @IsString()
@@ -94,6 +95,36 @@ export class RequestStaffDto {
   @IsString()
   @MaxLength(500)
   note?: string;
+}
+
+export class LiveLocationDto {
+  @IsUUID()
+  conversationId!: string;
+
+  @IsNumber()
+  lat!: number;
+
+  @IsNumber()
+  lng!: number;
+
+  @IsOptional()
+  @IsNumber()
+  accuracy?: number;
+
+  @IsOptional()
+  @IsIn([15, 60, 480])
+  minutes?: 15 | 60 | 480;
+}
+
+export class StopLiveLocationDto {
+  @IsUUID()
+  conversationId!: string;
+}
+
+export class AddParticipantsDto {
+  @IsArray()
+  @IsUUID('4', { each: true })
+  userIds!: string[];
 }
 
 export class UpdateThreadPrefsDto {

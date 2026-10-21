@@ -1,6 +1,7 @@
 // Made by Dr Ali
 import {
   DEFAULT_SUPPORT_BRANCH,
+  isSecretaryFirstBranch,
   resolveSupportBranch,
   resolveSupportDeskKey,
   supportDeskEmail,
@@ -12,6 +13,13 @@ describe('support-desk-routing', () => {
     expect(resolveSupportBranch(null)).toBe(DEFAULT_SUPPORT_BRANCH);
     expect(resolveSupportBranch('')).toBe('Yiwu');
     expect(resolveSupportBranch('  Guangzhou ')).toBe('Guangzhou');
+  });
+
+  it('marks only Yiwu as secretary-first', () => {
+    expect(isSecretaryFirstBranch('Yiwu')).toBe(true);
+    expect(isSecretaryFirstBranch('yiwu')).toBe(true);
+    expect(isSecretaryFirstBranch('Guangzhou')).toBe(false);
+    expect(isSecretaryFirstBranch(null)).toBe(false);
   });
 
   it('builds secretary desk email for branch (seed pattern)', () => {

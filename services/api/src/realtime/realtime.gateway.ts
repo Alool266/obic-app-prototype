@@ -1,5 +1,6 @@
 // Made by Dr Ali
 // Authenticated Socket.IO channel — JWT on connect, one room per user.
+// chat:viewing / chat:unviewing → suppress inbox for the open conversation.
 
 import { Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -7,12 +8,17 @@ import {
   OnGatewayConnection,
   OnGatewayDisconnect,
   OnGatewayInit,
+  SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { ObicJwtPayload } from '../auth/jwt-payload.interface';
-import { RT_READY } from './realtime.events';
+import {
+  RT_CHAT_UNVIEWING,
+  RT_CHAT_VIEWING,
+  RT_READY,
+} from './realtime.events';
 import { RealtimeService } from './realtime.service';
 
 @WebSocketGateway({
@@ -66,8 +72,34 @@ export class RealtimeGateway
   handleDisconnect(client: Socket) {
     const userId = client.data?.userId as string | undefined;
     if (userId) {
+      this.realtime.clearViewing(userId);
       this.logger.debug(`Realtime disconnect user=${userId}`);
     }
+  }
+
+  @SubscribeMessage(RT_CHAT_VIEWING)
+  onChatViewing(client: Socket, payload: { conversationId?: unknown }) {
+    const userId = client.data?.userId as string | undefined;
+    if (!userId) return;
+    const id =
+      typeof payload?.conversationId === 'string'
+        ? payload.conversationId.trim()
+        : '';
+    if (!id) return;
+    this.realtime.setViewing(userId, id);
+  }
+
+  @SubscribeMessage(RT_CHAT_UNVIEWING)
+  onChatUnviewing(client: Socket, payload?: { conversationId?: unknown }) {
+    const userId = client.data?.userId as string | undefined;
+    if (!userId) return;
+    const id =
+      typeof payload?.conversationId === 'string'
+        ? payload.conversationId.trim()
+        : '';
+    // If client names a thread, only clear when it matches (safe leave).
+    if (id && !this.realtime.isViewing(userId, id)) return;
+    this.realtime.clearViewing(userId);
   }
 
   emitToUsers(userIds: string[], event: string, payload: unknown) {

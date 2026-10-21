@@ -100,6 +100,12 @@ export class AdminUpdateStaffProfileDto {
   @MaxLength(120)
   branchLabel?: string | null;
 
+  /** Company directory department. null clears the assignment. */
+  @IsOptional()
+  @ValidateIf((_, value) => value !== null)
+  @IsUUID()
+  departmentId?: string | null;
+
   /** Optional public avatar URL (from /v1/uploads). */
   @IsOptional()
   @IsString()

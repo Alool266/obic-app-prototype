@@ -6,12 +6,15 @@ import {
   Controller,
   Delete,
   Get,
+  Param,
+  ParseUUIDPipe,
   Patch,
   Put,
   UseGuards,
 } from '@nestjs/common';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { OptionalJwtAuthGuard } from '../common/guards/optional-jwt-auth.guard';
 import { AuthUser } from '../common/interfaces/auth-user.interface';
 import { ChangeEmailDto } from './dto/change-email.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
@@ -68,7 +71,18 @@ export class UsersController {
     @CurrentUser() actor: AuthUser,
     @Body() dto: UpdateMomentsCoverDto,
   ) {
-    return this.usersService.updateMomentsCover(actor, dto.coverUrl);
+    return this.usersService.updateMomentsCover(
+      actor,
+      dto.coverUrl,
+      dto.focusY,
+    );
+  }
+
+  /** Friend Moments profile header (cover + name) — optional JWT. */
+  @Get(':id/moments-profile')
+  @UseGuards(OptionalJwtAuthGuard)
+  momentsProfile(@Param('id', ParseUUIDPipe) id: string) {
+    return this.usersService.momentsProfile(id);
   }
 
   @Delete('me')

@@ -18,3 +18,12 @@ export const RT_CALL_INCOMING = 'call:incoming';
 
 /** Server → client: call ended / cancelled. */
 export const RT_CALL_ENDED = 'call:ended';
+
+/** Client → server: user opened ChatScreen for this conversation. */
+export const RT_CHAT_VIEWING = 'chat:viewing';
+
+/** Client → server: user left ChatScreen (or cleared viewing). */
+export const RT_CHAT_UNVIEWING = 'chat:unviewing';
+
+/** Server → client: who is sharing live location in a chat. */
+export const RT_LIVE_LOCATION = 'live:location';

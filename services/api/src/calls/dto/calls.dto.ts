@@ -1,6 +1,14 @@
 // Made by Dr Ali
 
-import { IsIn, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
+import {
+  ArrayMaxSize,
+  IsArray,
+  IsIn,
+  IsOptional,
+  IsString,
+  IsUUID,
+  MaxLength,
+} from 'class-validator';
 
 export class CreateCallDto {
   @IsUUID()
@@ -8,6 +16,20 @@ export class CreateCallDto {
 
   @IsIn(['voice', 'video'])
   mode!: 'voice' | 'video';
+
+  /** Group only. Omit to ring every other member. */
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(15)
+  @IsUUID('4', { each: true })
+  inviteUserIds?: string[];
+}
+
+export class InviteCallDto {
+  @IsArray()
+  @ArrayMaxSize(15)
+  @IsUUID('4', { each: true })
+  userIds!: string[];
 }
 
 export class CallTokenDto {

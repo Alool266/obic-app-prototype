@@ -18,16 +18,21 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { Order } from '../orders/order.entity';
 import { RealtimeService } from '../realtime/realtime.service';
 import { User } from '../users/user.entity';
+import { UploadsService } from '../uploads/uploads.service';
 import { shouldAutoRequestStaff } from './ai-handoff-intent';
+import { parseAiAttachment, ParsedAiAttachment } from './ai-attachment';
 import { AiConfig } from './ai.config';
 import { AiService } from './ai.service';
 import { AiSettingsService } from './ai-settings.service';
 import {
   AiLocale,
+  briefingMatchesLanguage,
+  handoffLabels,
   OBIC_AI_DISPLAY_NAME,
   OBIC_AI_EMAIL,
   OBIC_AI_USER_ID,
   resolveReplyLocale,
+  summaryLanguage,
 } from './obic-ai.constants';
 
 export type AutoReplyResult = {
@@ -57,6 +62,7 @@ export class AiAutoReplyService {
     private readonly orders: Repository<Order>,
     private readonly notifications: NotificationsService,
     private readonly realtime: RealtimeService,
+    private readonly uploads: UploadsService,
   ) {}
 
   /**
@@ -136,15 +142,22 @@ export class AiAutoReplyService {
     if (!conv.aiAutoReplyEnabled) return noHandoff;
 
     const body = (opts.customerMessageBody ?? '').trim();
-    if (!body) return noHandoff;
-
-    const autoHandoff = shouldAutoRequestStaff(body);
-
     const customerMsg = await this.messages.findOne({
       where: { id: opts.customerMessageId },
-      select: ['id', 'createdAt'],
+      select: [
+        'id',
+        'createdAt',
+        'attachmentKind',
+        'attachmentUrl',
+        'attachmentName',
+      ],
     });
-    if (!customerMsg) return { autoHandoff };
+    if (!customerMsg) return noHandoff;
+
+    const attachment = await this.attachmentForAutoReply(customerMsg);
+    if (!body && !attachment) return noHandoff;
+
+    const autoHandoff = body ? shouldAutoRequestStaff(body) : false;
 
     // Already replied after this customer message (retried hook / double fire).
     const priorAi = await this.messages
@@ -165,6 +178,7 @@ export class AiAutoReplyService {
         userMessage: body,
         purpose: 'auto_reply',
         extraContext: extra,
+        attachment,
       });
       await this.postAiMessage(conv, reply);
     } catch (err) {
@@ -181,6 +195,34 @@ export class AiAutoReplyService {
       );
     }
     return { autoHandoff };
+  }
+
+  /** Photo or PDF/spreadsheet on a support message, when the bytes are still stored. */
+  private async attachmentForAutoReply(
+    message: Pick<
+      Message,
+      'attachmentKind' | 'attachmentUrl' | 'attachmentName'
+    >,
+  ): Promise<ParsedAiAttachment | undefined> {
+    if (
+      message.attachmentKind !== AttachmentKind.Image &&
+      message.attachmentKind !== AttachmentKind.File
+    ) {
+      return undefined;
+    }
+    const filename = uploadFilename(message.attachmentUrl);
+    if (!filename) return undefined;
+    try {
+      const stored = await this.uploads.readBuffer(filename);
+      if (!stored) return undefined;
+      return parseAiAttachment({
+        filename: message.attachmentName ?? filename,
+        mime: stored.mime,
+        dataBase64: stored.buffer.toString('base64'),
+      });
+    } catch {
+      return undefined;
+    }
   }
 
   async setAutoReplyEnabled(
@@ -266,6 +308,146 @@ export class AiAutoReplyService {
     });
     if (!conv) return null;
     return this.postAiMessage(conv, body);
+  }
+
+  /**
+   * Generate Secretary briefing from recent chat + handoff form fields.
+   * Stores on conversation.handoffSummary and posts a pinned-style AI note.
+   */
+  async generateAndPostHandoffSummary(opts: {
+    conversationId: string;
+    customerUserId: string;
+    customerName?: string | null;
+    locale?: string | null;
+    branch?: string | null;
+    serviceKey?: string | null;
+    orderRef?: string | null;
+    note?: string | null;
+    requestLabel?: string | null;
+  }): Promise<{ summary: string; posted: boolean } | null> {
+    const conv = await this.conversations.findOne({
+      where: { id: opts.conversationId },
+    });
+    if (!conv) return null;
+
+    const lang = summaryLanguage(opts.locale);
+    const labels = handoffLabels(lang);
+    const locale: AiLocale = lang === 'fr' ? 'en' : lang;
+    const recent = await this.messages.find({
+      where: { conversationId: opts.conversationId },
+      order: { createdAt: 'DESC' },
+      take: 12,
+      relations: { sender: true },
+    });
+    const transcript = [...recent]
+      .reverse()
+      .map((m) => {
+        const who =
+          m.senderId === OBIC_AI_USER_ID
+            ? 'AI'
+            : m.senderId === opts.customerUserId
+              ? 'Customer'
+              : 'Staff';
+        const body = (m.body ?? '').trim().slice(0, 400);
+        return body ? `${who}: ${body}` : null;
+      })
+      .filter(Boolean)
+      .join('\n');
+
+    const metaLines = [
+      `Customer: ${opts.customerName?.trim() || 'Customer'}`,
+      opts.branch ? `Branch: ${opts.branch}` : null,
+      opts.serviceKey ? `Service: ${opts.serviceKey}` : null,
+      opts.requestLabel ? `Topic: ${opts.requestLabel}` : null,
+      opts.orderRef ? `Ref: ${opts.orderRef}` : null,
+      opts.note ? `Note: ${opts.note}` : null,
+    ]
+      .filter(Boolean)
+      .join('\n');
+
+    let briefing = this.fallbackHandoffBriefing({
+      lang,
+      serviceKey: opts.serviceKey,
+      requestLabel: opts.requestLabel,
+      orderRef: opts.orderRef,
+      note: opts.note,
+      transcript,
+    });
+
+    const instruction = [
+      `Write the entire briefing in ${labels.languageName} only.`,
+      'Use these exact labels, one per line:',
+      `${labels.need}: …`,
+      `${labels.facts}: …`,
+      `${labels.urgency}: ${labels.low} | ${labels.medium} | ${labels.high}`,
+    ].join('\n');
+
+    try {
+      if (this.cfg.enabled && (await this.aiSettings.isGlobalAutoReplyEnabled())) {
+        const source =
+          transcript ||
+          [
+            opts.requestLabel ? `Topic: ${opts.requestLabel}` : null,
+            opts.note ? `Customer note: ${opts.note}` : null,
+            opts.orderRef ? `Reference: ${opts.orderRef}` : null,
+            'Customer requested human staff.',
+          ]
+            .filter(Boolean)
+            .join('\n');
+        const aiText = await this.ai.complete({
+          userId: opts.customerUserId,
+          locale,
+          purpose: 'handoff_summary',
+          ground: false,
+          extraContext: `${instruction}\n\n${metaLines}`,
+          userMessage: `${instruction}\n\n${source}`,
+        });
+        const cleaned = (aiText ?? '').trim();
+        if (briefingMatchesLanguage(cleaned, lang)) {
+          briefing = cleaned.slice(0, 2000);
+        }
+      }
+    } catch (err) {
+      this.logger.warn(
+        `ai_handoff_summary_fallback conversation=${opts.conversationId}`,
+      );
+      void err;
+    }
+
+    conv.handoffSummary = briefing;
+    await this.conversations.save(conv);
+
+    const posted = await this.postAiMessage(conv, `${labels.header}\n${briefing}`);
+    return { summary: briefing, posted: Boolean(posted) };
+  }
+
+  private fallbackHandoffBriefing(opts: {
+    lang: ReturnType<typeof summaryLanguage>;
+    serviceKey?: string | null;
+    requestLabel?: string | null;
+    orderRef?: string | null;
+    note?: string | null;
+    transcript: string;
+  }): string {
+    const labels = handoffLabels(opts.lang);
+    const need =
+      (opts.requestLabel ?? '').trim() ||
+      (opts.serviceKey ?? '').trim() ||
+      labels.support;
+    const facts = [
+      opts.note?.trim(),
+      opts.orderRef ? opts.orderRef.trim() : null,
+      opts.transcript
+        ? opts.transcript.split('\n').slice(-3).join(' | ')
+        : null,
+    ]
+      .filter(Boolean)
+      .join('; ');
+    return [
+      `${labels.need}: ${need}`,
+      `${labels.facts}: ${facts || '—'}`,
+      `${labels.urgency}: ${labels.medium}`,
+    ].join('\n');
   }
 
   private async postAiMessage(conv: Conversation, body: string) {
@@ -420,4 +602,23 @@ export class AiAutoReplyService {
       .filter(Boolean)
       .join('\n');
   }
+}
+
+function uploadFilename(url: string | null | undefined): string | null {
+  const raw = (url ?? '').trim();
+  if (!raw) return null;
+  let path = raw;
+  if (/^https?:\/\//i.test(raw)) {
+    try {
+      path = new URL(raw).pathname;
+    } catch {
+      return null;
+    }
+  }
+  if (!path.includes('/uploads/')) return null;
+  const name = path.split('/').pop() ?? '';
+  if (!name || name.includes('..') || name !== name.replace(/[/\\]/g, '')) {
+    return null;
+  }
+  return name;
 }

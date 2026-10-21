@@ -10,6 +10,7 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { OrderChatService } from '../orders/order-chat.service';
 import { Order } from '../orders/order.entity';
 import { User } from '../users/user.entity';
+import { FriendsService } from '../friends/friends.service';
 import { AuditLog } from './audit-log.entity';
 import { ChatService } from './chat.service';
 import { ConversationParticipant } from './conversation-participant.entity';
@@ -88,6 +89,7 @@ describe('ChatService oversight join', () => {
         { provide: AiAutoReplyService, useValue: aiAutoReply },
         { provide: OrderChatService, useValue: orderChat },
         { provide: RealtimeService, useValue: realtime },
+        { provide: FriendsService, useValue: { friendIdsOf: jest.fn(async () => []) } },
       ],
     }).compile();
     service = module.get(ChatService);
