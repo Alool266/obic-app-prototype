@@ -317,9 +317,7 @@ export function AdminShell({ active, me, children, onLangChange }: Props) {
       <div className="web-shell">
         <aside className="web-side">
           <div className="web-logo-row">
-            <div className="web-logo">
-              <span>O</span> {t(lang, 'brand')}
-            </div>
+            <div className="web-logo">{t(lang, 'brand')}</div>
             <LanguageSwitcher lang={lang} onChange={applyLang} variant="side" />
           </div>
           <input

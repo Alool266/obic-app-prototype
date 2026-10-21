@@ -3,6 +3,7 @@
 
 import { FormEvent, useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import QRCode from 'react-qr-code';
 import { AdminShell } from '@/components/AdminShell';
 import { adminFetch } from '@/lib/api';
 import { Lang, t } from '@/lib/i18n';
@@ -150,6 +151,17 @@ export default function TotpSettingsPage() {
           {enroll ? (
             <form onSubmit={confirmEnroll} className="form-grid" style={{ marginTop: 16 }}>
               <p className="muted">{t(lang, 'totpScanHint')}</p>
+              <div
+                style={{
+                  background: '#fff',
+                  padding: 16,
+                  borderRadius: 12,
+                  width: 'fit-content',
+                  border: '1px solid #e2e8f0',
+                }}
+              >
+                <QRCode value={enroll.otpauthUrl} size={200} />
+              </div>
               <label className="field">
                 <span>{t(lang, 'totpOtpauth')}</span>
                 <input readOnly value={enroll.otpauthUrl} />

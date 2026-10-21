@@ -11,7 +11,7 @@ import { Lang, pageDir, t } from '@/lib/i18n';
 export default function LoginPage() {
   const router = useRouter();
   const [lang, setLang] = useState<Lang>('ar');
-  const [email, setEmail] = useState('admin@obic.local');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [totpSession, setTotpSession] = useState<string | null>(null);
   const [totpCode, setTotpCode] = useState('');
@@ -65,15 +65,11 @@ export default function LoginPage() {
     <div className="login-stage" dir={pageDir(lang)} lang={lang}>
       <div className="login-layout">
         <aside className="login-aside">
-          <div className="login-mark" aria-hidden>
-            O
-          </div>
           <h2>{t(lang, 'brand')}</h2>
           <p>{t(lang, 'loginAside')}</p>
         </aside>
       <form className="login-card" onSubmit={onSubmit}>
         <div className="login-brand">
-          <span>O</span>
           <div>
             <h1>{t(lang, 'loginTitle')}</h1>
             <p className="muted">
