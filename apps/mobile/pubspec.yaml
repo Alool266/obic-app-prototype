@@ -1,0 +1,86 @@
+# Made by Dr Ali
+name: obic_mobile
+description: OBIC travel/services Flutter app — thin client; AuthZ lives on the API.
+publish_to: "none"
+version: 0.1.0+2
+
+environment:
+  sdk: ^3.12.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  intl: any
+  http: ^1.6.0
+  flutter_secure_storage: ^11.0.0
+  image_picker: ^1.2.3
+  video_player: ^2.13.0
+  path: ^1.9.1
+  http_parser: ^4.1.2
+  file_selector: ^1.0.3
+  gal: ^2.3.3
+  path_provider: ^2.1.6
+  qr_flutter: ^4.1.0
+  mobile_scanner: ^7.4.0
+  shared_preferences: ^2.5.3
+  geolocator: ^14.0.2
+  url_launcher: ^6.3.2
+  geocoding: ^4.0.0
+  connectivity_plus: ^7.3.1
+  socket_io_client: ^3.0.2
+  agora_rtc_engine: ^6.6.4
+  permission_handler: ^13.0.2
+  flutter_map: ^8.3.2
+  latlong2: ^0.10.1
+  record: ^7.1.1
+  audioplayers: ^6.8.1
+  webview_flutter: ^4.14.1
+  google_sign_in: ^7.2.0
+  sign_in_with_apple: ^8.2.0
+  mesh: ^0.5.0
+  liquid_glass_widgets: ^1.11.1
+  flutter_shaders: ^0.1.5
+  just_audio: ^0.10.6
+  audio_session: ^0.2.4
+  lottie: ^3.6.1
+  google_mlkit_text_recognition: ^0.17.1
+  share_plus: ^13.3.1
+  quick_actions: ^1.1.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  integration_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
+  generate: true
+  assets:
+    - assets/banners/
+    - assets/icon/
+    - assets/lottie/
+    - assets/sounds/
+  shaders:
+    - shaders/obic_metal.frag
+  fonts:
+    # Bundled so Arabic/CJK never fall back to tofu (Ahem / missing glyphs).
+    - family: NotoSansArabic
+      fonts:
+        - asset: assets/fonts/NotoSansArabic-Variable.ttf
+    - family: NotoSansSC
+      fonts:
+        - asset: assets/fonts/NotoSansSC-Regular.ttf
+        - asset: assets/fonts/NotoSansSC-Bold.ttf
+          weight: 700
+    - family: Roboto
+      fonts:
+        - asset: assets/fonts/Roboto-Regular.ttf
+        - asset: assets/fonts/Roboto-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Roboto-Bold.ttf
+          weight: 700

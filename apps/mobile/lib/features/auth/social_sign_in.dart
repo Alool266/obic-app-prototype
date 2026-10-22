@@ -12,21 +12,33 @@ import '../../core/region_controller.dart';
 import 'auth_controller.dart';
 
 /// Web client ID. The ID token `aud` is this value when [serverClientId] is set.
+/// Public OAuth client ID (not a secret) — baked in as default so TestFlight
+/// and store builds are always configured; --dart-define can still override.
 const String kGoogleServerClientId = String.fromEnvironment(
   'GOOGLE_SERVER_CLIENT_ID',
+  defaultValue:
+      '479446860741-vodgknuv00juv33l1hksna5hgpvod84e.apps.googleusercontent.com',
 );
 
 /// iOS OAuth client ID. Required on iOS; unused on Android.
 const String kGoogleIosClientId = String.fromEnvironment(
   'GOOGLE_IOS_CLIENT_ID',
+  defaultValue:
+      '479446860741-qc6p87a6066d440qtnq6uruoohl2t35f.apps.googleusercontent.com',
 );
 
 /// Apple Services ID. Required for Android. iOS uses the bundle ID natively.
-const String kAppleServiceId = String.fromEnvironment('APPLE_SERVICE_ID');
+const String kAppleServiceId = String.fromEnvironment(
+  'APPLE_SERVICE_ID',
+  defaultValue: 'com.obic.app.signin',
+);
 
 /// HTTPS return URL registered on the Services ID.
 /// Trial/prod example: https://api.example.com/v1/auth/apple/android-callback
-const String kAppleRedirectUri = String.fromEnvironment('APPLE_REDIRECT_URI');
+const String kAppleRedirectUri = String.fromEnvironment(
+  'APPLE_REDIRECT_URI',
+  defaultValue: 'https://api.obicgp.com/v1/auth/apple/android-callback',
+);
 
 enum SocialProvider { google, apple }
 
