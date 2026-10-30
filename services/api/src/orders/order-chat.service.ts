@@ -35,21 +35,30 @@ export class OrderChatService {
   ) {}
 
   /** Create or return the CRM thread for an order (after order save). */
-  async ensureForOrder(order: Order): Promise<string> {
+  async ensureForOrder(
+    order: Order,
+    opts?: { title?: string | null },
+  ): Promise<string> {
     const existing = await this.conversations.findOne({
       where: { orderId: order.id },
     });
     if (existing) {
+      if (opts?.title?.trim() && existing.title !== opts.title.trim()) {
+        existing.title = opts.title.trim().slice(0, 120);
+        await this.conversations.save(existing);
+      }
       await this.syncParticipants(existing.id, order);
       return existing.id;
     }
 
     const shortId = order.id.slice(0, 8).toUpperCase();
+    const title =
+      opts?.title?.trim()?.slice(0, 120) || `Order ${shortId}`;
     const conv = await this.conversations.save(
       this.conversations.create({
         kind: ConversationKind.Order,
         orderId: order.id,
-        title: `Order ${shortId}`,
+        title,
       }),
     );
     await this.syncParticipants(conv.id, order);
@@ -68,7 +77,9 @@ export class OrderChatService {
     });
     for (const row of existing) {
       if (memberIds.has(row.userId)) continue;
+      // Keep SuperAdmin + invited Employees (Secretary add-people).
       if (row.user?.role === UserRole.SuperAdmin) continue;
+      if (row.user?.role === UserRole.Employee) continue;
       await this.participants.delete(row.id);
     }
 

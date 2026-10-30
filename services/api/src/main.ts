@@ -1,7 +1,11 @@
 // Made by Dr Ali
 // OBIC API bootstrap — Helmet, global validation, /v1 prefix. Secrets only via env.
 
-import { BadRequestException, ClassSerializerInterceptor, ValidationPipe } from '@nestjs/common';
+import {
+  BadRequestException,
+  ClassSerializerInterceptor,
+  ValidationPipe,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory, Reflector } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
@@ -12,6 +16,7 @@ import type { NextFunction, Request, Response } from 'express';
 import { loadOptionalAiEnvFiles } from './ai/ai-env.loader';
 import { loadOptionalAgoraEnvFiles } from './calls/agora-env.loader';
 import { loadOptionalMailEnvFiles } from './auth/mail-env.loader';
+import { loadOptionalApnsEnvFiles } from './notifications/apns-env.loader';
 import { AppModule } from './app.module';
 import { parseCorsOrigins } from './common/admin-security';
 import { UploadsService } from './uploads/uploads.service';
@@ -20,7 +25,12 @@ async function bootstrap() {
   loadOptionalAiEnvFiles();
   loadOptionalAgoraEnvFiles();
   loadOptionalMailEnvFiles();
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    bodyParser: false,
+  });
+  // Photo turns are base64 JSON. The default 100kb parser would reject them.
+  app.useBodyParser('json', { limit: '8mb' });
+  app.useBodyParser('urlencoded', { extended: true, limit: '1mb' });
   const config = app.get(ConfigService);
 
   if (

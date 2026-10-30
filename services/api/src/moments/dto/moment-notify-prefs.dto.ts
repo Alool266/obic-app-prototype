@@ -1,5 +1,5 @@
 // Made by Dr Ali
-// Moments notify prefs DTO — global toggles + optional muted-friend list replace.
+// Moments notify prefs DTO — global toggles + mute + hide-from lists.
 
 import {
   IsArray,
@@ -17,9 +17,15 @@ export class UpdateMomentNotifyPrefsDto {
   @IsBoolean()
   muteUpdates?: boolean;
 
-  /** When set, replaces the full muted-friend set for this user. */
+  /** When set, replaces the full muted-friend set for this user (不看他). */
   @IsOptional()
   @IsArray()
   @IsUUID('4', { each: true })
   mutedFriendIds?: string[];
+
+  /** When set, replaces friends who cannot see my Moments (不让他看). */
+  @IsOptional()
+  @IsArray()
+  @IsUUID('4', { each: true })
+  hiddenFromFriendIds?: string[];
 }

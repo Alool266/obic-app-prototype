@@ -1,5 +1,5 @@
 // Made by Dr Ali
-// Moment comment — WeChat-style text replies under a post.
+// Moment comment — WeChat-style text + optional photo replies under a post.
 
 import {
   Column,
@@ -33,8 +33,22 @@ export class MomentComment {
   @JoinColumn({ name: 'author_id' })
   author!: User;
 
-  @Column({ type: 'varchar', length: 500 })
+  /** Empty string allowed when media-only (WeChat photo comment). */
+  @Column({ type: 'varchar', length: 500, default: '' })
   body!: string;
+
+  /**
+   * WeChat-style comment photos (images only), up to 9.
+   * { kind: 'image', url, name?, mime?, size? }
+   */
+  @Column({ type: 'jsonb', default: () => "'[]'" })
+  media!: Array<{
+    kind: 'image';
+    url: string;
+    name?: string;
+    mime?: string;
+    size?: number;
+  }>;
 
   /** WeChat-style: reply to another comment on the same moment (flat list). */
   @Index()
@@ -44,6 +58,10 @@ export class MomentComment {
   @ManyToOne(() => MomentComment, { onDelete: 'SET NULL', nullable: true })
   @JoinColumn({ name: 'reply_to_comment_id' })
   replyToComment!: MomentComment | null;
+
+  /** Soft-delete — hidden from feed; kept for moderation trail. */
+  @Column({ name: 'deleted_at', type: 'timestamptz', nullable: true })
+  deletedAt!: Date | null;
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt!: Date;

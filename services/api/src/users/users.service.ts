@@ -11,11 +11,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
 import { IsNull, Not, Repository } from 'typeorm';
-import {
-  isChinaMobile,
-  normalizeChinaMobile,
-  CHINA_PHONE_ONLY_MSG,
-} from '../auth/china-phone.util';
+import { normalizeSmsMobile } from '../auth/sms-phone.util';
 import { normalizeRegionCode } from '../auth/china-cohort.util';
 import { UserRole } from '../common/enums/user-role.enum';
 import { AuthUser } from '../common/interfaces/auth-user.interface';
@@ -85,15 +81,12 @@ export class UsersService {
         user.phone = null;
         user.phoneVerifiedAt = null;
       } else {
-        // Profile phone edits that look like China mobile must go through OTP.
-        const cn = normalizeChinaMobile(raw);
-        if (cn) {
+        // China, Saudi, and Yemen mobiles must go through the OTP.
+        const sms = normalizeSmsMobile(raw);
+        if (sms) {
           throw new BadRequestException(
-            'Use phone verification OTP to set a China mainland number',
+            'Use phone verification OTP to set this mobile number',
           );
-        }
-        if (isChinaMobile(raw)) {
-          throw new BadRequestException(CHINA_PHONE_ONLY_MSG);
         }
         const phone = raw;
         const taken = await this.usersRepo.findOne({
@@ -120,6 +113,24 @@ export class UsersService {
         // Prefer ISO code when recognizable; otherwise store trimmed label.
         user.country = normalizeRegionCode(raw) ?? raw.slice(0, 120);
       }
+    }
+
+    if (dto.gender !== undefined) {
+      const raw = dto.gender.trim().toLowerCase();
+      if (raw.length === 0) {
+        user.gender = null;
+      } else if (raw === 'male' || raw === 'female' || raw === 'other') {
+        user.gender = raw;
+      } else {
+        throw new BadRequestException(
+          'Gender must be male, female, other, or empty',
+        );
+      }
+    }
+
+    if (dto.whatsUp !== undefined) {
+      const raw = dto.whatsUp.trim();
+      user.whatsUp = raw.length === 0 ? null : raw.slice(0, 120);
     }
 
     if (dto.obicId !== undefined) {
@@ -224,6 +235,7 @@ export class UsersService {
   async updateMomentsCover(
     actor: AuthUser,
     coverUrl: string,
+    focusY?: number,
   ): Promise<PublicUser> {
     const user = await this.usersRepo.findOne({ where: { id: actor.userId } });
     if (!user) {
@@ -234,8 +246,38 @@ export class UsersService {
     }
     const url = coverUrl.trim();
     user.momentsCoverUrl = url.length === 0 ? null : url.slice(0, 1024);
+    if (typeof focusY === 'number' && Number.isFinite(focusY)) {
+      user.momentsCoverFocusY = Math.min(1, Math.max(-1, focusY));
+    } else if (url.length === 0) {
+      user.momentsCoverFocusY = 0;
+    }
     await this.usersRepo.save(user);
     return toPublicUser(user);
+  }
+
+  /**
+   * Public Moments profile header (name / avatar / cover) — no email/phone.
+   * Used when opening a friend’s Moments album.
+   */
+  async momentsProfile(userId: string) {
+    const user = await this.usersRepo.findOne({ where: { id: userId } });
+    if (!user || user.deletedAt) {
+      throw new NotFoundException('User not found');
+    }
+    return {
+      id: user.id,
+      name: user.name,
+      role: user.role,
+      avatarUrl: user.avatarUrl ?? null,
+      whatsUp: user.whatsUp ?? null,
+      city: user.city ?? null,
+      country: user.country ?? null,
+      momentsCoverUrl: user.momentsCoverUrl ?? null,
+      momentsCoverFocusY:
+        typeof user.momentsCoverFocusY === 'number'
+          ? user.momentsCoverFocusY
+          : 0,
+    };
   }
 
   /**

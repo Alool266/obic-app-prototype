@@ -1,0 +1,1787 @@
+{
+  "updatedAt": "2026-10-27",
+  "source": "OBIC curated China admin/trade city centers (WGS-84 approx)",
+  "count": 178,
+  "cities": [
+    {
+      "id": "beijing",
+      "nameZh": "北京",
+      "nameEn": "Beijing",
+      "pinyin": "beijing",
+      "nameAr": "بكين",
+      "lat": 39.9042,
+      "lng": 116.4074,
+      "tier": "municipality"
+    },
+    {
+      "id": "shanghai",
+      "nameZh": "上海",
+      "nameEn": "Shanghai",
+      "pinyin": "shanghai",
+      "nameAr": "شنغهاي",
+      "lat": 31.2304,
+      "lng": 121.4737,
+      "tier": "municipality"
+    },
+    {
+      "id": "tianjin",
+      "nameZh": "天津",
+      "nameEn": "Tianjin",
+      "pinyin": "tianjin",
+      "nameAr": "تيانجين",
+      "lat": 39.3434,
+      "lng": 117.3616,
+      "tier": "municipality"
+    },
+    {
+      "id": "chongqing",
+      "nameZh": "重庆",
+      "nameEn": "Chongqing",
+      "pinyin": "chongqing",
+      "nameAr": "تشونغتشينغ",
+      "lat": 29.4316,
+      "lng": 106.9123,
+      "tier": "municipality"
+    },
+    {
+      "id": "guangzhou",
+      "nameZh": "广州",
+      "nameEn": "Guangzhou",
+      "pinyin": "guangzhou",
+      "nameAr": "قوانغتشو",
+      "lat": 23.1291,
+      "lng": 113.2644,
+      "tier": "capital"
+    },
+    {
+      "id": "shenzhen",
+      "nameZh": "深圳",
+      "nameEn": "Shenzhen",
+      "pinyin": "shenzhen",
+      "nameAr": "شنتشن",
+      "lat": 22.5431,
+      "lng": 114.0579,
+      "tier": "trade"
+    },
+    {
+      "id": "hangzhou",
+      "nameZh": "杭州",
+      "nameEn": "Hangzhou",
+      "pinyin": "hangzhou",
+      "nameAr": "هانغتشو",
+      "lat": 30.2741,
+      "lng": 120.1551,
+      "tier": "capital"
+    },
+    {
+      "id": "nanjing",
+      "nameZh": "南京",
+      "nameEn": "Nanjing",
+      "pinyin": "nanjing",
+      "nameAr": "نانجينغ",
+      "lat": 32.0603,
+      "lng": 118.7969,
+      "tier": "capital"
+    },
+    {
+      "id": "wuhan",
+      "nameZh": "武汉",
+      "nameEn": "Wuhan",
+      "pinyin": "wuhan",
+      "nameAr": "ووهان",
+      "lat": 30.5928,
+      "lng": 114.3055,
+      "tier": "capital"
+    },
+    {
+      "id": "chengdu",
+      "nameZh": "成都",
+      "nameEn": "Chengdu",
+      "pinyin": "chengdu",
+      "nameAr": "تشنغدو",
+      "lat": 30.5728,
+      "lng": 104.0668,
+      "tier": "capital"
+    },
+    {
+      "id": "xian",
+      "nameZh": "西安",
+      "nameEn": "Xi'an",
+      "pinyin": "xian",
+      "nameAr": "شيان",
+      "lat": 34.3416,
+      "lng": 108.9398,
+      "tier": "capital"
+    },
+    {
+      "id": "zhengzhou",
+      "nameZh": "郑州",
+      "nameEn": "Zhengzhou",
+      "pinyin": "zhengzhou",
+      "nameAr": "تشنغتشو",
+      "lat": 34.7466,
+      "lng": 113.6253,
+      "tier": "capital"
+    },
+    {
+      "id": "changsha",
+      "nameZh": "长沙",
+      "nameEn": "Changsha",
+      "pinyin": "changsha",
+      "nameAr": "تشانغشا",
+      "lat": 28.2282,
+      "lng": 112.9388,
+      "tier": "capital"
+    },
+    {
+      "id": "fuzhou",
+      "nameZh": "福州",
+      "nameEn": "Fuzhou",
+      "pinyin": "fuzhou",
+      "nameAr": "فوتشو",
+      "lat": 26.0745,
+      "lng": 119.2965,
+      "tier": "capital"
+    },
+    {
+      "id": "xiamen",
+      "nameZh": "厦门",
+      "nameEn": "Xiamen",
+      "pinyin": "xiamen",
+      "nameAr": "شيامن",
+      "lat": 24.4798,
+      "lng": 118.0894,
+      "tier": "trade"
+    },
+    {
+      "id": "nanchang",
+      "nameZh": "南昌",
+      "nameEn": "Nanchang",
+      "pinyin": "nanchang",
+      "nameAr": "نانتشانغ",
+      "lat": 28.682,
+      "lng": 115.8579,
+      "tier": "capital"
+    },
+    {
+      "id": "hefei",
+      "nameZh": "合肥",
+      "nameEn": "Hefei",
+      "pinyin": "hefei",
+      "nameAr": "خفي",
+      "lat": 31.8206,
+      "lng": 117.2272,
+      "tier": "capital"
+    },
+    {
+      "id": "jinan",
+      "nameZh": "济南",
+      "nameEn": "Jinan",
+      "pinyin": "jinan",
+      "nameAr": "جينان",
+      "lat": 36.6512,
+      "lng": 117.1201,
+      "tier": "capital"
+    },
+    {
+      "id": "qingdao",
+      "nameZh": "青岛",
+      "nameEn": "Qingdao",
+      "pinyin": "qingdao",
+      "nameAr": "تشينغداو",
+      "lat": 36.0671,
+      "lng": 120.3826,
+      "tier": "trade"
+    },
+    {
+      "id": "shenyang",
+      "nameZh": "沈阳",
+      "nameEn": "Shenyang",
+      "pinyin": "shenyang",
+      "nameAr": "شنيانغ",
+      "lat": 41.8057,
+      "lng": 123.4315,
+      "tier": "capital"
+    },
+    {
+      "id": "dalian",
+      "nameZh": "大连",
+      "nameEn": "Dalian",
+      "pinyin": "dalian",
+      "nameAr": "داليان",
+      "lat": 38.914,
+      "lng": 121.6147,
+      "tier": "trade"
+    },
+    {
+      "id": "changchun",
+      "nameZh": "长春",
+      "nameEn": "Changchun",
+      "pinyin": "changchun",
+      "nameAr": "تشانغتشون",
+      "lat": 43.8171,
+      "lng": 125.3235,
+      "tier": "capital"
+    },
+    {
+      "id": "harbin",
+      "nameZh": "哈尔滨",
+      "nameEn": "Harbin",
+      "pinyin": "haerbin",
+      "nameAr": "هاربين",
+      "lat": 45.8038,
+      "lng": 126.534,
+      "tier": "capital"
+    },
+    {
+      "id": "shijiazhuang",
+      "nameZh": "石家庄",
+      "nameEn": "Shijiazhuang",
+      "pinyin": "shijiazhuang",
+      "nameAr": "شيجياتشوانغ",
+      "lat": 38.0428,
+      "lng": 114.5149,
+      "tier": "capital"
+    },
+    {
+      "id": "taiyuan",
+      "nameZh": "太原",
+      "nameEn": "Taiyuan",
+      "pinyin": "taiyuan",
+      "nameAr": "تاييوان",
+      "lat": 37.8706,
+      "lng": 112.5489,
+      "tier": "capital"
+    },
+    {
+      "id": "hohhot",
+      "nameZh": "呼和浩ت",
+      "nameEn": "Hohhot",
+      "pinyin": "huhehaote",
+      "nameAr": "خوخوط",
+      "lat": 40.8414,
+      "lng": 111.7519,
+      "tier": "capital"
+    },
+    {
+      "id": "yinchuan",
+      "nameZh": "银川",
+      "nameEn": "Yinchuan",
+      "pinyin": "yinchuan",
+      "nameAr": "ينتشوان",
+      "lat": 38.4872,
+      "lng": 106.2309,
+      "tier": "capital"
+    },
+    {
+      "id": "xining",
+      "nameZh": "西宁",
+      "nameEn": "Xining",
+      "pinyin": "xining",
+      "nameAr": "شينينغ",
+      "lat": 36.6171,
+      "lng": 101.7782,
+      "tier": "capital"
+    },
+    {
+      "id": "lanzhou",
+      "nameZh": "兰州",
+      "nameEn": "Lanzhou",
+      "pinyin": "lanzhou",
+      "nameAr": "لانتشو",
+      "lat": 36.0611,
+      "lng": 103.8343,
+      "tier": "capital"
+    },
+    {
+      "id": "urumqi",
+      "nameZh": "乌鲁木齐",
+      "nameEn": "Ürümqi",
+      "pinyin": "wulumuqi",
+      "nameAr": "أورومتشي",
+      "lat": 43.8256,
+      "lng": 87.6168,
+      "tier": "capital"
+    },
+    {
+      "id": "lhasa",
+      "nameZh": "拉萨",
+      "nameEn": "Lhasa",
+      "pinyin": "lasa",
+      "nameAr": "لاسا",
+      "lat": 29.6525,
+      "lng": 91.1721,
+      "tier": "capital"
+    },
+    {
+      "id": "kunming",
+      "nameZh": "昆明",
+      "nameEn": "Kunming",
+      "pinyin": "kunming",
+      "nameAr": "كونمينغ",
+      "lat": 25.0389,
+      "lng": 102.7183,
+      "tier": "capital"
+    },
+    {
+      "id": "nanning",
+      "nameZh": "南宁",
+      "nameEn": "Nanning",
+      "pinyin": "nanning",
+      "nameAr": "ناننينغ",
+      "lat": 22.817,
+      "lng": 108.3669,
+      "tier": "capital"
+    },
+    {
+      "id": "haikou",
+      "nameZh": "海口",
+      "nameEn": "Haikou",
+      "pinyin": "haikou",
+      "nameAr": "هايكو",
+      "lat": 20.044,
+      "lng": 110.1999,
+      "tier": "capital"
+    },
+    {
+      "id": "sanya",
+      "nameZh": "三亚",
+      "nameEn": "Sanya",
+      "pinyin": "sanya",
+      "nameAr": "سانيا",
+      "lat": 18.2528,
+      "lng": 109.5119,
+      "tier": "trade"
+    },
+    {
+      "id": "guiyang",
+      "nameZh": "贵阳",
+      "nameEn": "Guiyang",
+      "pinyin": "guiyang",
+      "nameAr": "غوييانغ",
+      "lat": 26.6477,
+      "lng": 106.6302,
+      "tier": "capital"
+    },
+    {
+      "id": "hongkong",
+      "nameZh": "香港",
+      "nameEn": "Hong Kong",
+      "pinyin": "xianggang",
+      "nameAr": "هونغ كونغ",
+      "lat": 22.3193,
+      "lng": 114.1694,
+      "tier": "trade"
+    },
+    {
+      "id": "macau",
+      "nameZh": "澳门",
+      "nameEn": "Macau",
+      "pinyin": "aomen",
+      "nameAr": "ماكاو",
+      "lat": 22.1987,
+      "lng": 113.5439,
+      "tier": "trade"
+    },
+    {
+      "id": "taipei",
+      "nameZh": "台北",
+      "nameEn": "Taipei",
+      "pinyin": "taibei",
+      "nameAr": "تايبيه",
+      "lat": 25.033,
+      "lng": 121.5654,
+      "tier": "capital"
+    },
+    {
+      "id": "yiwu",
+      "nameZh": "义乌",
+      "nameEn": "Yiwu",
+      "pinyin": "yiwu",
+      "nameAr": "ييوو",
+      "lat": 29.3069,
+      "lng": 120.0753,
+      "tier": "trade"
+    },
+    {
+      "id": "ningbo",
+      "nameZh": "宁波",
+      "nameEn": "Ningbo",
+      "pinyin": "ningbo",
+      "nameAr": "نينغبو",
+      "lat": 29.8683,
+      "lng": 121.544,
+      "tier": "trade"
+    },
+    {
+      "id": "wenzhou",
+      "nameZh": "温州",
+      "nameEn": "Wenzhou",
+      "pinyin": "wenzhou",
+      "nameAr": "ونتشو",
+      "lat": 27.9938,
+      "lng": 120.6994,
+      "tier": "trade"
+    },
+    {
+      "id": "jiaxing",
+      "nameZh": "嘉兴",
+      "nameEn": "Jiaxing",
+      "pinyin": "jiaxing",
+      "nameAr": "جياشينغ",
+      "lat": 30.7522,
+      "lng": 120.75,
+      "tier": "prefecture"
+    },
+    {
+      "id": "huzhou",
+      "nameZh": "湖州",
+      "nameEn": "Huzhou",
+      "pinyin": "huzhou",
+      "nameAr": "هوتشو",
+      "lat": 30.8942,
+      "lng": 120.0868,
+      "tier": "prefecture"
+    },
+    {
+      "id": "shaoxing",
+      "nameZh": "绍兴",
+      "nameEn": "Shaoxing",
+      "pinyin": "shaoxing",
+      "nameAr": "شاوشينغ",
+      "lat": 30.0023,
+      "lng": 120.581,
+      "tier": "prefecture"
+    },
+    {
+      "id": "jinhua",
+      "nameZh": "金华",
+      "nameEn": "Jinhua",
+      "pinyin": "jinhua",
+      "nameAr": "جينخوا",
+      "lat": 29.0788,
+      "lng": 119.6474,
+      "tier": "prefecture"
+    },
+    {
+      "id": "quzhou",
+      "nameZh": "衢州",
+      "nameEn": "Quzhou",
+      "pinyin": "quzhou",
+      "nameAr": "تشوتشو",
+      "lat": 28.9701,
+      "lng": 118.8595,
+      "tier": "prefecture"
+    },
+    {
+      "id": "zhoushan",
+      "nameZh": "舟山",
+      "nameEn": "Zhoushan",
+      "pinyin": "zhoushan",
+      "nameAr": "تشوشان",
+      "lat": 29.9853,
+      "lng": 122.2072,
+      "tier": "prefecture"
+    },
+    {
+      "id": "taizhou_zj",
+      "nameZh": "台州",
+      "nameEn": "Taizhou",
+      "pinyin": "taizhou",
+      "nameAr": "تايتشو",
+      "lat": 28.656,
+      "lng": 121.4208,
+      "tier": "prefecture"
+    },
+    {
+      "id": "lishui",
+      "nameZh": "丽水",
+      "nameEn": "Lishui",
+      "pinyin": "lishui",
+      "nameAr": "ليشوي",
+      "lat": 28.4518,
+      "lng": 119.9229,
+      "tier": "prefecture"
+    },
+    {
+      "id": "suzhou",
+      "nameZh": "苏州",
+      "nameEn": "Suzhou",
+      "pinyin": "suzhou",
+      "nameAr": "سوتشو",
+      "lat": 31.2989,
+      "lng": 120.5853,
+      "tier": "trade"
+    },
+    {
+      "id": "wuxi",
+      "nameZh": "无锡",
+      "nameEn": "Wuxi",
+      "pinyin": "wuxi",
+      "nameAr": "ووشي",
+      "lat": 31.4912,
+      "lng": 120.3124,
+      "tier": "trade"
+    },
+    {
+      "id": "changzhou",
+      "nameZh": "常州",
+      "nameEn": "Changzhou",
+      "pinyin": "changzhou",
+      "nameAr": "تشانغتشو",
+      "lat": 31.8107,
+      "lng": 119.9741,
+      "tier": "prefecture"
+    },
+    {
+      "id": "nantong",
+      "nameZh": "南通",
+      "nameEn": "Nantong",
+      "pinyin": "nantong",
+      "nameAr": "نانتونغ",
+      "lat": 31.9802,
+      "lng": 120.8943,
+      "tier": "prefecture"
+    },
+    {
+      "id": "yangzhou",
+      "nameZh": "扬州",
+      "nameEn": "Yangzhou",
+      "pinyin": "yangzhou",
+      "nameAr": "يانغتشو",
+      "lat": 32.3932,
+      "lng": 119.4129,
+      "tier": "prefecture"
+    },
+    {
+      "id": "xuzhou",
+      "nameZh": "徐州",
+      "nameEn": "Xuzhou",
+      "pinyin": "xuzhou",
+      "nameAr": "شوتشو",
+      "lat": 34.2058,
+      "lng": 117.2841,
+      "tier": "prefecture"
+    },
+    {
+      "id": "zhenjiang",
+      "nameZh": "镇江",
+      "nameEn": "Zhenjiang",
+      "pinyin": "zhenjiang",
+      "nameAr": "تشنجيانغ",
+      "lat": 32.2044,
+      "lng": 119.452,
+      "tier": "prefecture"
+    },
+    {
+      "id": "yancheng",
+      "nameZh": "盐城",
+      "nameEn": "Yancheng",
+      "pinyin": "yancheng",
+      "nameAr": "يانتشنغ",
+      "lat": 33.3477,
+      "lng": 120.1626,
+      "tier": "prefecture"
+    },
+    {
+      "id": "huaian",
+      "nameZh": "淮安",
+      "nameEn": "Huai'an",
+      "pinyin": "huaian",
+      "nameAr": "خوايان",
+      "lat": 33.6104,
+      "lng": 119.0153,
+      "tier": "prefecture"
+    },
+    {
+      "id": "lianyungang",
+      "nameZh": "连云港",
+      "nameEn": "Lianyungang",
+      "pinyin": "lianyungang",
+      "nameAr": "ليانيونغانغ",
+      "lat": 34.5967,
+      "lng": 119.2216,
+      "tier": "prefecture"
+    },
+    {
+      "id": "suqian",
+      "nameZh": "宿迁",
+      "nameEn": "Suqian",
+      "pinyin": "suqian",
+      "nameAr": "سوتشيان",
+      "lat": 33.9632,
+      "lng": 118.2752,
+      "tier": "prefecture"
+    },
+    {
+      "id": "taizhou_js",
+      "nameZh": "泰州",
+      "nameEn": "Taizhou",
+      "pinyin": "taizhou",
+      "nameAr": "تايتشو جيانغسو",
+      "lat": 32.4849,
+      "lng": 119.9152,
+      "tier": "prefecture"
+    },
+    {
+      "id": "dongguan",
+      "nameZh": "东莞",
+      "nameEn": "Dongguan",
+      "pinyin": "dongguan",
+      "nameAr": "دونغقوان",
+      "lat": 23.0207,
+      "lng": 113.7518,
+      "tier": "trade"
+    },
+    {
+      "id": "foshan",
+      "nameZh": "佛山",
+      "nameEn": "Foshan",
+      "pinyin": "foshan",
+      "nameAr": "فوشان",
+      "lat": 23.0215,
+      "lng": 113.1214,
+      "tier": "trade"
+    },
+    {
+      "id": "zhuhai",
+      "nameZh": "珠海",
+      "nameEn": "Zhuhai",
+      "pinyin": "zhuhai",
+      "nameAr": "تشوهاي",
+      "lat": 22.271,
+      "lng": 113.5767,
+      "tier": "trade"
+    },
+    {
+      "id": "zhongshan",
+      "nameZh": "中山",
+      "nameEn": "Zhongshan",
+      "pinyin": "zhongshan",
+      "nameAr": "جونغشان",
+      "lat": 22.517,
+      "lng": 113.3927,
+      "tier": "prefecture"
+    },
+    {
+      "id": "huizhou",
+      "nameZh": "惠州",
+      "nameEn": "Huizhou",
+      "pinyin": "huizhou",
+      "nameAr": "هويتشو",
+      "lat": 23.1115,
+      "lng": 114.4152,
+      "tier": "prefecture"
+    },
+    {
+      "id": "jiangmen",
+      "nameZh": "江门",
+      "nameEn": "Jiangmen",
+      "pinyin": "jiangmen",
+      "nameAr": "جيانغمن",
+      "lat": 22.5789,
+      "lng": 113.0815,
+      "tier": "prefecture"
+    },
+    {
+      "id": "zhaoqing",
+      "nameZh": "肇庆",
+      "nameEn": "Zhaoqing",
+      "pinyin": "zhaoqing",
+      "nameAr": "جاوتشينغ",
+      "lat": 23.0472,
+      "lng": 112.465,
+      "tier": "prefecture"
+    },
+    {
+      "id": "shantou",
+      "nameZh": "汕头",
+      "nameEn": "Shantou",
+      "pinyin": "shantou",
+      "nameAr": "شانتو",
+      "lat": 23.3541,
+      "lng": 116.682,
+      "tier": "prefecture"
+    },
+    {
+      "id": "jieyang",
+      "nameZh": "揭阳",
+      "nameEn": "Jieyang",
+      "pinyin": "jieyang",
+      "nameAr": "جيييانغ",
+      "lat": 23.5497,
+      "lng": 116.3727,
+      "tier": "prefecture"
+    },
+    {
+      "id": "chaozhou",
+      "nameZh": "潮州",
+      "nameEn": "Chaozhou",
+      "pinyin": "chaozhou",
+      "nameAr": "تشاوتشو",
+      "lat": 23.6618,
+      "lng": 116.6226,
+      "tier": "prefecture"
+    },
+    {
+      "id": "zhanjiang",
+      "nameZh": "湛江",
+      "nameEn": "Zhanjiang",
+      "pinyin": "zhanjiang",
+      "nameAr": "جانجيانغ",
+      "lat": 21.2707,
+      "lng": 110.3594,
+      "tier": "prefecture"
+    },
+    {
+      "id": "maoming",
+      "nameZh": "茂名",
+      "nameEn": "Maoming",
+      "pinyin": "maoming",
+      "nameAr": "ماومينغ",
+      "lat": 21.6626,
+      "lng": 110.9255,
+      "tier": "prefecture"
+    },
+    {
+      "id": "yangjiang",
+      "nameZh": "阳江",
+      "nameEn": "Yangjiang",
+      "pinyin": "yangjiang",
+      "nameAr": "يانجيانغ",
+      "lat": 21.8579,
+      "lng": 111.9822,
+      "tier": "prefecture"
+    },
+    {
+      "id": "qingyuan",
+      "nameZh": "清远",
+      "nameEn": "Qingyuan",
+      "pinyin": "qingyuan",
+      "nameAr": "تشينغيوان",
+      "lat": 23.685,
+      "lng": 113.056,
+      "tier": "prefecture"
+    },
+    {
+      "id": "shaoguan",
+      "nameZh": "韶关",
+      "nameEn": "Shaoguan",
+      "pinyin": "shaoguan",
+      "nameAr": "شاوقوان",
+      "lat": 24.8104,
+      "lng": 113.5972,
+      "tier": "prefecture"
+    },
+    {
+      "id": "meizhou",
+      "nameZh": "梅州",
+      "nameEn": "Meizhou",
+      "pinyin": "meizhou",
+      "nameAr": "ميتشو",
+      "lat": 24.2888,
+      "lng": 116.1222,
+      "tier": "prefecture"
+    },
+    {
+      "id": "heyuan",
+      "nameZh": "河源",
+      "nameEn": "Heyuan",
+      "pinyin": "heyuan",
+      "nameAr": "خيوان",
+      "lat": 23.7463,
+      "lng": 114.6978,
+      "tier": "prefecture"
+    },
+    {
+      "id": "shanwei",
+      "nameZh": "汕尾",
+      "nameEn": "Shanwei",
+      "pinyin": "shanwei",
+      "nameAr": "شانوي",
+      "lat": 22.7862,
+      "lng": 115.3753,
+      "tier": "prefecture"
+    },
+    {
+      "id": "yunfu",
+      "nameZh": "云浮",
+      "nameEn": "Yunfu",
+      "pinyin": "yunfu",
+      "nameAr": "يونفو",
+      "lat": 22.9151,
+      "lng": 112.0445,
+      "tier": "prefecture"
+    },
+    {
+      "id": "quanzhou",
+      "nameZh": "泉州",
+      "nameEn": "Quanzhou",
+      "pinyin": "quanzhou",
+      "nameAr": "تشوانتشو",
+      "lat": 24.8741,
+      "lng": 118.6757,
+      "tier": "trade"
+    },
+    {
+      "id": "zhangzhou",
+      "nameZh": "漳州",
+      "nameEn": "Zhangzhou",
+      "pinyin": "zhangzhou",
+      "nameAr": "جانغتشو",
+      "lat": 24.5109,
+      "lng": 117.6471,
+      "tier": "prefecture"
+    },
+    {
+      "id": "putian",
+      "nameZh": "莆田",
+      "nameEn": "Putian",
+      "pinyin": "putian",
+      "nameAr": "بوتيان",
+      "lat": 25.4541,
+      "lng": 119.0078,
+      "tier": "prefecture"
+    },
+    {
+      "id": "sanming",
+      "nameZh": "三明",
+      "nameEn": "Sanming",
+      "pinyin": "sanming",
+      "nameAr": "سانمينغ",
+      "lat": 26.2654,
+      "lng": 117.6387,
+      "tier": "prefecture"
+    },
+    {
+      "id": "nanping",
+      "nameZh": "南平",
+      "nameEn": "Nanping",
+      "pinyin": "nanping",
+      "nameAr": "نانبينغ",
+      "lat": 26.6418,
+      "lng": 118.1777,
+      "tier": "prefecture"
+    },
+    {
+      "id": "longyan",
+      "nameZh": "龙岩",
+      "nameEn": "Longyan",
+      "pinyin": "longyan",
+      "nameAr": "لونغيان",
+      "lat": 25.0916,
+      "lng": 117.0173,
+      "tier": "prefecture"
+    },
+    {
+      "id": "ningde",
+      "nameZh": "宁德",
+      "nameEn": "Ningde",
+      "pinyin": "ningde",
+      "nameAr": "نينغده",
+      "lat": 26.6656,
+      "lng": 119.5479,
+      "tier": "prefecture"
+    },
+    {
+      "id": "yantai",
+      "nameZh": "烟台",
+      "nameEn": "Yantai",
+      "pinyin": "yantai",
+      "nameAr": "يانتاي",
+      "lat": 37.4638,
+      "lng": 121.4479,
+      "tier": "trade"
+    },
+    {
+      "id": "weifang",
+      "nameZh": "潍坊",
+      "nameEn": "Weifang",
+      "pinyin": "weifang",
+      "nameAr": "ويفانغ",
+      "lat": 36.7069,
+      "lng": 119.1619,
+      "tier": "prefecture"
+    },
+    {
+      "id": "weihai",
+      "nameZh": "威海",
+      "nameEn": "Weihai",
+      "pinyin": "weihai",
+      "nameAr": "ويهاي",
+      "lat": 37.5131,
+      "lng": 122.1204,
+      "tier": "prefecture"
+    },
+    {
+      "id": "zibo",
+      "nameZh": "淄博",
+      "nameEn": "Zibo",
+      "pinyin": "zibo",
+      "nameAr": "تسيبو",
+      "lat": 36.8131,
+      "lng": 118.055,
+      "tier": "prefecture"
+    },
+    {
+      "id": "linyi",
+      "nameZh": "临沂",
+      "nameEn": "Linyi",
+      "pinyin": "linyi",
+      "nameAr": "ليني",
+      "lat": 35.1041,
+      "lng": 118.3564,
+      "tier": "prefecture"
+    },
+    {
+      "id": "jining",
+      "nameZh": "济宁",
+      "nameEn": "Jining",
+      "pinyin": "jining",
+      "nameAr": "جينينغ",
+      "lat": 35.4154,
+      "lng": 116.5871,
+      "tier": "prefecture"
+    },
+    {
+      "id": "taian",
+      "nameZh": "泰安",
+      "nameEn": "Tai'an",
+      "pinyin": "taian",
+      "nameAr": "تايآن",
+      "lat": 36.2003,
+      "lng": 117.0875,
+      "tier": "prefecture"
+    },
+    {
+      "id": "dezhou",
+      "nameZh": "德州",
+      "nameEn": "Dezhou",
+      "pinyin": "dezhou",
+      "nameAr": "دتشو",
+      "lat": 37.4513,
+      "lng": 116.3594,
+      "tier": "prefecture"
+    },
+    {
+      "id": "liaocheng",
+      "nameZh": "聊城",
+      "nameEn": "Liaocheng",
+      "pinyin": "liaocheng",
+      "nameAr": "لياوچنغ",
+      "lat": 36.456,
+      "lng": 115.9852,
+      "tier": "prefecture"
+    },
+    {
+      "id": "binzhou",
+      "nameZh": "滨州",
+      "nameEn": "Binzhou",
+      "pinyin": "binzhou",
+      "nameAr": "بينتشو",
+      "lat": 37.3835,
+      "lng": 117.9708,
+      "tier": "prefecture"
+    },
+    {
+      "id": "heze",
+      "nameZh": "菏泽",
+      "nameEn": "Heze",
+      "pinyin": "heze",
+      "nameAr": "خه تسه",
+      "lat": 35.2331,
+      "lng": 115.4807,
+      "tier": "prefecture"
+    },
+    {
+      "id": "zaozhuang",
+      "nameZh": "枣庄",
+      "nameEn": "Zaozhuang",
+      "pinyin": "zaozhuang",
+      "nameAr": "تساوتشوانغ",
+      "lat": 34.8109,
+      "lng": 117.3237,
+      "tier": "prefecture"
+    },
+    {
+      "id": "rizhao",
+      "nameZh": "日照",
+      "nameEn": "Rizhao",
+      "pinyin": "rizhao",
+      "nameAr": "ريجوا",
+      "lat": 35.4164,
+      "lng": 119.5269,
+      "tier": "prefecture"
+    },
+    {
+      "id": "dongying",
+      "nameZh": "东营",
+      "nameEn": "Dongying",
+      "pinyin": "dongying",
+      "nameAr": "دونغينغ",
+      "lat": 37.4345,
+      "lng": 118.6746,
+      "tier": "prefecture"
+    },
+    {
+      "id": "luoyang",
+      "nameZh": "洛阳",
+      "nameEn": "Luoyang",
+      "pinyin": "luoyang",
+      "nameAr": "لويانغ",
+      "lat": 34.6197,
+      "lng": 112.454,
+      "tier": "prefecture"
+    },
+    {
+      "id": "kaifeng",
+      "nameZh": "开封",
+      "nameEn": "Kaifeng",
+      "pinyin": "kaifeng",
+      "nameAr": "كايفنغ",
+      "lat": 34.7971,
+      "lng": 114.3076,
+      "tier": "prefecture"
+    },
+    {
+      "id": "nanyang",
+      "nameZh": "南阳",
+      "nameEn": "Nanyang",
+      "pinyin": "nanyang",
+      "nameAr": "نانيانغ",
+      "lat": 32.9908,
+      "lng": 112.5285,
+      "tier": "prefecture"
+    },
+    {
+      "id": "xinxiang",
+      "nameZh": "新乡",
+      "nameEn": "Xinxiang",
+      "pinyin": "xinxiang",
+      "nameAr": "شينشيانغ",
+      "lat": 35.303,
+      "lng": 113.9268,
+      "tier": "prefecture"
+    },
+    {
+      "id": "anyang",
+      "nameZh": "安阳",
+      "nameEn": "Anyang",
+      "pinyin": "anyang",
+      "nameAr": "آنيانغ",
+      "lat": 36.0976,
+      "lng": 114.3924,
+      "tier": "prefecture"
+    },
+    {
+      "id": "shangqiu",
+      "nameZh": "商丘",
+      "nameEn": "Shangqiu",
+      "pinyin": "shangqiu",
+      "nameAr": "شانغتشيو",
+      "lat": 34.4142,
+      "lng": 115.6564,
+      "tier": "prefecture"
+    },
+    {
+      "id": "xuchang",
+      "nameZh": "许昌",
+      "nameEn": "Xuchang",
+      "pinyin": "xuchang",
+      "nameAr": "شوتشانغ",
+      "lat": 34.0357,
+      "lng": 113.852,
+      "tier": "prefecture"
+    },
+    {
+      "id": "pingdingshan",
+      "nameZh": "平顶山",
+      "nameEn": "Pingdingshan",
+      "pinyin": "pingdingshan",
+      "nameAr": "بينغدينغشان",
+      "lat": 33.7453,
+      "lng": 113.1924,
+      "tier": "prefecture"
+    },
+    {
+      "id": "zhoukou",
+      "nameZh": "周口",
+      "nameEn": "Zhoukou",
+      "pinyin": "zhoukou",
+      "nameAr": "تشوكو",
+      "lat": 33.6251,
+      "lng": 114.6969,
+      "tier": "prefecture"
+    },
+    {
+      "id": "zhumadian",
+      "nameZh": "驻马店",
+      "nameEn": "Zhumadian",
+      "pinyin": "zhumadian",
+      "nameAr": "تشوماتشيان",
+      "lat": 32.979,
+      "lng": 114.022,
+      "tier": "prefecture"
+    },
+    {
+      "id": "jiaozuo",
+      "nameZh": "焦作",
+      "nameEn": "Jiaozuo",
+      "pinyin": "jiaozuo",
+      "nameAr": "جياوتسو",
+      "lat": 35.2159,
+      "lng": 113.2418,
+      "tier": "prefecture"
+    },
+    {
+      "id": "puyang",
+      "nameZh": "濮阳",
+      "nameEn": "Puyang",
+      "pinyin": "puyang",
+      "nameAr": "بويانغ",
+      "lat": 35.7617,
+      "lng": 115.0292,
+      "tier": "prefecture"
+    },
+    {
+      "id": "sanmenxia",
+      "nameZh": "三门峡",
+      "nameEn": "Sanmenxia",
+      "pinyin": "sanmenxia",
+      "nameAr": "سانمنشيا",
+      "lat": 34.7725,
+      "lng": 111.1941,
+      "tier": "prefecture"
+    },
+    {
+      "id": "hebi",
+      "nameZh": "鹤壁",
+      "nameEn": "Hebi",
+      "pinyin": "hebi",
+      "nameAr": "خيبي",
+      "lat": 35.7481,
+      "lng": 114.2973,
+      "tier": "prefecture"
+    },
+    {
+      "id": "luohe",
+      "nameZh": "漯河",
+      "nameEn": "Luohe",
+      "pinyin": "luohe",
+      "nameAr": "لوه خه",
+      "lat": 33.5814,
+      "lng": 114.0168,
+      "tier": "prefecture"
+    },
+    {
+      "id": "yichang",
+      "nameZh": "宜昌",
+      "nameEn": "Yichang",
+      "pinyin": "yichang",
+      "nameAr": "ييتشانغ",
+      "lat": 30.7026,
+      "lng": 111.2865,
+      "tier": "prefecture"
+    },
+    {
+      "id": "xiangyang",
+      "nameZh": "襄阳",
+      "nameEn": "Xiangyang",
+      "pinyin": "xiangyang",
+      "nameAr": "شيانغيانغ",
+      "lat": 32.009,
+      "lng": 112.1224,
+      "tier": "prefecture"
+    },
+    {
+      "id": "huangshi",
+      "nameZh": "黄石",
+      "nameEn": "Huangshi",
+      "pinyin": "huangshi",
+      "nameAr": "هوانغشي",
+      "lat": 30.1995,
+      "lng": 115.0385,
+      "tier": "prefecture"
+    },
+    {
+      "id": "jingzhou",
+      "nameZh": "荆州",
+      "nameEn": "Jingzhou",
+      "pinyin": "jingzhou",
+      "nameAr": "جينغتشو",
+      "lat": 30.3269,
+      "lng": 112.2381,
+      "tier": "prefecture"
+    },
+    {
+      "id": "shiyan",
+      "nameZh": "十堰",
+      "nameEn": "Shiyan",
+      "pinyin": "shiyan",
+      "nameAr": "شيبان",
+      "lat": 32.6291,
+      "lng": 110.798,
+      "tier": "prefecture"
+    },
+    {
+      "id": "zhuzhou",
+      "nameZh": "株洲",
+      "nameEn": "Zhuzhou",
+      "pinyin": "zhuzhou",
+      "nameAr": "تشوتشو",
+      "lat": 27.8358,
+      "lng": 113.1339,
+      "tier": "prefecture"
+    },
+    {
+      "id": "xiangtan",
+      "nameZh": "湘潭",
+      "nameEn": "Xiangtan",
+      "pinyin": "xiangtan",
+      "nameAr": "شيانغتان",
+      "lat": 27.8297,
+      "lng": 112.9441,
+      "tier": "prefecture"
+    },
+    {
+      "id": "hengyang",
+      "nameZh": "衡阳",
+      "nameEn": "Hengyang",
+      "pinyin": "hengyang",
+      "nameAr": "هنغيانغ",
+      "lat": 26.8964,
+      "lng": 112.572,
+      "tier": "prefecture"
+    },
+    {
+      "id": "yueyang",
+      "nameZh": "岳阳",
+      "nameEn": "Yueyang",
+      "pinyin": "yueyang",
+      "nameAr": "يوييانغ",
+      "lat": 29.3573,
+      "lng": 113.129,
+      "tier": "prefecture"
+    },
+    {
+      "id": "changde",
+      "nameZh": "常德",
+      "nameEn": "Changde",
+      "pinyin": "changde",
+      "nameAr": "تشانغده",
+      "lat": 29.0316,
+      "lng": 111.6985,
+      "tier": "prefecture"
+    },
+    {
+      "id": "mianyang",
+      "nameZh": "绵阳",
+      "nameEn": "Mianyang",
+      "pinyin": "mianyang",
+      "nameAr": "ميانيانغ",
+      "lat": 31.4675,
+      "lng": 104.6791,
+      "tier": "prefecture"
+    },
+    {
+      "id": "deyang",
+      "nameZh": "德阳",
+      "nameEn": "Deyang",
+      "pinyin": "deyang",
+      "nameAr": "دييانغ",
+      "lat": 31.127,
+      "lng": 104.398,
+      "tier": "prefecture"
+    },
+    {
+      "id": "nanchong",
+      "nameZh": "南充",
+      "nameEn": "Nanchong",
+      "pinyin": "nanchong",
+      "nameAr": "نانتشونغ",
+      "lat": 30.8373,
+      "lng": 106.1107,
+      "tier": "prefecture"
+    },
+    {
+      "id": "yibin",
+      "nameZh": "宜宾",
+      "nameEn": "Yibin",
+      "pinyin": "yibin",
+      "nameAr": "ييبن",
+      "lat": 28.7518,
+      "lng": 104.6432,
+      "tier": "prefecture"
+    },
+    {
+      "id": "leshan",
+      "nameZh": "乐山",
+      "nameEn": "Leshan",
+      "pinyin": "leshan",
+      "nameAr": "لشان",
+      "lat": 29.5521,
+      "lng": 103.7656,
+      "tier": "prefecture"
+    },
+    {
+      "id": "luzhou",
+      "nameZh": "泸州",
+      "nameEn": "Luzhou",
+      "pinyin": "luzhou",
+      "nameAr": "لوتشو",
+      "lat": 28.8718,
+      "lng": 105.4423,
+      "tier": "prefecture"
+    },
+    {
+      "id": "zigong",
+      "nameZh": "自贡",
+      "nameEn": "Zigong",
+      "pinyin": "zigong",
+      "nameAr": "تسيغونغ",
+      "lat": 29.3392,
+      "lng": 104.7784,
+      "tier": "prefecture"
+    },
+    {
+      "id": "panzhihua",
+      "nameZh": "攀枝花",
+      "nameEn": "Panzhihua",
+      "pinyin": "panzhihua",
+      "nameAr": "بانتشيهوا",
+      "lat": 26.5804,
+      "lng": 101.7188,
+      "tier": "prefecture"
+    },
+    {
+      "id": "dali",
+      "nameZh": "大理",
+      "nameEn": "Dali",
+      "pinyin": "dali",
+      "nameAr": "دالي",
+      "lat": 25.6065,
+      "lng": 100.2676,
+      "tier": "trade"
+    },
+    {
+      "id": "lijiang",
+      "nameZh": "丽江",
+      "nameEn": "Lijiang",
+      "pinyin": "lijiang",
+      "nameAr": "ليجيانغ",
+      "lat": 26.8721,
+      "lng": 100.2299,
+      "tier": "trade"
+    },
+    {
+      "id": "xishuangbanna",
+      "nameZh": "西双版纳",
+      "nameEn": "Xishuangbanna",
+      "pinyin": "xishuangbanna",
+      "nameAr": "شيشوانغباننا",
+      "lat": 22.0017,
+      "lng": 100.7976,
+      "tier": "trade"
+    },
+    {
+      "id": "guilin",
+      "nameZh": "桂林",
+      "nameEn": "Guilin",
+      "pinyin": "guilin",
+      "nameAr": "قويلين",
+      "lat": 25.2342,
+      "lng": 110.1799,
+      "tier": "trade"
+    },
+    {
+      "id": "liuzhou",
+      "nameZh": "柳州",
+      "nameEn": "Liuzhou",
+      "pinyin": "liuzhou",
+      "nameAr": "ليوتشو",
+      "lat": 24.3264,
+      "lng": 109.4281,
+      "tier": "prefecture"
+    },
+    {
+      "id": "beihai",
+      "nameZh": "北海",
+      "nameEn": "Beihai",
+      "pinyin": "beihai",
+      "nameAr": "بيهاي",
+      "lat": 21.4733,
+      "lng": 109.1201,
+      "tier": "trade"
+    },
+    {
+      "id": "zunyi",
+      "nameZh": "遵义",
+      "nameEn": "Zunyi",
+      "pinyin": "zunyi",
+      "nameAr": "تسونيي",
+      "lat": 27.7257,
+      "lng": 106.9274,
+      "tier": "prefecture"
+    },
+    {
+      "id": "baotou",
+      "nameZh": "包头",
+      "nameEn": "Baotou",
+      "pinyin": "baotou",
+      "nameAr": "باوتو",
+      "lat": 40.6574,
+      "lng": 109.8403,
+      "tier": "prefecture"
+    },
+    {
+      "id": "ordos",
+      "nameZh": "鄂尔多斯",
+      "nameEn": "Ordos",
+      "pinyin": "eerduosi",
+      "nameAr": "أوردوس",
+      "lat": 39.6086,
+      "lng": 109.781,
+      "tier": "prefecture"
+    },
+    {
+      "id": "tangshan",
+      "nameZh": "唐山",
+      "nameEn": "Tangshan",
+      "pinyin": "tangshan",
+      "nameAr": "تانغشان",
+      "lat": 39.6309,
+      "lng": 118.1802,
+      "tier": "prefecture"
+    },
+    {
+      "id": "baoding",
+      "nameZh": "保定",
+      "nameEn": "Baoding",
+      "pinyin": "baoding",
+      "nameAr": "باودينغ",
+      "lat": 38.8671,
+      "lng": 115.4845,
+      "tier": "prefecture"
+    },
+    {
+      "id": "handan",
+      "nameZh": "邯郸",
+      "nameEn": "Handan",
+      "pinyin": "handan",
+      "nameAr": "هاندان",
+      "lat": 36.6256,
+      "lng": 114.5391,
+      "tier": "prefecture"
+    },
+    {
+      "id": "langfang",
+      "nameZh": "廊坊",
+      "nameEn": "Langfang",
+      "pinyin": "langfang",
+      "nameAr": "لانغفانغ",
+      "lat": 39.538,
+      "lng": 116.6835,
+      "tier": "prefecture"
+    },
+    {
+      "id": "qinhuangdao",
+      "nameZh": "秦皇岛",
+      "nameEn": "Qinhuangdao",
+      "pinyin": "qinhuangdao",
+      "nameAr": "تشينهوانغداو",
+      "lat": 39.8882,
+      "lng": 119.5202,
+      "tier": "trade"
+    },
+    {
+      "id": "datong",
+      "nameZh": "大同",
+      "nameEn": "Datong",
+      "pinyin": "datong",
+      "nameAr": "داتونغ",
+      "lat": 40.0768,
+      "lng": 113.3001,
+      "tier": "prefecture"
+    },
+    {
+      "id": "yanan",
+      "nameZh": "延安",
+      "nameEn": "Yan'an",
+      "pinyin": "yanan",
+      "nameAr": "ينآن",
+      "lat": 36.5854,
+      "lng": 109.4897,
+      "tier": "prefecture"
+    },
+    {
+      "id": "baoji",
+      "nameZh": "宝鸡",
+      "nameEn": "Baoji",
+      "pinyin": "baoji",
+      "nameAr": "باوجي",
+      "lat": 34.3635,
+      "lng": 107.2378,
+      "tier": "prefecture"
+    },
+    {
+      "id": "weinan",
+      "nameZh": "渭南",
+      "nameEn": "Weinan",
+      "pinyin": "weinan",
+      "nameAr": "وينان",
+      "lat": 34.4994,
+      "lng": 109.5101,
+      "tier": "prefecture"
+    },
+    {
+      "id": "kashgar",
+      "nameZh": "喀什",
+      "nameEn": "Kashgar",
+      "pinyin": "kashi",
+      "nameAr": "كاشغر",
+      "lat": 39.4704,
+      "lng": 75.9898,
+      "tier": "trade"
+    },
+    {
+      "id": "hotan",
+      "nameZh": "和田",
+      "nameEn": "Hotan",
+      "pinyin": "hetian",
+      "nameAr": "خوتان",
+      "lat": 37.1107,
+      "lng": 79.9253,
+      "tier": "prefecture"
+    },
+    {
+      "id": "korla",
+      "nameZh": "库尔勒",
+      "nameEn": "Korla",
+      "pinyin": "kuerle",
+      "nameAr": "كورلا",
+      "lat": 41.7646,
+      "lng": 86.1527,
+      "tier": "prefecture"
+    },
+    {
+      "id": "anshan",
+      "nameZh": "鞍山",
+      "nameEn": "Anshan",
+      "pinyin": "anshan",
+      "nameAr": "آنشان",
+      "lat": 41.1086,
+      "lng": 122.9946,
+      "tier": "prefecture"
+    },
+    {
+      "id": "fushun",
+      "nameZh": "抚顺",
+      "nameEn": "Fushun",
+      "pinyin": "fushun",
+      "nameAr": "فوشون",
+      "lat": 41.8758,
+      "lng": 123.9572,
+      "tier": "prefecture"
+    },
+    {
+      "id": "jilin_city",
+      "nameZh": "吉林市",
+      "nameEn": "Jilin City",
+      "pinyin": "jilin",
+      "nameAr": "جيلين",
+      "lat": 43.8378,
+      "lng": 126.5494,
+      "tier": "prefecture"
+    },
+    {
+      "id": "qiqihar",
+      "nameZh": "齐齐哈尔",
+      "nameEn": "Qiqihar",
+      "pinyin": "qiqihaer",
+      "nameAr": "تشيتشيهار",
+      "lat": 47.3543,
+      "lng": 123.9182,
+      "tier": "prefecture"
+    },
+    {
+      "id": "daqing",
+      "nameZh": "大庆",
+      "nameEn": "Daqing",
+      "pinyin": "daqing",
+      "nameAr": "داقينغ",
+      "lat": 46.5893,
+      "lng": 125.1031,
+      "tier": "prefecture"
+    },
+    {
+      "id": "ganzhou",
+      "nameZh": "赣州",
+      "nameEn": "Ganzhou",
+      "pinyin": "ganzhou",
+      "nameAr": "قانتشو",
+      "lat": 25.831,
+      "lng": 114.9333,
+      "tier": "prefecture"
+    },
+    {
+      "id": "jiujiang",
+      "nameZh": "九江",
+      "nameEn": "Jiujiang",
+      "pinyin": "jiujiang",
+      "nameAr": "جيوجيانغ",
+      "lat": 29.7051,
+      "lng": 116.0019,
+      "tier": "prefecture"
+    },
+    {
+      "id": "jingdezhen",
+      "nameZh": "景德镇",
+      "nameEn": "Jingdezhen",
+      "pinyin": "jingdezhen",
+      "nameAr": "جينغدتشن",
+      "lat": 29.2688,
+      "lng": 117.1784,
+      "tier": "prefecture"
+    },
+    {
+      "id": "wuhu",
+      "nameZh": "芜湖",
+      "nameEn": "Wuhu",
+      "pinyin": "wuhu",
+      "nameAr": "ووهو",
+      "lat": 31.3529,
+      "lng": 118.4331,
+      "tier": "prefecture"
+    },
+    {
+      "id": "bengbu",
+      "nameZh": "蚌埠",
+      "nameEn": "Bengbu",
+      "pinyin": "bengbu",
+      "nameAr": "بنغبو",
+      "lat": 32.9163,
+      "lng": 117.3897,
+      "tier": "prefecture"
+    },
+    {
+      "id": "huangshan",
+      "nameZh": "黄山",
+      "nameEn": "Huangshan",
+      "pinyin": "huangshan",
+      "nameAr": "هوانغشان",
+      "lat": 29.7147,
+      "lng": 118.3376,
+      "tier": "trade"
+    },
+    {
+      "id": "wenchang",
+      "nameZh": "文昌",
+      "nameEn": "Wenchang",
+      "pinyin": "wenchang",
+      "nameAr": "ونتشانغ",
+      "lat": 19.5433,
+      "lng": 110.7977,
+      "tier": "prefecture"
+    },
+    {
+      "id": "yixing",
+      "nameZh": "宜兴",
+      "nameEn": "Yixing",
+      "pinyin": "yixing",
+      "nameAr": "يي شينغ",
+      "lat": 31.3402,
+      "lng": 119.8235,
+      "tier": "trade"
+    },
+    {
+      "id": "kunshan",
+      "nameZh": "昆山",
+      "nameEn": "Kunshan",
+      "pinyin": "kunshan",
+      "nameAr": "كونشان",
+      "lat": 31.3856,
+      "lng": 120.9807,
+      "tier": "trade"
+    },
+    {
+      "id": "changshu",
+      "nameZh": "常熟",
+      "nameEn": "Changshu",
+      "pinyin": "changshu",
+      "nameAr": "تشانغشو",
+      "lat": 31.6539,
+      "lng": 120.7523,
+      "tier": "trade"
+    },
+    {
+      "id": "cixi",
+      "nameZh": "慈溪",
+      "nameEn": "Cixi",
+      "pinyin": "cixi",
+      "nameAr": "تسيشي",
+      "lat": 30.1697,
+      "lng": 121.2664,
+      "tier": "trade"
+    },
+    {
+      "id": "rui_an",
+      "nameZh": "瑞安",
+      "nameEn": "Ruian",
+      "pinyin": "ruian",
+      "nameAr": "رويآن",
+      "lat": 27.778,
+      "lng": 120.6552,
+      "tier": "trade"
+    },
+    {
+      "id": "yueqing",
+      "nameZh": "乐清",
+      "nameEn": "Yueqing",
+      "pinyin": "yueqing",
+      "nameAr": "يوتشينغ",
+      "lat": 28.1128,
+      "lng": 120.9863,
+      "tier": "trade"
+    },
+    {
+      "id": "haining",
+      "nameZh": "海宁",
+      "nameEn": "Haining",
+      "pinyin": "haining",
+      "nameAr": "هاينينغ",
+      "lat": 30.5334,
+      "lng": 120.681,
+      "tier": "trade"
+    },
+    {
+      "id": "tongxiang",
+      "nameZh": "桐乡",
+      "nameEn": "Tongxiang",
+      "pinyin": "tongxiang",
+      "nameAr": "تونغشيانغ",
+      "lat": 30.6305,
+      "lng": 120.5651,
+      "tier": "trade"
+    },
+    {
+      "id": "pinghu",
+      "nameZh": "平湖",
+      "nameEn": "Pinghu",
+      "pinyin": "pinghu",
+      "nameAr": "بينغهو",
+      "lat": 30.677,
+      "lng": 121.015,
+      "tier": "trade"
+    },
+    {
+      "id": "deqing",
+      "nameZh": "德清",
+      "nameEn": "Deqing",
+      "pinyin": "deqing",
+      "nameAr": "دتشينغ",
+      "lat": 30.5425,
+      "lng": 119.9773,
+      "tier": "trade"
+    }
+  ]
+}

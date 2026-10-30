@@ -15,6 +15,7 @@ import { ContentReport } from './content-report.entity';
 import { ModerationController } from './moderation.controller';
 import { ModerationService } from './moderation.service';
 import { User } from '../users/user.entity';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { User } from '../users/user.entity';
       MomentComment,
       User,
     ]),
+    NotificationsModule,
   ],
   controllers: [
     ModerationController,

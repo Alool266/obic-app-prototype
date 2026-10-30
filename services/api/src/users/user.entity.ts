@@ -46,6 +46,10 @@ export class User {
   @Column({ name: 'branch_label', type: 'varchar', length: 120, nullable: true })
   branchLabel!: string | null;
 
+  /** Company directory department. Null until a SuperAdmin assigns one. */
+  @Column({ name: 'department_id', type: 'uuid', nullable: true })
+  departmentId!: string | null;
+
   /** Public avatar URL (uploaded or absolute). */
   @Column({ name: 'avatar_url', type: 'varchar', length: 1024, nullable: true })
   avatarUrl!: string | null;
@@ -57,6 +61,16 @@ export class User {
   /** Profile country (self-service). */
   @Column({ type: 'varchar', length: 120, nullable: true })
   country!: string | null;
+
+  /**
+   * WeChat-style gender: `male` | `female` | `other` | null (unset).
+   */
+  @Column({ type: 'varchar', length: 16, nullable: true })
+  gender!: string | null;
+
+  /** WeChat “What's Up” / signature (profile status line). */
+  @Column({ name: 'whats_up', type: 'varchar', length: 120, nullable: true })
+  whatsUp!: string | null;
 
   /**
    * OBIC ID — WeChat-style vanity handle friends use to find/add you.
@@ -73,6 +87,17 @@ export class User {
   @Column({ name: 'moments_cover_url', type: 'varchar', length: 1024, nullable: true })
   momentsCoverUrl!: string | null;
 
+  /**
+   * Vertical focus for Moments cover (−1 top … 0 center … 1 bottom).
+   * Clients apply as Alignment(0, focusY) with BoxFit.cover.
+   */
+  @Column({
+    name: 'moments_cover_focus_y',
+    type: 'double precision',
+    default: 0,
+  })
+  momentsCoverFocusY!: number;
+
   /** Soft-delete / deactivate — login rejected when set. */
   @Column({ name: 'deleted_at', type: 'timestamptz', nullable: true })
   deletedAt!: Date | null;
@@ -84,6 +109,26 @@ export class User {
   /** Phone OTP verified (register / change). */
   @Column({ name: 'phone_verified_at', type: 'timestamptz', nullable: true })
   phoneVerifiedAt!: Date | null;
+
+  /** Google `sub` from a verified ID token. Null until Google sign-in links. */
+  @Column({
+    name: 'google_sub',
+    type: 'varchar',
+    length: 255,
+    unique: true,
+    nullable: true,
+  })
+  googleSub!: string | null;
+
+  /** Apple `sub` from a verified identity token. Null until Apple sign-in links. */
+  @Column({
+    name: 'apple_sub',
+    type: 'varchar',
+    length: 255,
+    unique: true,
+    nullable: true,
+  })
+  appleSub!: string | null;
 
   /**
    * Internal Ops desk access for Employees (SuperAdmin always allowed in API/UI).

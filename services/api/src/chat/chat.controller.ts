@@ -10,6 +10,7 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -24,18 +25,53 @@ import { ChatService } from './chat.service';
 import {
   CreateThreadDto,
   RequestStaffDto,
+  AddParticipantsDto,
+  LiveLocationDto,
   SendMessageDto,
+  StopLiveLocationDto,
   UpdateThreadPrefsDto,
 } from './dto/chat.dto';
+import { LiveLocationService } from './live-location.service';
 
 @Controller('chat')
 @UseGuards(JwtAuthGuard, PhoneVerifiedGuard)
 export class ChatController {
-  constructor(private readonly chat: ChatService) {}
+  constructor(
+    private readonly chat: ChatService,
+    private readonly liveLocation: LiveLocationService,
+  ) {}
+
+  @Get('live-location')
+  listLive(
+    @CurrentUser() actor: AuthUser,
+    @Query('conversationId') conversationId?: string,
+  ) {
+    if (!conversationId) return { shares: [] };
+    return this.liveLocation.list(actor, conversationId);
+  }
+
+  @Post('live-location')
+  shareLive(@CurrentUser() actor: AuthUser, @Body() dto: LiveLocationDto) {
+    return this.liveLocation.upsert(actor, dto);
+  }
+
+  @Post('live-location/stop')
+  stopLive(@CurrentUser() actor: AuthUser, @Body() dto: StopLiveLocationDto) {
+    return this.liveLocation.stop(actor, dto.conversationId);
+  }
 
   @Get('threads')
   listThreads(@CurrentUser() actor: AuthUser) {
     return this.chat.listThreads(actor);
+  }
+
+  /** Light unread feed for phones that cannot use Google push. */
+  @Get('alert-feed')
+  alertFeed(
+    @CurrentUser() actor: AuthUser,
+    @Query('after') after?: string,
+  ) {
+    return this.chat.alertFeed(actor, after);
   }
 
   @Post('threads')
@@ -47,8 +83,9 @@ export class ChatController {
   listMessages(
     @CurrentUser() actor: AuthUser,
     @Param('id', ParseUUIDPipe) id: string,
+    @Query('since') since?: string,
   ) {
-    return this.chat.listMessages(actor, id);
+    return this.chat.listMessages(actor, id, since);
   }
 
   @Patch('threads/:id/prefs')
@@ -113,6 +150,39 @@ export class ChatController {
       orderRef: dto?.orderRef,
       note: dto?.note,
     });
+  }
+
+  /** Staff: list same-branch desk employees to invite into this support/order chat. */
+  @Get('threads/:id/invite-candidates')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.Employee, UserRole.SuperAdmin)
+  listInviteCandidates(
+    @CurrentUser() actor: AuthUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.chat.listInviteCandidates(actor, id);
+  }
+
+  /** Any member can add accepted friends to a group chat. */
+  @Post('threads/:id/members')
+  addGroupMembers(
+    @CurrentUser() actor: AuthUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: AddParticipantsDto,
+  ) {
+    return this.chat.addGroupMembers(actor, id, dto.userIds ?? []);
+  }
+
+  /** Staff: add desk employees to an existing support/order thread. */
+  @Post('threads/:id/participants')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.Employee, UserRole.SuperAdmin)
+  addParticipants(
+    @CurrentUser() actor: AuthUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: AddParticipantsDto,
+  ) {
+    return this.chat.addParticipants(actor, id, dto.userIds ?? []);
   }
 
   @Get('admin/employee-chats')

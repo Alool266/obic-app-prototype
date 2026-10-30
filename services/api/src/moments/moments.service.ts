@@ -1,6 +1,6 @@
 // Made by Dr Ali
 // Moments feed — WeChat 朋友圈 ACL (server-enforced).
-// Official/staff → public to everyone; customers → mutual friends only.
+// Official/staff → public; customers → friends / private / partial / exclude.
 
 import {
   BadRequestException,
@@ -21,10 +21,16 @@ import { User } from '../users/user.entity';
 import { CreateMomentCommentDto } from './dto/create-moment-comment.dto';
 import { CreateMomentDto, MomentMediaDto } from './dto/create-moment.dto';
 import {
+  MOMENT_VISIBILITY_EXCLUDE,
+  MOMENT_VISIBILITY_FRIENDS,
+  MOMENT_VISIBILITY_PARTIAL,
+  MOMENT_VISIBILITY_PRIVATE,
+  MOMENT_VISIBILITY_PUBLIC,
+  MomentVisibility,
   canViewerSeeMoment,
+  momentNotifyAudienceIds,
   momentVisibilityForRole,
 } from './moment-visibility';
-import { momentNotifyCandidateMode } from './moment-fanout';
 import { MomentComment } from './moment-comment.entity';
 import { MomentLike } from './moment-like.entity';
 import { MomentNotifyPrefsService } from './moment-notify-prefs.service';
@@ -57,51 +63,52 @@ export class MomentsService {
     });
     if (!rows.length) return [];
 
-    const friendIds = viewerId
-      ? new Set(await this.friends.friendIdsOf(viewerId))
-      : new Set<string>();
-
+    const acl = await this.viewerAcl(viewerId);
     const visible = rows
-      .filter((m) => canViewerSeeMoment(m, viewerId, friendIds))
+      .filter((m) =>
+        canViewerSeeMoment(m, viewerId, acl.friendIds, {
+          mutedAuthorIds: acl.mutedAuthorIds,
+          authorsHidingViewer: acl.authorsHidingViewer,
+        }),
+      )
       .slice(0, Math.min(limit, 100));
     if (!visible.length) return [];
 
-    const ids = visible.map((m) => m.id);
-    const [likeRows, commentRows] = await Promise.all([
-      this.likes.find({
-        where: { momentId: In(ids) },
-        relations: { user: true },
-        order: { createdAt: 'ASC' },
-      }),
-      this.comments.find({
-        where: { momentId: In(ids) },
-        relations: { author: true },
-        order: { createdAt: 'ASC' },
-      }),
-    ]);
+    return this.hydrateFeed(visible, viewerId);
+  }
 
-    const likesByMoment = new Map<string, MomentLike[]>();
-    for (const l of likeRows) {
-      const list = likesByMoment.get(l.momentId) ?? [];
-      list.push(l);
-      likesByMoment.set(l.momentId, list);
-    }
-    const commentsByMoment = new Map<string, MomentComment[]>();
-    for (const c of commentRows) {
-      const list = commentsByMoment.get(c.momentId) ?? [];
-      list.push(c);
-      commentsByMoment.set(c.momentId, list);
+  /** Moments posted by one user — same visibility ACL as the feed. */
+  async listForUser(
+    authorId: string,
+    limit = 50,
+    viewerId?: string | null,
+  ) {
+    const author = await this.users.findOne({ where: { id: authorId } });
+    if (!author || author.deletedAt) {
+      throw new NotFoundException('User not found');
     }
 
-    return visible.map((m) =>
-      this.toDto(
-        m,
-        m.author,
-        likesByMoment.get(m.id) ?? [],
-        commentsByMoment.get(m.id) ?? [],
-        viewerId,
-      ),
-    );
+    const take = Math.min(Math.max(limit * 2, 50), 200);
+    const rows = await this.moments.find({
+      where: { authorId, deletedAt: IsNull() },
+      relations: { author: true },
+      order: { createdAt: 'DESC' },
+      take,
+    });
+    if (!rows.length) return [];
+
+    const acl = await this.viewerAcl(viewerId);
+    const visible = rows
+      .filter((m) =>
+        canViewerSeeMoment(m, viewerId, acl.friendIds, {
+          mutedAuthorIds: acl.mutedAuthorIds,
+          authorsHidingViewer: acl.authorsHidingViewer,
+        }),
+      )
+      .slice(0, Math.min(limit, 100));
+    if (!visible.length) return [];
+
+    return this.hydrateFeed(visible, viewerId);
   }
 
   async create(actor: AuthUser, dto: CreateMomentDto) {
@@ -109,7 +116,11 @@ export class MomentsService {
     const role = (author?.role ?? actor.role) as UserRole;
     const isStaff =
       role === UserRole.SuperAdmin || role === UserRole.Employee;
-    const visibility = momentVisibilityForRole(isStaff);
+
+    const friendIds = await this.friends.friendIdsOf(actor.userId);
+    const friendSet = new Set(friendIds);
+    const { visibility, allowedUserIds, deniedUserIds } =
+      this.resolveCreatePrivacy(dto, isStaff, friendSet);
 
     const media = this.normalizeMedia(dto);
     const body = (dto.body ?? '').trim();
@@ -128,19 +139,26 @@ export class MomentsService {
         body,
         imageUrl: media.find((m) => m.kind === 'image')?.url ?? null,
         media,
-        notifyAll: isStaff,
+        notifyAll: isStaff && visibility === MOMENT_VISIBILITY_PUBLIC,
         visibility,
+        allowedUserIds,
+        deniedUserIds,
       }),
     );
     saved.author = author ?? undefined!;
 
-    // WeChat Moments: fan-out to friends (customers) or all users (staff/official).
-    // Honor mute prefs; never notify the author.
     const preview =
       body.slice(0, 180) ||
       (media[0]?.name ? `Shared ${media[0].name}` : 'New Moments update');
+
+    const audience = momentNotifyAudienceIds(
+      visibility,
+      friendIds,
+      allowedUserIds,
+      deniedUserIds,
+    );
     let candidateIds: string[];
-    if (momentNotifyCandidateMode(isStaff) === 'all') {
+    if (audience === 'all') {
       const allIds: Array<{ id: string }> = await this.users
         .createQueryBuilder('u')
         .select('u.id', 'id')
@@ -149,10 +167,9 @@ export class MomentsService {
         .getRawMany();
       candidateIds = allIds.map((r) => r.id);
     } else {
-      candidateIds = (await this.friends.friendIdsOf(actor.userId)).filter(
-        (id) => id !== actor.userId,
-      );
+      candidateIds = audience.filter((id) => id !== actor.userId);
     }
+
     const recipients = await this.notifyPrefs.filterNotifyRecipients(
       candidateIds,
       actor.userId,
@@ -216,16 +233,25 @@ export class MomentsService {
   ) {
     await this.requireVisibleMoment(momentId, actor.userId);
 
-    const body = dto.body.trim();
-    if (!body) throw new BadRequestException('Comment required');
-    await this.moderation.assertClean(actor, body, {
-      targetType: ReportTargetType.Comment,
-    });
+    const body = (dto.body ?? '').trim();
+    const media = this.normalizeCommentMedia(dto);
+    if (!body && media.length === 0) {
+      throw new BadRequestException('Comment needs text or media');
+    }
+    if (body) {
+      await this.moderation.assertClean(actor, body, {
+        targetType: ReportTargetType.Comment,
+      });
+    }
 
     let replyTo: MomentComment | null = null;
     if (dto.replyToCommentId) {
       replyTo = await this.comments.findOne({
-        where: { id: dto.replyToCommentId, momentId },
+        where: {
+          id: dto.replyToCommentId,
+          momentId,
+          deletedAt: IsNull(),
+        },
         relations: { author: true },
       });
       if (!replyTo) {
@@ -239,6 +265,7 @@ export class MomentsService {
         momentId,
         authorId: actor.userId,
         body,
+        media,
         replyToCommentId: replyTo?.id ?? null,
       }),
     );
@@ -251,11 +278,166 @@ export class MomentsService {
       authorName: author?.name ?? null,
       authorAvatarUrl: author?.avatarUrl ?? null,
       body: saved.body,
+      media: saved.media ?? [],
       replyToCommentId: replyTo?.id ?? null,
       replyToAuthorId: replyTo?.authorId ?? null,
       replyToAuthorName: replyTo?.author?.name ?? null,
       createdAt: saved.createdAt,
     };
+  }
+
+  /**
+   * Soft-delete a comment. Allowed for the comment author or the moment author
+   * (WeChat: post owner can remove others' comments on their Moment).
+   */
+  async softDeleteComment(
+    actor: AuthUser,
+    momentId: string,
+    commentId: string,
+  ) {
+    await this.requireVisibleMoment(momentId, actor.userId);
+
+    const comment = await this.comments.findOne({
+      where: { id: commentId, momentId, deletedAt: IsNull() },
+    });
+    if (!comment) {
+      throw new NotFoundException('Comment not found');
+    }
+
+    const moment = await this.moments.findOne({
+      where: { id: momentId, deletedAt: IsNull() },
+    });
+    if (!moment) {
+      throw new NotFoundException('Moment not found');
+    }
+
+    const isCommentAuthor = comment.authorId === actor.userId;
+    const isMomentAuthor = moment.authorId === actor.userId;
+    if (!isCommentAuthor && !isMomentAuthor) {
+      throw new ForbiddenException('Not allowed to delete this comment');
+    }
+
+    comment.deletedAt = new Date();
+    await this.comments.save(comment);
+    return { deleted: true, momentId, commentId };
+  }
+
+  private async viewerAcl(viewerId?: string | null) {
+    if (!viewerId) {
+      return {
+        friendIds: new Set<string>(),
+        mutedAuthorIds: new Set<string>(),
+        authorsHidingViewer: new Set<string>(),
+      };
+    }
+    const [friendIds, muted, hiding] = await Promise.all([
+      this.friends.friendIdsOf(viewerId),
+      this.notifyPrefs.mutedAuthorIdsOf(viewerId),
+      this.notifyPrefs.authorsHidingViewer(viewerId),
+    ]);
+    return {
+      friendIds: new Set(friendIds),
+      mutedAuthorIds: new Set(muted),
+      authorsHidingViewer: new Set(hiding),
+    };
+  }
+
+  private async hydrateFeed(visible: Moment[], viewerId?: string | null) {
+    const ids = visible.map((m) => m.id);
+    const [likeRows, commentRows] = await Promise.all([
+      this.likes.find({
+        where: { momentId: In(ids) },
+        relations: { user: true },
+        order: { createdAt: 'ASC' },
+      }),
+      this.comments.find({
+        where: { momentId: In(ids), deletedAt: IsNull() },
+        relations: { author: true },
+        order: { createdAt: 'ASC' },
+      }),
+    ]);
+
+    const likesByMoment = new Map<string, MomentLike[]>();
+    for (const l of likeRows) {
+      const list = likesByMoment.get(l.momentId) ?? [];
+      list.push(l);
+      likesByMoment.set(l.momentId, list);
+    }
+    const commentsByMoment = new Map<string, MomentComment[]>();
+    for (const c of commentRows) {
+      const list = commentsByMoment.get(c.momentId) ?? [];
+      list.push(c);
+      commentsByMoment.set(c.momentId, list);
+    }
+
+    return visible.map((m) =>
+      this.toDto(
+        m,
+        m.author,
+        likesByMoment.get(m.id) ?? [],
+        commentsByMoment.get(m.id) ?? [],
+        viewerId,
+      ),
+    );
+  }
+
+  private resolveCreatePrivacy(
+    dto: CreateMomentDto,
+    isStaff: boolean,
+    friendSet: Set<string>,
+  ): {
+    visibility: MomentVisibility;
+    allowedUserIds: string[];
+    deniedUserIds: string[];
+  } {
+    const requested = dto.visibility;
+    let visibility: MomentVisibility = requested
+      ? (requested as MomentVisibility)
+      : momentVisibilityForRole(isStaff);
+
+    if (!isStaff && visibility === MOMENT_VISIBILITY_PUBLIC) {
+      throw new BadRequestException(
+        'Customers cannot post public Moments; use friends/private/partial/exclude',
+      );
+    }
+
+    let allowedUserIds = [
+      ...new Set((dto.allowedUserIds ?? []).filter((id) => friendSet.has(id))),
+    ];
+    let deniedUserIds = [
+      ...new Set((dto.deniedUserIds ?? []).filter((id) => friendSet.has(id))),
+    ];
+
+    if (visibility === MOMENT_VISIBILITY_PARTIAL) {
+      if (!allowedUserIds.length) {
+        throw new BadRequestException(
+          'partial Moments require at least one allowed friend',
+        );
+      }
+      deniedUserIds = [];
+    } else if (visibility === MOMENT_VISIBILITY_EXCLUDE) {
+      if (!deniedUserIds.length) {
+        throw new BadRequestException(
+          'exclude Moments require at least one denied friend',
+        );
+      }
+      allowedUserIds = [];
+    } else {
+      allowedUserIds = [];
+      deniedUserIds = [];
+    }
+
+    if (
+      visibility !== MOMENT_VISIBILITY_PUBLIC &&
+      visibility !== MOMENT_VISIBILITY_FRIENDS &&
+      visibility !== MOMENT_VISIBILITY_PRIVATE &&
+      visibility !== MOMENT_VISIBILITY_PARTIAL &&
+      visibility !== MOMENT_VISIBILITY_EXCLUDE
+    ) {
+      visibility = MOMENT_VISIBILITY_FRIENDS;
+    }
+
+    return { visibility, allowedUserIds, deniedUserIds };
   }
 
   /** 404 (not 403) when hidden — do not leak friends-only Moments. */
@@ -264,8 +446,13 @@ export class MomentsService {
       where: { id: momentId, deletedAt: IsNull() },
     });
     if (!moment) throw new NotFoundException('Moment not found');
-    const friendIds = new Set(await this.friends.friendIdsOf(viewerId));
-    if (!canViewerSeeMoment(moment, viewerId, friendIds)) {
+    const acl = await this.viewerAcl(viewerId);
+    if (
+      !canViewerSeeMoment(moment, viewerId, acl.friendIds, {
+        mutedAuthorIds: acl.mutedAuthorIds,
+        authorsHidingViewer: acl.authorsHidingViewer,
+      })
+    ) {
       throw new NotFoundException('Moment not found');
     }
     return moment;
@@ -284,6 +471,20 @@ export class MomentsService {
       ];
     }
     return [];
+  }
+
+  /** Comment attachments are images only (WeChat Moments). */
+  private normalizeCommentMedia(dto: CreateMomentCommentDto) {
+    return (dto.media ?? [])
+      .filter((m) => m?.kind === 'image' && m.url?.trim())
+      .slice(0, 9)
+      .map((m) => ({
+        kind: 'image' as const,
+        url: m.url.trim(),
+        name: m.name,
+        mime: m.mime,
+        size: m.size,
+      }));
   }
 
   private toDto(
@@ -309,6 +510,8 @@ export class MomentsService {
       media,
       notifyAll: m.notifyAll,
       visibility: m.visibility,
+      allowedUserIds: m.allowedUserIds ?? [],
+      deniedUserIds: m.deniedUserIds ?? [],
       createdAt: m.createdAt,
       likeCount: likeRows.length,
       likedByMe: viewerId
@@ -328,6 +531,7 @@ export class MomentsService {
           authorName: c.author?.name ?? null,
           authorAvatarUrl: c.author?.avatarUrl ?? null,
           body: c.body,
+          media: Array.isArray(c.media) ? c.media : [],
           replyToCommentId: c.replyToCommentId ?? null,
           replyToAuthorId: parent?.authorId ?? null,
           replyToAuthorName: parent?.author?.name ?? null,

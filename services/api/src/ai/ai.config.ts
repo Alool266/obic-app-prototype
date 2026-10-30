@@ -4,7 +4,11 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
-export type AiProvider = 'groq' | 'gemini' | 'openai' | 'openrouter';
+export type AiProvider =
+  'groq' | 'gemini' | 'openai' | 'openrouter' | 'deepseek';
+
+/** Vision and file-turn model. Same id for text and images (no separate vision SKU). */
+export const DEEPSEEK_FLASH_MODEL = 'deepseek-flash';
 
 const PROVIDER_DEFAULTS: Record<
   AiProvider,
@@ -30,6 +34,11 @@ const PROVIDER_DEFAULTS: Record<
     baseUrl: 'https://openrouter.ai/api/v1',
     model: 'google/gemma-2-9b-it:free',
   },
+  // https://api-docs.deepseek.com — vision uses this same model.
+  deepseek: {
+    baseUrl: 'https://api.deepseek.com',
+    model: DEEPSEEK_FLASH_MODEL,
+  },
 };
 
 @Injectable()
@@ -42,24 +51,32 @@ export class AiConfig {
   }
 
   /**
-   * Provider: groq (default free) | gemini | openai | openrouter.
+   * Provider: groq (default free) | gemini | openai | openrouter | deepseek.
    * All use OpenAI-compatible /chat/completions except we keep one client path.
+   * Photo and file turns use DeepSeek even when text stays on another provider.
    */
   get provider(): AiProvider {
-    const raw = (
-      this.config.get<string>('AI_PROVIDER') ?? 'groq'
-    )
+    const raw = (this.config.get<string>('AI_PROVIDER') ?? 'groq')
       .trim()
       .toLowerCase();
     if (raw === 'gemini' || raw === 'google') return 'gemini';
     if (raw === 'openai') return 'openai';
     if (raw === 'openrouter') return 'openrouter';
+    if (raw === 'deepseek') return 'deepseek';
     return 'groq';
   }
 
   /**
    * Unified key: AI_API_KEY, else provider-specific, else legacy OPENAI_API_KEY.
    */
+  /** Groq key for Whisper and image reading, even if chat uses another provider. */
+  get groqApiKey(): string {
+    const dedicated = (this.config.get<string>('GROQ_API_KEY') ?? '').trim();
+    if (dedicated) return dedicated;
+    if (this.provider === 'groq') return this.apiKey;
+    return '';
+  }
+
   get apiKey(): string {
     const unified = (this.config.get<string>('AI_API_KEY') ?? '').trim();
     if (unified) return unified;
@@ -84,9 +101,55 @@ export class AiConfig {
           this.config.get<string>('OPENAI_API_KEY') ??
           ''
         ).trim();
-      default:
+      case 'openai':
         return (this.config.get<string>('OPENAI_API_KEY') ?? '').trim();
+      case 'deepseek':
+        return (
+          this.config.get<string>('DEEPSEEK_API_KEY') ??
+          this.config.get<string>('OPENAI_API_KEY') ??
+          ''
+        ).trim();
+      default: {
+        const _exhaustive: never = this.provider;
+        return _exhaustive;
+      }
     }
+  }
+
+  /**
+   * Key for photo, file, and support auto-reply turns.
+   * Text-only assistant chat keeps using [apiKey] unless AI_PROVIDER is already deepseek.
+   */
+  get deepseekApiKey(): string {
+    const dedicated = (
+      this.config.get<string>('DEEPSEEK_API_KEY') ?? ''
+    ).trim();
+    if (dedicated) return dedicated;
+    if (this.provider === 'deepseek') return this.apiKey;
+    return '';
+  }
+
+  get hasDeepseekKey(): boolean {
+    return this.deepseekApiKey.length > 0;
+  }
+
+  /**
+   * Photo, file, and auto-reply model.
+   * Defaults to deepseek-flash. Set DEEPSEEK_MODEL to a vision model on another host.
+   */
+  get deepseekVisionModel(): string {
+    const explicit = (this.config.get<string>('DEEPSEEK_MODEL') ?? '').trim();
+    if (explicit) return explicit;
+    return DEEPSEEK_FLASH_MODEL;
+  }
+
+  get deepseekBaseUrl(): string {
+    const dedicated = (
+      this.config.get<string>('DEEPSEEK_BASE_URL') ?? ''
+    ).trim();
+    if (dedicated) return dedicated.replace(/\/$/, '');
+    if (this.provider === 'deepseek') return this.baseUrl;
+    return PROVIDER_DEFAULTS.deepseek.baseUrl;
   }
 
   get hasApiKey(): boolean {
@@ -137,10 +200,10 @@ export class AiConfig {
     return Number.isFinite(n) && n > 0 ? Math.min(n, 60) : 12;
   }
 
-  /** Max completion tokens for assistant replies (keep low for snappy UX). */
+  /** Max completion tokens for assistant replies. */
   get maxTokens(): number {
-    const n = Number(this.config.get<string>('AI_MAX_TOKENS') ?? '400');
-    return Number.isFinite(n) && n > 0 ? Math.min(n, 2000) : 400;
+    const n = Number(this.config.get<string>('AI_MAX_TOKENS') ?? '4096');
+    return Number.isFinite(n) && n > 0 ? Math.min(n, 8192) : 4096;
   }
 
   /** Shorter cap for support/order auto-replies. */

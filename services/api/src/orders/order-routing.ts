@@ -47,6 +47,18 @@ export function deskKeyForServiceSlug(slug: string): string {
   return SERVICE_DESK[slug] ?? 'secretary';
 }
 
+/**
+ * Yiwu: always Secretary first (boss handoff). Other branches keep service→desk.
+ */
+export function deskKeyForBranchAndService(
+  branch: string | null | undefined,
+  serviceSlug: string,
+): string {
+  const b = (branch ?? '').trim().toLowerCase();
+  if (b === 'yiwu' || !b) return 'secretary';
+  return deskKeyForServiceSlug(serviceSlug);
+}
+
 export function branchEmailDesk(branch: string, deskKey: string): string {
   const slug = branch.trim().toLowerCase();
   return `temp.${slug}.${deskKey}@obic.local`;

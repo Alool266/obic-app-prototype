@@ -15,6 +15,10 @@ import { ConversationParticipant } from '../chat/conversation-participant.entity
 import { Message } from '../chat/message.entity';
 import { MomentComment } from '../moments/moment-comment.entity';
 import { Moment } from '../moments/moment.entity';
+import { NotificationKind } from '../notifications/notification.entity';
+import { NotificationsService } from '../notifications/notifications.service';
+import { customerAlertDeskEmail } from '../notifications/customer-alert-routing';
+import { User } from '../users/user.entity';
 import { BannedWord } from './banned-word.entity';
 import {
   ContentReport,
@@ -41,6 +45,9 @@ export class ModerationService {
     private readonly moments: Repository<Moment>,
     @InjectRepository(MomentComment)
     private readonly comments: Repository<MomentComment>,
+    @InjectRepository(User)
+    private readonly users: Repository<User>,
+    private readonly notifications: NotificationsService,
   ) {}
 
   /** Reject send if an active phrase matches. Also opens an auto flag for SuperAdmin. */
@@ -83,6 +90,7 @@ export class ModerationService {
         status: ReportStatus.Open,
       }),
     );
+    await this.alertDesk(actor.userId, snippet || 'A customer filed a report');
     return this.reportDto(saved);
   }
 
@@ -222,5 +230,24 @@ export class ModerationService {
       reviewedAt: r.reviewedAt,
       createdAt: r.createdAt,
     };
+  }
+
+  private async alertDesk(customerUserId: string, body: string) {
+    try {
+      const email = customerAlertDeskEmail('content_report');
+      const user = await this.users.findOne({
+        where: { email, role: UserRole.Employee },
+      });
+      if (!user || user.id === customerUserId) return;
+      await this.notifications.createForUsers({
+        userIds: [user.id],
+        kind: NotificationKind.System,
+        title: 'New content report',
+        body: body.slice(0, 140),
+        data: { type: 'content_report' },
+      });
+    } catch {
+      // The report row is already saved.
+    }
   }
 }

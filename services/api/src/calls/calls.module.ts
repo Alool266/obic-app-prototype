@@ -6,6 +6,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConversationParticipant } from '../chat/conversation-participant.entity';
 import { Conversation } from '../chat/conversation.entity';
 import { RealtimeModule } from '../realtime/realtime.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 import { User } from '../users/user.entity';
 import { CallsConfig } from './calls.config';
 import { CallsController } from './calls.controller';
@@ -15,6 +16,7 @@ import { CallsService } from './calls.service';
   imports: [
     TypeOrmModule.forFeature([Conversation, ConversationParticipant, User]),
     RealtimeModule,
+    NotificationsModule,
   ],
   controllers: [CallsController],
   providers: [CallsConfig, CallsService],

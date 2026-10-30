@@ -50,10 +50,34 @@ export class Moment {
   /**
    * WeChat 朋友圈 visibility:
    * - `public` — official/staff; everyone (incl. guests)
-   * - `friends` — customers; mutual friends + author only
+   * - `friends` — all mutual friends + author
+   * - `private` — author only
+   * - `partial` — author + `allowedUserIds`
+   * - `exclude` — friends except `deniedUserIds`
    */
   @Column({ type: 'varchar', length: 16, default: 'friends' })
-  visibility!: 'public' | 'friends';
+  visibility!:
+    | 'public'
+    | 'friends'
+    | 'private'
+    | 'partial'
+    | 'exclude';
+
+  /** Friend user ids who can see a `partial` Moment. */
+  @Column({
+    name: 'allowed_user_ids',
+    type: 'jsonb',
+    default: () => "'[]'",
+  })
+  allowedUserIds!: string[];
+
+  /** Friend user ids excluded from an `exclude` Moment. */
+  @Column({
+    name: 'denied_user_ids',
+    type: 'jsonb',
+    default: () => "'[]'",
+  })
+  deniedUserIds!: string[];
 
   /** Soft-delete — hidden from feed; kept for moderation trail. */
   @Column({ name: 'deleted_at', type: 'timestamptz', nullable: true })

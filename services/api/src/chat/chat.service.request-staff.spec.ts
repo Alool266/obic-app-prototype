@@ -11,6 +11,7 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { OrderChatService } from '../orders/order-chat.service';
 import { Order, OrderStatus } from '../orders/order.entity';
 import { User } from '../users/user.entity';
+import { FriendsService } from '../friends/friends.service';
 import { AuditLog } from './audit-log.entity';
 import { ChatService } from './chat.service';
 import { ConversationParticipant } from './conversation-participant.entity';
@@ -59,6 +60,10 @@ describe('ChatService.requestStaff', () => {
   const aiAutoReply = {
     pauseForCustomerHandoff: jest.fn(),
     postConnectingNotice: jest.fn(),
+    generateAndPostHandoffSummary: jest.fn().mockResolvedValue({
+      summary: 'Need: Visa\nKey facts: —\nUrgency: medium',
+      posted: true,
+    }),
     afterHumanMessage: jest.fn(),
     setAutoReplyEnabled: jest.fn(),
   };
@@ -90,6 +95,7 @@ describe('ChatService.requestStaff', () => {
         { provide: AiAutoReplyService, useValue: aiAutoReply },
         { provide: OrderChatService, useValue: orderChat },
         { provide: RealtimeService, useValue: realtime },
+        { provide: FriendsService, useValue: { friendIdsOf: jest.fn(async () => []) } },
       ],
     }).compile();
     service = module.get(ChatService);
@@ -146,7 +152,8 @@ describe('ChatService.requestStaff', () => {
         kind: ConversationKind.Support,
         orderId: null,
         aiAutoReplyEnabled: false,
-        title: null,
+        title: 'Ali — Visa inquiry',
+        handoffSummary: 'Need: Visa',
         updatedAt: new Date(),
       }); // getThreadSummary
 
@@ -157,6 +164,7 @@ describe('ChatService.requestStaff', () => {
       newlyPaused: true,
     });
     aiAutoReply.postConnectingNotice.mockResolvedValue({ id: 'msg-1' });
+    conversations.update = jest.fn().mockResolvedValue(undefined);
 
     const actor = new AuthUser(customerId, 'sid', UserRole.Customer);
     const result = await service.requestStaff(actor, convId, {
@@ -166,6 +174,7 @@ describe('ChatService.requestStaff', () => {
 
     expect(aiAutoReply.pauseForCustomerHandoff).toHaveBeenCalledWith(convId);
     expect(participants.save).toHaveBeenCalled();
+    expect(aiAutoReply.generateAndPostHandoffSummary).toHaveBeenCalled();
     expect(notifications.createForUsers).toHaveBeenCalledWith(
       expect.objectContaining({
         userIds: [deskId],
@@ -185,6 +194,78 @@ describe('ChatService.requestStaff', () => {
     expect(result.branch).toBe('Yiwu');
     expect(result.desk).toBe('secretary');
     expect(auditLogs.save).toHaveBeenCalled();
+  });
+
+  it('support: Yiwu + travel still routes to secretary (not marketing)', async () => {
+    const convId = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee';
+    const customerId = 'cust-yiwu-travel';
+    const deskId = 'desk-sec-yiwu';
+
+    users.findOne
+      .mockResolvedValueOnce({
+        id: customerId,
+        role: UserRole.Customer,
+        name: 'DR aloosh',
+      })
+      .mockResolvedValueOnce({
+        id: deskId,
+        role: UserRole.Employee,
+        email: 'temp.yiwu.secretary@obic.local',
+      });
+
+    participants.findOne
+      .mockResolvedValueOnce({ conversationId: convId, userId: customerId })
+      .mockResolvedValueOnce(null);
+
+    conversations.findOne
+      .mockResolvedValueOnce({
+        id: convId,
+        kind: ConversationKind.Support,
+        orderId: null,
+        aiAutoReplyEnabled: true,
+        title: null,
+        updatedAt: new Date(),
+      })
+      .mockResolvedValueOnce({
+        id: convId,
+        kind: ConversationKind.Support,
+        orderId: null,
+        aiAutoReplyEnabled: false,
+        title: 'DR aloosh — Travel inquiry',
+        updatedAt: new Date(),
+      });
+
+    conversations.update = jest.fn().mockResolvedValue(undefined);
+    aiAutoReply.pauseForCustomerHandoff.mockResolvedValue({
+      ok: true,
+      conversationId: convId,
+      aiAutoReplyEnabled: false,
+      newlyPaused: true,
+    });
+    aiAutoReply.postConnectingNotice.mockResolvedValue({ id: 'msg-1' });
+
+    const actor = new AuthUser(customerId, 'sid', UserRole.Customer);
+    const result = await service.requestStaff(actor, convId, {
+      branch: 'Yiwu',
+      serviceKey: 'travel',
+    });
+
+    expect(users.findOne).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          email: 'temp.yiwu.secretary@obic.local',
+        }),
+      }),
+    );
+    expect(users.find).not.toHaveBeenCalled(); // no opsAccess auto-join on Yiwu
+    expect(result.desk).toBe('secretary');
+    expect(result.staffMemberIds).toEqual([deskId]);
+    expect(conversations.update).toHaveBeenCalledWith(
+      convId,
+      expect.objectContaining({
+        title: expect.stringContaining('DR aloosh'),
+      }),
+    );
   });
 
   it('support: routes Guangzhou + business → branchmgr desk', async () => {
@@ -222,10 +303,11 @@ describe('ChatService.requestStaff', () => {
         kind: ConversationKind.Support,
         orderId: null,
         aiAutoReplyEnabled: false,
-        title: null,
+        title: 'Ali — Business inquiry',
         updatedAt: new Date(),
       });
 
+    conversations.update = jest.fn().mockResolvedValue(undefined);
     aiAutoReply.pauseForCustomerHandoff.mockResolvedValue({
       ok: true,
       conversationId: convId,
@@ -331,10 +413,11 @@ describe('ChatService.requestStaff', () => {
         kind: ConversationKind.Order,
         orderId,
         aiAutoReplyEnabled: false,
-        title: 'Order X',
+        title: 'Ali — Visa inquiry',
         updatedAt: new Date(),
       });
 
+    conversations.update = jest.fn().mockResolvedValue(undefined);
     aiAutoReply.pauseForCustomerHandoff.mockResolvedValue({
       ok: true,
       conversationId: convId,

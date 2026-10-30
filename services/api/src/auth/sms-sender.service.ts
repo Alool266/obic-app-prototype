@@ -6,6 +6,11 @@ import { createHmac, createHash, randomUUID } from 'crypto';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { MailSenderService } from './mail-sender.service';
+import {
+  normalizeSmsMobile,
+  smsCountryOf,
+  type SmsCountry,
+} from './sms-phone.util';
 
 export type SmsDeliveryVia =
   | 'sms'
@@ -48,21 +53,28 @@ export class SmsSenderService {
     backupEmail?: string | null;
     locale?: string | null;
   }): Promise<SmsDeliveryResult> {
-    const providersConfigured =
-      this.aliyunConfigured() ||
-      this.tencentConfigured() ||
-      this.twilioConfigured();
+    const phone = normalizeSmsMobile(opts.toPhone) ?? opts.toPhone;
+    const country = smsCountryOf(phone);
+    const attempts =
+      country === 'CN'
+        ? [
+            () => this.tryAliyun(phone, opts.code),
+            () => this.tryTencent(phone, opts.code),
+            () => this.tryTwilio(phone, opts.code),
+          ]
+        : country === 'SA' || country === 'YE'
+          ? [
+              () => this.tryAliyunGlobe(phone, opts.code, opts.locale),
+              () => this.tryTwilio(phone, opts.code),
+            ]
+          : [];
 
-    for (const trySend of [
-      () => this.tryAliyun(opts.toPhone, opts.code),
-      () => this.tryTencent(opts.toPhone, opts.code),
-      () => this.tryTwilio(opts.toPhone, opts.code),
-    ]) {
+    for (const trySend of attempts) {
       const result = await trySend();
       if (result?.ok) return result;
     }
 
-    if (providersConfigured) {
+    if (this.destinationReady(country)) {
       return {
         ok: false,
         error: 'SMS_SEND_FAILED',
@@ -100,12 +112,35 @@ export class SmsSenderService {
     };
   }
 
+  /** A provider that can actually reach this country. */
+  private destinationReady(country: SmsCountry | null): boolean {
+    if (country === 'CN') {
+      return (
+        this.aliyunConfigured() ||
+        this.tencentConfigured() ||
+        this.twilioConfigured()
+      );
+    }
+    if (country === 'SA' || country === 'YE') {
+      return this.aliyunGlobeConfigured() || this.twilioConfigured();
+    }
+    return false;
+  }
+
   private aliyunConfigured(): boolean {
     return Boolean(
       this.cfg('ALIYUN_SMS_ACCESS_KEY_ID') &&
         this.cfg('ALIYUN_SMS_ACCESS_KEY_SECRET') &&
         this.cfg('ALIYUN_SMS_SIGN_NAME') &&
         this.cfg('ALIYUN_SMS_TEMPLATE_CODE'),
+    );
+  }
+
+  private aliyunGlobeConfigured(): boolean {
+    return Boolean(
+      this.cfg('ALIYUN_SMS_ACCESS_KEY_ID') &&
+        this.cfg('ALIYUN_SMS_ACCESS_KEY_SECRET') &&
+        this.cfg('ALIYUN_SMS_GLOBE_FROM'),
     );
   }
 
@@ -152,6 +187,7 @@ export class SmsSenderService {
       return null;
     }
 
+    if (smsCountryOf(normalizeSmsMobile(toPhone) ?? '') !== 'CN') return null;
     const { local } = this.cnLocalOrE164(toPhone);
     const templateParamKey =
       this.cfg('ALIYUN_SMS_TEMPLATE_PARAM_KEY') || 'code';
@@ -227,6 +263,7 @@ export class SmsSenderService {
       return null;
     }
 
+    if (smsCountryOf(normalizeSmsMobile(toPhone) ?? '') !== 'CN') return null;
     const { e164 } = this.cnLocalOrE164(toPhone);
     const region = this.cfg('TENCENT_SMS_REGION') || 'ap-guangzhou';
     const host = 'sms.tencentcloudapi.com';
@@ -322,6 +359,79 @@ export class SmsSenderService {
       this.log.error(`Tencent SMS error: ${String(e)}`);
       return { ok: false, error: String(e), code: 'SMS_SEND_FAILED' };
     }
+  }
+
+  /** Aliyun international SMS. Domestic 短信 cannot reach +966 or +967. */
+  private async tryAliyunGlobe(
+    toPhone: string,
+    code: string,
+    locale?: string | null,
+  ): Promise<SmsDeliveryResult | null> {
+    const accessKeyId = this.cfg('ALIYUN_SMS_ACCESS_KEY_ID');
+    const accessKeySecret = this.cfg('ALIYUN_SMS_ACCESS_KEY_SECRET');
+    const from = this.cfg('ALIYUN_SMS_GLOBE_FROM');
+    if (!accessKeyId || !accessKeySecret || !from) return null;
+    const country = smsCountryOf(normalizeSmsMobile(toPhone) ?? '');
+    if (country !== 'SA' && country !== 'YE') return null;
+
+    const to = toPhone.replace(/[^\d]/g, '');
+    const message = this.globeMessage(code, locale);
+    try {
+      const params: Record<string, string> = {
+        AccessKeyId: accessKeyId,
+        Action: 'SendMessageToGlobe',
+        Format: 'JSON',
+        From: from,
+        Message: message,
+        SignatureMethod: 'HMAC-SHA1',
+        SignatureNonce: randomUUID(),
+        SignatureVersion: '1.0',
+        Timestamp: new Date().toISOString().replace(/\.\d{3}Z$/, 'Z'),
+        To: to,
+        Type: 'OTP',
+        Version: '2017-05-25',
+      };
+      const canonical = Object.keys(params)
+        .sort()
+        .map(
+          (k) =>
+            `${this.percentEncode(k)}=${this.percentEncode(params[k])}`,
+        )
+        .join('&');
+      const stringToSign = `GET&${this.percentEncode('/')}&${this.percentEncode(canonical)}`;
+      const signature = createHmac('sha1', `${accessKeySecret}&`)
+        .update(stringToSign)
+        .digest('base64');
+      const url = `https://dysmsapi.aliyuncs.com/?${canonical}&Signature=${this.percentEncode(signature)}`;
+      const res = await fetch(url, { method: 'GET' });
+      const body = (await res.json()) as {
+        Code?: string;
+        Message?: string;
+      };
+      if (body.Code === 'OK') {
+        return { ok: true, via: 'sms' };
+      }
+      this.log.error(
+        `Aliyun international SMS failed: ${body.Code ?? res.status} ${body.Message ?? ''}`.slice(
+          0,
+          200,
+        ),
+      );
+      return {
+        ok: false,
+        error: body.Message ?? 'Aliyun international SMS failed',
+        code: 'SMS_SEND_FAILED',
+      };
+    } catch (e) {
+      this.log.error(`Aliyun international SMS error: ${String(e)}`);
+      return { ok: false, error: String(e), code: 'SMS_SEND_FAILED' };
+    }
+  }
+
+  private globeMessage(code: string, locale?: string | null): string {
+    if (locale === 'ar') return `رمز OBIC: ${code}. صالح 10 دقائق.`;
+    if (locale === 'zh') return `OBIC 验证码 ${code}，10分钟内有效。`;
+    return `OBIC code ${code}. Valid for 10 minutes.`;
   }
 
   private async tryTwilio(

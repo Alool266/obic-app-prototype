@@ -2,10 +2,14 @@
 // WeChat Moments visibility ACL unit tests.
 
 import {
+  MOMENT_VISIBILITY_EXCLUDE,
   MOMENT_VISIBILITY_FRIENDS,
+  MOMENT_VISIBILITY_PARTIAL,
+  MOMENT_VISIBILITY_PRIVATE,
   MOMENT_VISIBILITY_PUBLIC,
   canViewerSeeMoment,
   isMomentPublic,
+  momentNotifyAudienceIds,
   momentVisibilityForRole,
 } from './moment-visibility';
 
@@ -67,5 +71,90 @@ describe('moment visibility (WeChat 朋友圈)', () => {
     expect(
       isMomentPublic({ visibility: MOMENT_VISIBILITY_FRIENDS, notifyAll: true }),
     ).toBe(true);
+  });
+
+  it('private — author only', () => {
+    const m = {
+      authorId: 'a',
+      visibility: MOMENT_VISIBILITY_PRIVATE,
+    };
+    expect(canViewerSeeMoment(m, 'a', new Set())).toBe(true);
+    expect(canViewerSeeMoment(m, 'friend', new Set(['a']))).toBe(false);
+  });
+
+  it('partial — only allowed friends', () => {
+    const m = {
+      authorId: 'a',
+      visibility: MOMENT_VISIBILITY_PARTIAL,
+      allowedUserIds: ['b'],
+    };
+    expect(canViewerSeeMoment(m, 'b', new Set(['a']))).toBe(true);
+    expect(canViewerSeeMoment(m, 'c', new Set(['a']))).toBe(false);
+    expect(canViewerSeeMoment(m, 'a', new Set())).toBe(true);
+  });
+
+  it('exclude — friends except denied', () => {
+    const m = {
+      authorId: 'a',
+      visibility: MOMENT_VISIBILITY_EXCLUDE,
+      deniedUserIds: ['c'],
+    };
+    expect(canViewerSeeMoment(m, 'b', new Set(['a']))).toBe(true);
+    expect(canViewerSeeMoment(m, 'c', new Set(['a']))).toBe(false);
+  });
+
+  it('mute (不看他) hides non-public from muted author', () => {
+    const m = {
+      authorId: 'a',
+      visibility: MOMENT_VISIBILITY_FRIENDS,
+    };
+    expect(
+      canViewerSeeMoment(m, 'b', new Set(['a']), {
+        mutedAuthorIds: new Set(['a']),
+      }),
+    ).toBe(false);
+    // Author still sees own.
+    expect(
+      canViewerSeeMoment(m, 'a', new Set(), {
+        mutedAuthorIds: new Set(['a']),
+      }),
+    ).toBe(true);
+  });
+
+  it('hide-from (不让他看) blocks viewer', () => {
+    const m = {
+      authorId: 'a',
+      visibility: MOMENT_VISIBILITY_FRIENDS,
+    };
+    expect(
+      canViewerSeeMoment(m, 'b', new Set(['a']), {
+        authorsHidingViewer: new Set(['a']),
+      }),
+    ).toBe(false);
+  });
+
+  it('notify audience respects privacy modes', () => {
+    expect(
+      momentNotifyAudienceIds(MOMENT_VISIBILITY_PRIVATE, ['b', 'c'], [], []),
+    ).toEqual([]);
+    expect(
+      momentNotifyAudienceIds(
+        MOMENT_VISIBILITY_PARTIAL,
+        ['b', 'c'],
+        ['b'],
+        [],
+      ),
+    ).toEqual(['b']);
+    expect(
+      momentNotifyAudienceIds(
+        MOMENT_VISIBILITY_EXCLUDE,
+        ['b', 'c'],
+        [],
+        ['c'],
+      ),
+    ).toEqual(['b']);
+    expect(
+      momentNotifyAudienceIds(MOMENT_VISIBILITY_PUBLIC, ['b'], [], []),
+    ).toBe('all');
   });
 });

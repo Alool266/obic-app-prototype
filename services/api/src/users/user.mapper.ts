@@ -16,9 +16,15 @@ export interface PublicUser {
   /** Desk title — display only; privilege is still `role`. */
   staffTitle: string | null;
   branchLabel: string | null;
+  /** Company directory department. Null when unassigned. */
+  departmentId: string | null;
   avatarUrl: string | null;
   city: string | null;
   country: string | null;
+  /** male | female | other | null */
+  gender: string | null;
+  /** What's Up / signature. */
+  whatsUp: string | null;
   /** WeChat-style vanity ID (lowercase). Null until first set. */
   obicId: string | null;
   /** When OBIC ID was last set/changed. */
@@ -27,6 +33,8 @@ export interface PublicUser {
   obicIdNextChangeAt: Date | null;
   /** Moments album cover URL. */
   momentsCoverUrl: string | null;
+  /** Vertical cover focus (−1…1). */
+  momentsCoverFocusY: number;
   /**
    * Stored Ops flag. Clients: SuperAdmin always may open Ops;
    * Employees only when this is true. Customers never.
@@ -64,14 +72,19 @@ export function toPublicUser(user: User): PublicUser {
     role: user.role,
     staffTitle: user.staffTitle ?? null,
     branchLabel: user.branchLabel ?? null,
+    departmentId: user.departmentId ?? null,
     avatarUrl: user.avatarUrl ?? null,
     city: user.city ?? null,
     country: user.country ?? null,
+    gender: user.gender ?? null,
+    whatsUp: user.whatsUp ?? null,
     obicId: user.obicId ?? null,
     obicIdChangedAt: changedAt,
     obicIdNextChangeAt:
       nextAt && nextAt.getTime() > now ? nextAt : null,
     momentsCoverUrl: user.momentsCoverUrl ?? null,
+    momentsCoverFocusY:
+      typeof user.momentsCoverFocusY === 'number' ? user.momentsCoverFocusY : 0,
     opsAccess: Boolean(user.opsAccess),
     offersAccess: Boolean(user.offersAccess),
     emailVerified: Boolean(user.emailVerifiedAt),

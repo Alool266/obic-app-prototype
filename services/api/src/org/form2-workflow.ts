@@ -21,8 +21,10 @@ export const FORM2_WORKFLOW_RULES: Form2WorkflowRule[] = [
     id: 1,
     questionEn: 'Can the employee change order status alone?',
     questionAr: 'هل الموظف يغيّر حالة الطلب بنفسه؟',
-    answerEn: 'Yes — when assigned to that order.',
-    answerAr: 'نعم — إذا كان معيّناً على ذلك الطلب.',
+    answerEn:
+      'Yiwu: only the branch Secretary (SuperAdmin override). Other branches: assigned employee.',
+    answerAr:
+      'إيوو: سكرتير الفرع فقط (والمشرف الأعلى يستثنى). الفروع الأخرى: الموظف المعيّن على الطلب.',
   },
   {
     id: 2,
@@ -134,7 +136,76 @@ export type StaffAclUser = {
   role: UserRole;
   staffTitle: string | null;
   branchLabel: string | null;
+  /** Optional — seed emails like temp.yiwu.secretary@obic.local. */
+  email?: string | null;
 };
+
+/** Hard-block message when a non-Secretary tries to change Yiwu status. */
+export const SECRETARY_STATUS_FORBIDDEN =
+  'Only the Secretary can update status';
+
+/** Desk title matches Secretary (EN / AR), including Secretary (GM). */
+export function isSecretaryTitle(
+  staffTitle: string | null | undefined,
+): boolean {
+  const raw = (staffTitle ?? '').trim();
+  if (!raw) return false;
+  const t = raw.toLowerCase();
+  if (t.includes('secretary')) return true;
+  if (/سكرتير/.test(raw) || /سكرتاري/.test(raw)) return true;
+  return false;
+}
+
+/** Seed / live secretary desk email pattern. */
+export function isSecretaryEmail(email: string | null | undefined): boolean {
+  const e = (email ?? '').trim().toLowerCase();
+  if (!e) return false;
+  return /(^|\.)secretary@/.test(e) || e.includes('.secretary@');
+}
+
+/** Yiwu service-order / support branch (boss Secretary-first scope). */
+export function isYiwuRequestBranch(
+  preferredBranch: string | null | undefined,
+): boolean {
+  return (preferredBranch ?? '').trim().toLowerCase() === 'yiwu';
+}
+
+/**
+ * Yiwu Secretary desk: title or email matches secretary, and branch is Yiwu
+ * (or seed email is temp.yiwu.secretary@…).
+ */
+export function isYiwuSecretary(user: StaffAclUser): boolean {
+  if (user.role !== UserRole.Employee && user.role !== UserRole.SuperAdmin) {
+    return false;
+  }
+  const desk =
+    isSecretaryTitle(user.staffTitle) || isSecretaryEmail(user.email);
+  if (!desk) return false;
+  const branch = (user.branchLabel ?? '').trim().toLowerCase();
+  if (branch === 'yiwu') return true;
+  const email = (user.email ?? '').trim().toLowerCase();
+  if (email.includes('.yiwu.secretary@')) return true;
+  return false;
+}
+
+/**
+ * Who may change customer-visible order status.
+ * - SuperAdmin: always (ops escape hatch).
+ * - Yiwu requests: Yiwu Secretary only (assignee alone is not enough).
+ * - Other branches: Form2 rule 1 — assigned employee.
+ */
+export function canUpdateOrderStatus(
+  user: StaffAclUser,
+  order: { preferredBranch: string | null },
+  opts: { assignedToSelf: boolean },
+): boolean {
+  if (user.role === UserRole.SuperAdmin) return true;
+  if (user.role !== UserRole.Employee) return false;
+  if (isYiwuRequestBranch(order.preferredBranch)) {
+    return isYiwuSecretary(user);
+  }
+  return opts.assignedToSelf;
+}
 
 /** Off-duty reassignment ACL (rule 4). SuperAdmin always. */
 export function canReassignOrders(user: StaffAclUser): boolean {

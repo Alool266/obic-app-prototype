@@ -14,6 +14,7 @@ import { AdminTotpController } from './admin-totp.controller';
 import { AdminTotpService } from './admin-totp.service';
 import { AdminService } from './admin.service';
 import { TotpModule } from '../auth/totp/totp.module';
+import { DirectoryModule } from '../directory/directory.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { TotpModule } from '../auth/totp/totp.module';
     OrdersModule,
     NotificationsModule,
     AiModule,
+    DirectoryModule,
   ],
   controllers: [AdminController, AdminTotpController],
   providers: [AdminService, AdminTotpService],

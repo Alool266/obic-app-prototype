@@ -11,6 +11,7 @@ import { OffersService } from '../offers/offers.service';
 import { ServicesService } from '../services/services.service';
 import { User } from '../users/user.entity';
 import { OrderChatService } from './order-chat.service';
+import { AiAutoReplyService } from '../ai/ai-auto-reply.service';
 import { Order, OrderStatus } from './order.entity';
 import { OrdersService } from './orders.service';
 
@@ -71,6 +72,10 @@ describe('OrdersService.create with offerId', () => {
         { provide: OffersService, useValue: offersService },
         { provide: NotificationsService, useValue: notifications },
         { provide: OrderChatService, useValue: orderChat },
+        {
+          provide: AiAutoReplyService,
+          useValue: { generateAndPostHandoffSummary: jest.fn() },
+        },
       ],
     }).compile();
     service = module.get(OrdersService);
@@ -121,12 +126,11 @@ describe('OrdersService.create with offerId', () => {
       titleEn: 'Canton Hotel',
       titleAr: 'فندق',
     });
-    usersRepo.find.mockResolvedValue([
-      { id: 'sa-1', role: UserRole.SuperAdmin, offersAccess: false },
-      { id: 'emp-offers', role: UserRole.Employee, offersAccess: true },
-      { id: 'emp-plain', role: UserRole.Employee, offersAccess: false },
-      { id: 'cust-1', role: UserRole.Customer, offersAccess: false },
-    ]);
+    usersRepo.findOne.mockResolvedValue({
+      id: 'sec-1',
+      role: UserRole.Employee,
+      email: 'temp.yiwu.secretary@obic.local',
+    });
 
     const actor = new AuthUser('cust-1', 'sid', UserRole.Customer);
     await service.create(actor, { serviceId, offerId });
@@ -137,7 +141,7 @@ describe('OrdersService.create with offerId', () => {
       return data?.type === 'offer_request';
     })?.[0] as { userIds: string[]; kind: string; data: { orderId: string } };
     expect(offerCall).toBeTruthy();
-    expect(offerCall.userIds.sort()).toEqual(['emp-offers', 'sa-1']);
+    expect(offerCall.userIds).toEqual(['sec-1']);
     expect(offerCall.kind).toBe('order_created');
     expect(offerCall.data.orderId).toBe('order-1');
   });

@@ -5,10 +5,10 @@
 import { IsEmail, IsIn, IsOptional, IsString, Matches } from 'class-validator';
 
 export class StartPhoneVerifyDto {
-  /** China mainland mobile only (+86 / 1[3-9]xxxxxxxxx). */
+  /** China +86, Saudi Arabia +966, or Yemen +967 mobile. */
   @IsString()
-  @Matches(/^(?:\+?86)?1[3-9]\d{9}$/, {
-    message: 'Phone verification supports China numbers only for now',
+  @Matches(/^(?:\+?86)?1[3-9]\d{9}$|^(?:\+?966)?0?5\d{8}$|^(?:\+?967)?0?7\d{8}$/, {
+    message: 'SMS_PHONE_COUNTRIES',
   })
   phone!: string;
 

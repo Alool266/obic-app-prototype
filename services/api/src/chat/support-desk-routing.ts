@@ -12,6 +12,14 @@ import {
 export const DEFAULT_SUPPORT_BRANCH = 'Yiwu';
 
 /**
+ * Boss rule (Yiwu first): handoffs go to Secretary only; she invites desks.
+ * Other branches keep service→desk routing.
+ */
+export function isSecretaryFirstBranch(branch: string | null | undefined): boolean {
+  return (branch ?? '').trim().toLowerCase() === 'yiwu';
+}
+
+/**
  * Support queue desk key — secretary handles general client service / docs.
  * Aligns with order-routing fallback (`SERVICE_DESK` default).
  */

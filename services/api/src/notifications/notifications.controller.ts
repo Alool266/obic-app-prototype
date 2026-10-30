@@ -3,6 +3,7 @@
 
 import {
   Controller,
+  Delete,
   Get,
   Param,
   ParseUUIDPipe,
@@ -50,5 +51,14 @@ export class NotificationsController {
     @Param('id', ParseUUIDPipe) id: string,
   ) {
     return this.notifications.markRead(actor, id);
+  }
+
+  /** Remove inbox row (open-chat race cleanup). */
+  @Delete(':id')
+  dismiss(
+    @CurrentUser() actor: AuthUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.notifications.dismiss(actor, id);
   }
 }

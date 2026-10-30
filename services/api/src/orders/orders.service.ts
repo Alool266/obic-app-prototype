@@ -24,17 +24,23 @@ import {
   NotificationKind,
 } from '../notifications/notification.entity';
 import { NotificationsService } from '../notifications/notifications.service';
+import { customerAlertDeskEmail } from '../notifications/customer-alert-routing';
 import { OffersService } from '../offers/offers.service';
 import { ServicesService } from '../services/services.service';
 import { User } from '../users/user.entity';
-import { canManageOffers } from '../users/user.mapper';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { Order, OrderStatus } from './order.entity';
 import { OrderChatService } from './order-chat.service';
 import {
   branchEmailDesk,
-  deskKeyForServiceSlug,
+  deskKeyForBranchAndService,
 } from './order-routing';
+import { isSecretaryFirstBranch } from '../chat/support-desk-routing';
+import {
+  formatHandoffTitle,
+  requestTopicLabel,
+} from '../chat/handoff-title';
+import { AiAutoReplyService } from '../ai/ai-auto-reply.service';
 
 const DEFAULT_BRANCH = 'Yiwu';
 
@@ -58,6 +64,7 @@ export class OrdersService {
     private readonly offersService: OffersService,
     private readonly notifications: NotificationsService,
     private readonly orderChat: OrderChatService,
+    private readonly aiAutoReply: AiAutoReplyService,
   ) {}
 
   async create(actor: AuthUser, dto: CreateOrderDto) {
@@ -83,6 +90,11 @@ export class OrdersService {
       offerTitleAr = offer.titleAr;
     }
 
+    const customer = await this.usersRepo.findOne({
+      where: { id: actor.userId },
+      select: ['id', 'name'],
+    });
+
     const order = this.ordersRepo.create({
       userId: actor.userId,
       serviceId: service.id,
@@ -106,13 +118,40 @@ export class OrdersService {
     }
 
     const saved = await this.ordersRepo.save(order);
-    const conversationId = await this.orderChat.ensureForOrder(saved);
+
+    const topic = requestTopicLabel({
+      serviceKey: service.slug,
+      serviceName: saved.subServiceNameEn ?? service.nameEn,
+      note: saved.notes,
+    });
+    const title = formatHandoffTitle(customer?.name, topic);
+
+    const conversationId = await this.orderChat.ensureForOrder(saved, {
+      title,
+    });
     if (saved.assignedEmployeeId && saved.status === OrderStatus.Assigned) {
       await this.orderChat.postStatusNote(
         conversationId,
         saved.assignedEmployeeId,
         OrderStatus.Assigned,
       );
+    }
+
+    // Yiwu: Secretary briefing on Path A create (same briefing as Talk to staff).
+    if (isSecretaryFirstBranch(branch)) {
+      try {
+        await this.aiAutoReply.generateAndPostHandoffSummary({
+          conversationId,
+          customerUserId: actor.userId,
+          customerName: customer?.name,
+          branch,
+          serviceKey: service.slug,
+          note: saved.notes,
+          requestLabel: topic,
+        });
+      } catch {
+        // Soft-fail — order already created.
+      }
     }
 
     await this.notifyOrderStaff({
@@ -141,12 +180,12 @@ export class OrdersService {
     return this.toDto(saved, service.slug, conversationId);
   }
 
-  /** Pick branch desk employee for the service category. */
+  /** Pick branch desk employee for the service category. Yiwu → Secretary. */
   private async resolveAssignee(
     serviceSlug: string,
     branch: string,
   ): Promise<string | null> {
-    const deskKey = deskKeyForServiceSlug(serviceSlug);
+    const deskKey = deskKeyForBranchAndService(branch, serviceSlug);
     const primaryEmail = branchEmailDesk(branch, deskKey);
 
     let emp = await this.usersRepo.findOne({
@@ -155,7 +194,10 @@ export class OrdersService {
 
     if (
       !emp &&
-      (serviceSlug === 'hotels' || serviceSlug === 'flights' || serviceSlug === 'vip')
+      !isSecretaryFirstBranch(branch) &&
+      (serviceSlug === 'hotels' ||
+        serviceSlug === 'flights' ||
+        serviceSlug === 'vip')
     ) {
       emp = await this.usersRepo.findOne({
         where: {
@@ -175,7 +217,7 @@ export class OrdersService {
     return emp?.id ?? null;
   }
 
-  /** Notify SuperAdmins + assigned employee when a customer submits a form. */
+  /** Notify the configured desk (default: Yiwu Secretary). Never the customer. */
   private async notifyOrderStaff(opts: {
     orderId: string;
     serviceSlug: string;
@@ -187,29 +229,13 @@ export class OrdersService {
     assignedEmployeeId: string | null;
     hasOffer: boolean;
   }) {
-    const superAdmins = await this.usersRepo.find({
-      where: { role: UserRole.SuperAdmin },
-    });
-    const ids = new Set<string>();
-    for (const sa of superAdmins) {
-      if (sa.id !== opts.customerUserId) ids.add(sa.id);
-    }
-    if (
-      opts.assignedEmployeeId &&
-      opts.assignedEmployeeId !== opts.customerUserId
-    ) {
-      ids.add(opts.assignedEmployeeId);
-    }
-    if (!ids.size) return;
-
     const labelEn =
       opts.subServiceNameEn ?? opts.serviceNameEn ?? opts.serviceSlug;
     const labelAr =
       opts.subServiceNameAr ?? opts.serviceNameAr ?? opts.serviceSlug;
-
-    await this.notifications.createForUsers({
-      userIds: [...ids],
-      kind: NotificationKind.OrderCreated,
+    await this.alertConfiguredDesk({
+      action: 'order',
+      customerUserId: opts.customerUserId,
       title: 'New service request',
       body: `Customer submitted: ${labelEn}`,
       data: {
@@ -382,7 +408,7 @@ export class OrdersService {
   }
 
   /**
-   * Notify SuperAdmins + Employees with offersAccess (canManageOffers).
+   * Hotel/flight offer request. Same configured desk as other customer actions.
    * Customer who placed the order is never included.
    */
   private async notifyOffersStaff(opts: {
@@ -393,22 +419,10 @@ export class OrdersService {
     offerTitleAr: string;
     customerUserId: string;
   }) {
-    const staff = await this.usersRepo.find({
-      where: [
-        { role: UserRole.SuperAdmin },
-        { role: UserRole.Employee, offersAccess: true },
-      ],
-    });
-    const ids = staff
-      .filter((u) => canManageOffers(u) && u.id !== opts.customerUserId)
-      .map((u) => u.id);
-    if (!ids.length) return;
-
-    const kindLabel =
-      opts.serviceSlug === 'flights' ? 'flight' : 'hotel';
-    await this.notifications.createForUsers({
-      userIds: ids,
-      kind: NotificationKind.OrderCreated,
+    const kindLabel = opts.serviceSlug === 'flights' ? 'flight' : 'hotel';
+    await this.alertConfiguredDesk({
+      action: 'offer',
+      customerUserId: opts.customerUserId,
       title: `New ${kindLabel} offer request`,
       body: `Customer requested: ${opts.offerTitleEn}`,
       data: {
@@ -419,6 +433,27 @@ export class OrdersService {
         titleAr: opts.offerTitleAr,
         titleEn: opts.offerTitleEn,
       },
+    });
+  }
+
+  private async alertConfiguredDesk(opts: {
+    action: 'order' | 'offer';
+    customerUserId: string;
+    title: string;
+    body: string;
+    data: Record<string, unknown>;
+  }) {
+    const email = customerAlertDeskEmail(opts.action);
+    const user = await this.usersRepo.findOne({
+      where: { email, role: UserRole.Employee },
+    });
+    if (!user || user.id === opts.customerUserId) return;
+    await this.notifications.createForUsers({
+      userIds: [user.id],
+      kind: NotificationKind.OrderCreated,
+      title: opts.title,
+      body: opts.body,
+      data: opts.data,
     });
   }
 

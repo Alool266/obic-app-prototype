@@ -1,5 +1,5 @@
 // Made by Dr Ali
-// Create moment — text and/or multi media (WeChat-style).
+// Create moment — text and/or multi media (WeChat-style) + privacy.
 
 import { Type } from 'class-transformer';
 import {
@@ -10,10 +10,12 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  IsUUID,
   MaxLength,
   ValidateIf,
   ValidateNested,
 } from 'class-validator';
+import { MOMENT_VISIBILITY_VALUES } from '../moment-visibility';
 
 export class MomentMediaDto {
   @IsIn(['image', 'video', 'file'])
@@ -58,4 +60,26 @@ export class CreateMomentDto {
   @ValidateNested({ each: true })
   @Type(() => MomentMediaDto)
   media?: MomentMediaDto[];
+
+  /**
+   * WeChat privacy: friends | private | partial | exclude.
+   * Staff may also use public. Customers cannot set public.
+   */
+  @IsOptional()
+  @IsIn([...MOMENT_VISIBILITY_VALUES])
+  visibility?: (typeof MOMENT_VISIBILITY_VALUES)[number];
+
+  /** Required when visibility=partial — specific friends who can see. */
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(500)
+  @IsUUID('4', { each: true })
+  allowedUserIds?: string[];
+
+  /** Required when visibility=exclude — friends who cannot see. */
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(500)
+  @IsUUID('4', { each: true })
+  deniedUserIds?: string[];
 }
