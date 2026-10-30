@@ -8,9 +8,11 @@ import {
   Param,
   ParseUUIDPipe,
   Post,
+  Put,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { IsBoolean } from 'class-validator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
 import { UserRole } from '../common/enums/user-role.enum';
@@ -20,6 +22,11 @@ import { AuthUser } from '../common/interfaces/auth-user.interface';
 import { RejectMiniAppDto } from './dto/mini-app.dto';
 import { MiniAppsService } from './mini-apps.service';
 
+class SetDeskMiniAppFlagDto {
+  @IsBoolean()
+  enabled!: boolean;
+}
+
 @ApiTags('admin-mini-apps')
 @ApiBearerAuth()
 @Controller('admin/mini-apps')
@@ -27,6 +34,22 @@ import { MiniAppsService } from './mini-apps.service';
 @Roles(UserRole.SuperAdmin)
 export class AdminMiniAppsController {
   constructor(private readonly miniApps: MiniAppsService) {}
+
+  @Get('desk-flags')
+  @ApiOperation({ summary: 'SuperAdmin: first-party mini-app enable/disable' })
+  deskFlags(@CurrentUser() actor: AuthUser) {
+    return this.miniApps.listDeskFlags(actor);
+  }
+
+  @Put('desk-flags/:appId')
+  @ApiOperation({ summary: 'SuperAdmin: toggle a first-party mini-app' })
+  setDeskFlag(
+    @CurrentUser() actor: AuthUser,
+    @Param('appId') appId: string,
+    @Body() dto: SetDeskMiniAppFlagDto,
+  ) {
+    return this.miniApps.setDeskFlag(actor, appId, dto.enabled);
+  }
 
   @Get()
   @ApiOperation({ summary: 'SuperAdmin: mini app review queue' })

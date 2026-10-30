@@ -78,6 +78,14 @@ export class MiniAppsController {
     return this.miniApps.listPublic();
   }
 
+  @Get('first-party-flags')
+  @ApiOperation({
+    summary: 'First-party mini-app enablement (Notes/Docs/hubs) for the shelf',
+  })
+  firstPartyFlags() {
+    return this.miniApps.listFirstPartyFlags();
+  }
+
   @Get(':id/files/*path')
   @ApiOperation({ summary: 'Hosted package file. Approved packages only.' })
   async approvedFile(

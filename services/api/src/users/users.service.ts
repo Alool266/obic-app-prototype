@@ -20,6 +20,7 @@ import { ChangeEmailDto } from './dto/change-email.dto';
 import { DeleteMeDto } from './dto/delete-me.dto';
 import { UpdateMeDto } from './dto/update-me.dto';
 import { UpdateAddressesDto } from './dto/update-addresses.dto';
+import { UpdateHomeLayoutDto } from './dto/update-home-layout.dto';
 import { decideObicIdChange } from './obic-id.util';
 import {
   canSuperAdminSelfDelete,
@@ -27,15 +28,31 @@ import {
 } from './superadmin-self-delete';
 import { UserAddress } from './user-address.interface';
 import { User } from './user.entity';
+import { UserHomeLayout } from './user-home-layout.entity';
 import { PublicUser, toPublicUser } from './user.mapper';
 
 const BCRYPT_ROUNDS = 12;
+
+export type MiniAppsLayoutPayload = {
+  order: string[];
+  favorites: string[];
+  hidden: string[];
+};
+
+export type HomeLayoutPayload = {
+  order: string[];
+  favorites: string[];
+  hidden: string[];
+  miniApps: MiniAppsLayoutPayload;
+};
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User)
     private readonly usersRepo: Repository<User>,
+    @InjectRepository(UserHomeLayout)
+    private readonly homeLayoutRepo: Repository<UserHomeLayout>,
   ) {}
 
   /** "Me" profile — never accept a client-supplied userId for this path. */
@@ -312,6 +329,105 @@ export class UsersService {
     user.deletedAt = new Date();
     await this.usersRepo.save(user);
     return { ok: true };
+  }
+
+  /** Home icon layout — empty arrays mean catalog defaults on the client. */
+  async getHomeLayout(actor: AuthUser): Promise<HomeLayoutPayload> {
+    const row = await this.homeLayoutRepo.findOne({
+      where: { userId: actor.userId },
+    });
+    if (!row) {
+      return {
+        order: [],
+        favorites: [],
+        hidden: [],
+        miniApps: { order: [], favorites: [], hidden: [] },
+      };
+    }
+    return {
+      order: this.normalizeSlugList(row.orderSlugs),
+      favorites: this.normalizeSlugList(row.favorites),
+      hidden: this.normalizeSlugList(row.hidden),
+      miniApps: {
+        order: this.normalizeSlugList(row.miniOrder),
+        favorites: this.normalizeSlugList(row.miniFavorites),
+        hidden: this.normalizeSlugList(row.miniHidden),
+      },
+    };
+  }
+
+  async putHomeLayout(
+    actor: AuthUser,
+    dto: UpdateHomeLayoutDto,
+  ): Promise<HomeLayoutPayload> {
+    const user = await this.usersRepo.findOne({ where: { id: actor.userId } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const order = this.normalizeSlugList(dto.order);
+    const hidden = this.normalizeSlugList(dto.hidden);
+    const hiddenSet = new Set(hidden);
+    const favorites = this.normalizeSlugList(dto.favorites).filter(
+      (slug) => !hiddenSet.has(slug),
+    );
+
+    let row = await this.homeLayoutRepo.findOne({
+      where: { userId: actor.userId },
+    });
+    if (!row) {
+      row = this.homeLayoutRepo.create({
+        userId: actor.userId,
+        orderSlugs: order,
+        favorites,
+        hidden,
+        miniOrder: [],
+        miniFavorites: [],
+        miniHidden: [],
+      });
+    } else {
+      row.orderSlugs = order;
+      row.favorites = favorites;
+      row.hidden = hidden;
+    }
+
+    if (dto.miniApps) {
+      const miniHidden = this.normalizeSlugList(dto.miniApps.hidden);
+      const miniHiddenSet = new Set(miniHidden);
+      row.miniOrder = this.normalizeSlugList(dto.miniApps.order);
+      row.miniFavorites = this.normalizeSlugList(dto.miniApps.favorites).filter(
+        (id) => !miniHiddenSet.has(id),
+      );
+      row.miniHidden = miniHidden;
+    }
+
+    await this.homeLayoutRepo.save(row);
+    return {
+      order,
+      favorites,
+      hidden,
+      miniApps: {
+        order: this.normalizeSlugList(row.miniOrder),
+        favorites: this.normalizeSlugList(row.miniFavorites),
+        hidden: this.normalizeSlugList(row.miniHidden),
+      },
+    };
+  }
+
+  private normalizeSlugList(raw: unknown): string[] {
+    if (!Array.isArray(raw)) return [];
+    const seen = new Set<string>();
+    const out: string[] = [];
+    for (const item of raw) {
+      if (typeof item !== 'string') continue;
+      const slug = item.trim().toLowerCase();
+      if (!slug || seen.has(slug)) continue;
+      if (!/^[a-z0-9][a-z0-9_-]{0,62}$/.test(slug)) continue;
+      seen.add(slug);
+      out.push(slug);
+      if (out.length >= 64) break;
+    }
+    return out;
   }
 
   /** Replace saved delivery addresses (max 20). */

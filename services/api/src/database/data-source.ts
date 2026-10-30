@@ -96,6 +96,13 @@ import { PriceVersions1765840000000 } from './migrations/1765840000000-PriceVers
 import { RegistrationApplications1765850000000 } from './migrations/1765850000000-RegistrationApplications';
 import { DocumentExtractions1765860000000 } from './migrations/1765860000000-DocumentExtractions';
 import { Vip1765870000000 } from './migrations/1765870000000-Vip';
+import { ActivateVipPrices1765900000000 } from './migrations/1765900000000-ActivateVipPrices';
+import { LogisticsTools1765910000000 } from './migrations/1765910000000-LogisticsTools';
+import { UserHomeLayout1765920000000 } from './migrations/1765920000000-UserHomeLayout';
+import { MiniAppsLayoutAndUserOffice1765930000000 } from './migrations/1765930000000-MiniAppsLayoutAndUserOffice';
+import { UserHomeLayout } from '../users/user-home-layout.entity';
+import { UserOfficeItem } from '../user-office/user-office-item.entity';
+import { DeskMiniAppFlag } from '../mini-apps/desk-mini-app-flag.entity';
 import { PriceVersion } from '../prices/price-version.entity';
 import { DocumentExtraction } from '../registration/document-extraction.entity';
 import { VipConsultation } from '../vip/vip-consultation.entity';
@@ -189,6 +196,9 @@ export default new DataSource({
       : undefined,
   entities: [
     User,
+    UserHomeLayout,
+    UserOfficeItem,
+    DeskMiniAppFlag,
     RefreshSession,
     Service,
     ServiceSub,
@@ -347,6 +357,10 @@ export default new DataSource({
     RegistrationApplications1765850000000,
     DocumentExtractions1765860000000,
     Vip1765870000000,
+    ActivateVipPrices1765900000000,
+    LogisticsTools1765910000000,
+    UserHomeLayout1765920000000,
+    MiniAppsLayoutAndUserOffice1765930000000,
   ],
   synchronize: false,
 });

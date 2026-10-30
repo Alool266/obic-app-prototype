@@ -12,8 +12,17 @@ import '../../core/media_url.dart';
 import '../../theme/obic_colors.dart';
 import '../../widgets/obic_logo.dart';
 import '../../widgets/script_text_field.dart';
+import '../africa_in_hand/africa_in_hand_page.dart';
+import '../auth/auth_controller.dart';
+import '../china_in_hand/china_in_hand_page.dart';
+import '../daily_life/daily_life_page.dart';
+import '../mideast_in_hand/mideast_in_hand_page.dart';
 import '../music/music_mark.dart';
 import '../music/music_screen.dart';
+import '../office/office_home_screen.dart';
+import '../travel_hub/travel_hub_page.dart';
+import '../yemen_in_hand/yemen_flag_icon.dart';
+import '../yemen_in_hand/yemen_in_hand_page.dart';
 import 'mini_app_engine_screen.dart';
 import 'mini_apps_api.dart';
 import 'mini_apps_arrange_screen.dart';
@@ -27,13 +36,127 @@ Future<void> openMiniAppEntry(
   BuildContext context,
   MiniAppEntry app, {
   String? displayName,
+  AuthController? authController,
 }) async {
-  if (app.native || app.id == kObicMusicMiniAppId) {
+  if (app.comingSoon) {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => const OfficeComingSoonScreen(),
+      ),
+    );
+    return;
+  }
+  if (app.id == kObicMusicMiniAppId) {
     await Navigator.of(context).push(
       MaterialPageRoute<void>(builder: (_) => const MusicScreen()),
     );
     return;
   }
+  final auth = authController;
+  final lang = Localizations.localeOf(context).languageCode;
+  if (app.id == kObicYemenMiniAppId) {
+    if (auth == null) return;
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => YemenInHandPage(
+          authController: auth,
+          langCode: lang,
+        ),
+      ),
+    );
+    return;
+  }
+  if (app.id == kObicChinaMiniAppId) {
+    if (auth == null) return;
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => ChinaInHandPage(
+          authController: auth,
+          langCode: lang,
+        ),
+      ),
+    );
+    return;
+  }
+  if (app.id == kObicMideastMiniAppId) {
+    if (auth == null) return;
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => MideastInHandPage(
+          authController: auth,
+          langCode: lang,
+        ),
+      ),
+    );
+    return;
+  }
+  if (app.id == kObicAfricaMiniAppId) {
+    if (auth == null) return;
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => AfricaInHandPage(
+          authController: auth,
+          langCode: lang,
+        ),
+      ),
+    );
+    return;
+  }
+  if (app.id == kObicDailyMiniAppId) {
+    if (auth == null) return;
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => DailyLifePage(
+          authController: auth,
+          langCode: lang,
+        ),
+      ),
+    );
+    return;
+  }
+  if (app.id == kObicTravelMiniAppId) {
+    if (auth == null) return;
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => TravelHubPage(
+          authController: auth,
+          langCode: lang,
+        ),
+      ),
+    );
+    return;
+  }
+  if (app.id == kObicNotesMiniAppId ||
+      app.id == kObicDocumentsMiniAppId ||
+      app.id == kObicSpreadsheetsMiniAppId ||
+      app.id == kObicPdfMiniAppId) {
+    if (auth == null) return;
+    final kind = switch (app.id) {
+      kObicNotesMiniAppId => 'note',
+      kObicDocumentsMiniAppId => 'document',
+      kObicSpreadsheetsMiniAppId => 'spreadsheet',
+      kObicPdfMiniAppId => 'pdf',
+      _ => 'note',
+    };
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => OfficeHomeScreen(
+          authController: auth,
+          kind: kind,
+        ),
+      ),
+    );
+    return;
+  }
+  if (app.id == kObicSlidesMiniAppId) {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => const OfficeComingSoonScreen(),
+      ),
+    );
+    return;
+  }
+  if (app.native) return;
   if (!app.canOpen) return;
   final startUrl = engineStartUrlFor(app);
   if (startUrl == null) return;
@@ -55,6 +178,7 @@ Future<void> openMiniAppsPanel(
   BuildContext context, {
   String? Function()? displayName,
   String? userId,
+  AuthController? authController,
 }) {
   return Navigator.of(context).push<void>(
     MaterialPageRoute<void>(
@@ -62,6 +186,7 @@ Future<void> openMiniAppsPanel(
       builder: (_) => MiniAppsStandalonePage(
         displayName: displayName,
         userId: userId,
+        authController: authController,
       ),
     ),
   );
@@ -89,12 +214,14 @@ class MiniAppsPullDownHost extends StatefulWidget {
     this.controller,
     this.displayName,
     this.userId,
+    this.authController,
   });
 
   final Widget child;
   final MiniAppsPullController? controller;
   final String? Function()? displayName;
   final String? userId;
+  final AuthController? authController;
 
   @override
   State<MiniAppsPullDownHost> createState() => _MiniAppsPullDownHostState();
@@ -121,8 +248,10 @@ class _MiniAppsPullDownHostState extends State<MiniAppsPullDownHost>
   String _query = '';
   bool _showTip = false;
   List<MiniAppEntry> _remote = const [];
+  Set<String> _disabledFirstParty = {};
   bool _catalogLoaded = false;
   MiniAppLayout _layout = MiniAppLayout.empty;
+  MiniAppGeo? _geoFocus;
 
   @override
   void initState() {
@@ -141,7 +270,9 @@ class _MiniAppsPullDownHostState extends State<MiniAppsPullDownHost>
   }
 
   Future<void> _loadLayout() async {
-    final layout = await MiniAppLayoutStore(widget.userId ?? 'guest').load();
+    final token = await widget.authController?.accessToken();
+    final layout = await MiniAppLayoutStore(widget.userId ?? 'guest')
+        .load(accessToken: token);
     if (!mounted) return;
     setState(() => _layout = layout);
   }
@@ -316,7 +447,14 @@ class _MiniAppsPullDownHostState extends State<MiniAppsPullDownHost>
   void _openApp(MiniAppEntry app) {
     final name = widget.displayName?.call();
     _snapClosed();
-    unawaited(openMiniAppEntry(context, app, displayName: name));
+    unawaited(
+      openMiniAppEntry(
+        context,
+        app,
+        displayName: name,
+        authController: widget.authController,
+      ),
+    );
   }
 
   List<MiniAppEntry> _catalog(BuildContext context) {
@@ -324,8 +462,13 @@ class _MiniAppsPullDownHostState extends State<MiniAppsPullDownHost>
     final site = obicWebsiteMiniApp(
       AppLocalizations.of(context).miniAppWebsiteName,
     );
-    final merged = mergeApprovedMiniApps(site, _remote);
-    return [merged.first, obicMusicMiniApp(lang), ...merged.skip(1)];
+    final first = [
+      obicMusicMiniApp(lang),
+      obicYemenInHandMiniApp(lang),
+      ...firstPartyProductivityAndHubs(lang),
+    ].where((a) => !_disabledFirstParty.contains(a.id)).toList();
+    final merged = mergeApprovedMiniApps(site, first, _remote);
+    return filterMiniAppsByGeo(merged, _geoFocus);
   }
 
   Future<void> _loadCatalog() async {
@@ -333,8 +476,24 @@ class _MiniAppsPullDownHostState extends State<MiniAppsPullDownHost>
     _catalogLoaded = true;
     try {
       final remote = await MiniAppsApi().listApproved();
+      Set<String> disabled = {};
+      try {
+        final flags = await MiniAppsApi().listFirstPartyFlags();
+        disabled = {
+          for (final row in flags)
+            if (row['enabled'] == false) (row['appId']?.toString() ?? ''),
+        }..remove('');
+      } catch (_) {}
+      final locale = WidgetsBinding.instance.platformDispatcher.locale;
+      final geo = geoFromLocaleOrCountry(
+        '${locale.countryCode ?? ''}_${locale.languageCode}',
+      );
       if (!mounted) return;
-      setState(() => _remote = remote);
+      setState(() {
+        _remote = remote;
+        _disabledFirstParty = disabled;
+        _geoFocus = geo;
+      });
     } catch (_) {
       // Trial API may not have this route yet. The website tile still opens.
     }
@@ -347,11 +506,13 @@ class _MiniAppsPullDownHostState extends State<MiniAppsPullDownHost>
 
   Future<void> _arrange(BuildContext context) async {
     final apps = _catalog(context);
+    final token = await widget.authController?.accessToken();
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => MiniAppsArrangeScreen(
           apps: apps,
           userId: widget.userId ?? 'guest',
+          accessToken: token,
         ),
       ),
     );
@@ -425,6 +586,8 @@ class _MiniAppsPullDownHostState extends State<MiniAppsPullDownHost>
                     onDragStart: _onPanelDragStart,
                     onDragUpdate: _onPanelDragUpdate,
                     onDragEnd: _onPanelDragEnd,
+                    partnerEmpty: _remote.isEmpty,
+                    query: _query,
                   ),
                 ),
               ),
@@ -594,6 +757,8 @@ class _MiniAppsPanelBody extends StatelessWidget {
     required this.onDragStart,
     required this.onDragUpdate,
     required this.onDragEnd,
+    this.partnerEmpty = false,
+    this.query = '',
   });
 
   final ValueChanged<String> onQueryChanged;
@@ -605,6 +770,8 @@ class _MiniAppsPanelBody extends StatelessWidget {
   final GestureDragStartCallback onDragStart;
   final GestureDragUpdateCallback onDragUpdate;
   final GestureDragEndCallback onDragEnd;
+  final bool partnerEmpty;
+  final String query;
 
   @override
   Widget build(BuildContext context) {
@@ -694,17 +861,44 @@ class _MiniAppsPanelBody extends StatelessWidget {
         Expanded(
           child: apps.isEmpty
               ? Center(
-                  child: Text(
-                    l10n.miniAppsEmptySearch,
-                    style: TextStyle(color: muted, fontSize: 13),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Text(
+                      l10n.miniAppsEmptySearch,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: muted, fontSize: 13),
+                    ),
                   ),
                 )
               : SingleChildScrollView(
                   padding: const EdgeInsets.fromLTRB(12, 4, 12, 4),
                   physics: const BouncingScrollPhysics(),
-                  child: _MiniAppsGrid(
-                    apps: apps,
-                    onTap: onOpen,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (partnerEmpty && query.trim().isEmpty)
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(4, 0, 4, 10),
+                          child: Text(
+                            Localizations.localeOf(context).languageCode == 'ar'
+                                ? 'لا تطبيقات شركاء معتمدة حالياً — موقع أوبك والموسيقى متاحان.'
+                                : Localizations.localeOf(context).languageCode ==
+                                        'zh'
+                                    ? '暂无合作小程序 — OBIC 官网与音乐仍可用。'
+                                    : 'No partner mini-apps approved yet — OBIC site, Music & Yemen stay available.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: muted,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      _MiniAppsGrid(
+                        apps: apps,
+                        onTap: onOpen,
+                      ),
+                    ],
                   ),
                 ),
         ),
@@ -798,37 +992,88 @@ class _MiniAppTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ink = ObicColors.inkOf(context);
+    final muted = ObicColors.mutedOf(context);
     final iconUrl = app.iconUrl;
     final resolved = iconUrl == null || iconUrl.isEmpty
         ? ''
         : resolveMediaUrl(iconUrl);
     final showNetwork = resolved.startsWith('https://');
+    final canTap = app.canOpen || app.comingSoon;
+
+    Widget mark;
+    if (app.id == kObicMusicMiniAppId) {
+      mark = const MusicMark(size: 52);
+    } else if (app.id == kObicYemenMiniAppId) {
+      mark = const _YemenMiniAppMark();
+    } else if (app.icon != null) {
+      mark = Container(
+        width: 52,
+        height: 52,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: ObicColors.blueSoftOf(context),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Icon(app.icon, color: ObicColors.blue, size: 28),
+      );
+    } else if (app.firstParty) {
+      mark = const ObicLogo(size: 52, borderRadius: 14);
+    } else {
+      mark = ClipRRect(
+        borderRadius: BorderRadius.circular(14),
+        child: SizedBox(
+          width: 52,
+          height: 52,
+          child: showNetwork
+              ? Image.network(
+                  resolved,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, _, _) => const _FallbackIcon(),
+                )
+              : const _FallbackIcon(),
+        ),
+      );
+    }
 
     return InkWell(
-      onTap: app.canOpen ? onTap : null,
+      onTap: canTap ? onTap : null,
       borderRadius: BorderRadius.circular(12),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 4),
         child: Column(
           children: [
-            app.id == kObicMusicMiniAppId
-                ? const MusicMark(size: 52)
-                : app.firstParty
-                ? const ObicLogo(size: 52, borderRadius: 14)
-                : ClipRRect(
-                    borderRadius: BorderRadius.circular(14),
-                    child: SizedBox(
-                      width: 52,
-                      height: 52,
-                      child: showNetwork
-                          ? Image.network(
-                              resolved,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, _, _) => const _FallbackIcon(),
-                            )
-                          : const _FallbackIcon(),
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                mark,
+                if (app.comingSoon)
+                  Positioned(
+                    right: -4,
+                    top: -4,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 4,
+                        vertical: 1,
+                      ),
+                      decoration: BoxDecoration(
+                        color: ObicColors.blue,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        Localizations.localeOf(context).languageCode
+                                .startsWith('ar')
+                            ? 'قريباً'
+                            : 'Soon',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 8,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
                     ),
                   ),
+              ],
+            ),
             const SizedBox(height: 7),
             Text(
               app.name,
@@ -836,7 +1081,7 @@ class _MiniAppTile extends StatelessWidget {
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                color: ink,
+                color: app.comingSoon ? muted : ink,
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
                 height: 1.2,
@@ -861,12 +1106,39 @@ class _FallbackIcon extends StatelessWidget {
   }
 }
 
+class _YemenMiniAppMark extends StatelessWidget {
+  const _YemenMiniAppMark();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 52,
+      height: 52,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: ObicColors.navy,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: const Color(0xFFE8D48B).withValues(alpha: 0.55),
+        ),
+      ),
+      child: const YemenFlagIcon(width: 34, height: 24, borderRadius: 3),
+    );
+  }
+}
+
 /// Full-screen mini-apps sheet for non-Home entry points (e.g. Discover).
 class MiniAppsStandalonePage extends StatefulWidget {
-  const MiniAppsStandalonePage({super.key, this.displayName, this.userId});
+  const MiniAppsStandalonePage({
+    super.key,
+    this.displayName,
+    this.userId,
+    this.authController,
+  });
 
   final String? Function()? displayName;
   final String? userId;
+  final AuthController? authController;
 
   @override
   State<MiniAppsStandalonePage> createState() => _MiniAppsStandalonePageState();
@@ -875,7 +1147,9 @@ class MiniAppsStandalonePage extends StatefulWidget {
 class _MiniAppsStandalonePageState extends State<MiniAppsStandalonePage> {
   String _query = '';
   List<MiniAppEntry> _remote = const [];
+  Set<String> _disabledFirstParty = {};
   MiniAppLayout _layout = MiniAppLayout.empty;
+  MiniAppGeo? _geoFocus;
 
   @override
   void initState() {
@@ -885,7 +1159,9 @@ class _MiniAppsStandalonePageState extends State<MiniAppsStandalonePage> {
   }
 
   Future<void> _loadLayout() async {
-    final layout = await MiniAppLayoutStore(widget.userId ?? 'guest').load();
+    final token = await widget.authController?.accessToken();
+    final layout = await MiniAppLayoutStore(widget.userId ?? 'guest')
+        .load(accessToken: token);
     if (!mounted) return;
     setState(() => _layout = layout);
   }
@@ -893,8 +1169,24 @@ class _MiniAppsStandalonePageState extends State<MiniAppsStandalonePage> {
   Future<void> _loadCatalog() async {
     try {
       final remote = await MiniAppsApi().listApproved();
+      Set<String> disabled = {};
+      try {
+        final flags = await MiniAppsApi().listFirstPartyFlags();
+        disabled = {
+          for (final row in flags)
+            if (row['enabled'] == false) (row['appId']?.toString() ?? ''),
+        }..remove('');
+      } catch (_) {}
+      final locale = WidgetsBinding.instance.platformDispatcher.locale;
+      final geo = geoFromLocaleOrCountry(
+        '${locale.countryCode ?? ''}_${locale.languageCode}',
+      );
       if (!mounted) return;
-      setState(() => _remote = remote);
+      setState(() {
+        _remote = remote;
+        _disabledFirstParty = disabled;
+        _geoFocus = geo;
+      });
     } catch (_) {}
   }
 
@@ -903,8 +1195,15 @@ class _MiniAppsStandalonePageState extends State<MiniAppsStandalonePage> {
     final site = obicWebsiteMiniApp(
       AppLocalizations.of(context).miniAppWebsiteName,
     );
-    final merged = mergeApprovedMiniApps(site, _remote);
-    return [merged.first, obicMusicMiniApp(lang), ...merged.skip(1)];
+    final first = [
+      obicMusicMiniApp(lang),
+      obicYemenInHandMiniApp(lang),
+      ...firstPartyProductivityAndHubs(lang),
+    ].where((a) => !_disabledFirstParty.contains(a.id)).toList();
+    return filterMiniAppsByGeo(
+      mergeApprovedMiniApps(site, first, _remote),
+      _geoFocus,
+    );
   }
 
   List<MiniAppEntry> _filtered(BuildContext context) {
@@ -920,6 +1219,7 @@ class _MiniAppsStandalonePageState extends State<MiniAppsStandalonePage> {
         context,
         app,
         displayName: widget.displayName?.call(),
+        authController: widget.authController,
       ),
     );
   }
@@ -936,11 +1236,13 @@ class _MiniAppsStandalonePageState extends State<MiniAppsStandalonePage> {
           apps: _filtered(context),
           onOpen: _openApp,
           onArrange: () async {
+            final token = await widget.authController?.accessToken();
             await Navigator.of(context).push(
               MaterialPageRoute<void>(
                 builder: (_) => MiniAppsArrangeScreen(
                   apps: _all(context),
                   userId: widget.userId ?? 'guest',
+                  accessToken: token,
                 ),
               ),
             );
@@ -953,6 +1255,8 @@ class _MiniAppsStandalonePageState extends State<MiniAppsStandalonePage> {
           onDragEnd: (d) {
             if ((d.primaryVelocity ?? 0) < -280) _close();
           },
+          partnerEmpty: _remote.isEmpty,
+          query: _query,
         ),
       ),
     );

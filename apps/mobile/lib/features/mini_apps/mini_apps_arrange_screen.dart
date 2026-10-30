@@ -12,10 +12,12 @@ class MiniAppsArrangeScreen extends StatefulWidget {
     super.key,
     required this.apps,
     required this.userId,
+    this.accessToken,
   });
 
   final List<MiniAppEntry> apps;
   final String userId;
+  final String? accessToken;
 
   @override
   State<MiniAppsArrangeScreen> createState() => _MiniAppsArrangeScreenState();
@@ -33,7 +35,7 @@ class _MiniAppsArrangeScreenState extends State<MiniAppsArrangeScreen> {
   }
 
   Future<void> _load() async {
-    final layout = await _store.load();
+    final layout = await _store.load(accessToken: widget.accessToken);
     if (!mounted) return;
     setState(() {
       _layout = layout;
@@ -51,7 +53,7 @@ class _MiniAppsArrangeScreenState extends State<MiniAppsArrangeScreen> {
       _layout = next;
       _visible = List.of(visible);
     });
-    await _store.save(next);
+    await _store.save(next, accessToken: widget.accessToken);
   }
 
   String _t(String en, String ar, String zh, String fr) {

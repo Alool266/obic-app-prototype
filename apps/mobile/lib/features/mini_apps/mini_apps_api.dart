@@ -64,6 +64,19 @@ class MiniAppsApi {
     return out;
   }
 
+  Future<List<Map<String, dynamic>>> listFirstPartyFlags() async {
+    final res = await _client
+        .get(_uri('/v1/mini-apps/first-party-flags'), headers: _headers(null))
+        .timeout(_timeout);
+    final map = _decodeMap(res, 'First-party flags');
+    final rows = map['rows'];
+    if (rows is! List) return const [];
+    return rows
+        .whereType<Map>()
+        .map((e) => Map<String, dynamic>.from(e))
+        .toList();
+  }
+
   Future<List<MiniAppSubmission>> listMine(String accessToken) async {
     final res = await _client
         .get(_uri('/v1/mini-apps/mine'), headers: _headers(accessToken))

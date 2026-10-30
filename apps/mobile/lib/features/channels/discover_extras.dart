@@ -412,7 +412,12 @@ class _DiscoverScrollState extends State<DiscoverScroll> {
   List<MiniAppEntry> _miniApps(AppLocalizations l10n) {
     final lang = Localizations.localeOf(context).languageCode;
     final site = obicWebsiteMiniApp(l10n.miniAppWebsiteName);
-    return mergeApprovedMiniApps(site, _remote);
+    final first = [
+      obicMusicMiniApp(lang),
+      obicYemenInHandMiniApp(lang),
+      ...firstPartyProductivityAndHubs(lang),
+    ];
+    return mergeApprovedMiniApps(site, first, _remote);
   }
 
   @override

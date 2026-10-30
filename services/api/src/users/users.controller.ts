@@ -20,6 +20,7 @@ import { ChangeEmailDto } from './dto/change-email.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { UpdateAvatarDto } from './dto/update-avatar.dto';
 import { UpdateAddressesDto } from './dto/update-addresses.dto';
+import { UpdateHomeLayoutDto } from './dto/update-home-layout.dto';
 import { UpdateMeDto } from './dto/update-me.dto';
 import { DeleteMeDto } from './dto/delete-me.dto';
 import { UpdateMomentsCoverDto } from './dto/update-moments-cover.dto';
@@ -78,11 +79,29 @@ export class UsersController {
     );
   }
 
-  /** Friend Moments profile header (cover + name) — optional JWT. */
-  @Get(':id/moments-profile')
-  @UseGuards(OptionalJwtAuthGuard)
-  momentsProfile(@Param('id', ParseUUIDPipe) id: string) {
-    return this.usersService.momentsProfile(id);
+  @Put('me/addresses')
+  @UseGuards(JwtAuthGuard)
+  updateAddresses(
+    @CurrentUser() actor: AuthUser,
+    @Body() dto: UpdateAddressesDto,
+  ) {
+    return this.usersService.updateAddresses(actor, dto);
+  }
+
+  /** Home mega-icon layout (order / favorites / hidden). */
+  @Get('me/home-layout')
+  @UseGuards(JwtAuthGuard)
+  getHomeLayout(@CurrentUser() actor: AuthUser) {
+    return this.usersService.getHomeLayout(actor);
+  }
+
+  @Put('me/home-layout')
+  @UseGuards(JwtAuthGuard)
+  putHomeLayout(
+    @CurrentUser() actor: AuthUser,
+    @Body() dto: UpdateHomeLayoutDto,
+  ) {
+    return this.usersService.putHomeLayout(actor, dto);
   }
 
   @Delete('me')
@@ -91,12 +110,10 @@ export class UsersController {
     return this.usersService.deleteMe(actor, dto);
   }
 
-  @Put('me/addresses')
-  @UseGuards(JwtAuthGuard)
-  updateAddresses(
-    @CurrentUser() actor: AuthUser,
-    @Body() dto: UpdateAddressesDto,
-  ) {
-    return this.usersService.updateAddresses(actor, dto);
+  /** Friend Moments profile header (cover + name) — optional JWT. */
+  @Get(':id/moments-profile')
+  @UseGuards(OptionalJwtAuthGuard)
+  momentsProfile(@Param('id', ParseUUIDPipe) id: string) {
+    return this.usersService.momentsProfile(id);
   }
 }

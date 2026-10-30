@@ -17,6 +17,7 @@ import { NotificationKind } from '../notifications/notification.entity';
 import { NotificationsService } from '../notifications/notifications.service';
 import { customerAlertDeskEmail } from '../notifications/customer-alert-routing';
 import { User } from '../users/user.entity';
+import { DeskMiniAppFlag } from './desk-mini-app-flag.entity';
 import { MiniAppFile } from './mini-app-file.entity';
 import { MiniApp } from './mini-app.entity';
 import {
@@ -33,6 +34,23 @@ import { normalizeIconUrl } from './mini-app-url';
 
 const kMaxPerUser = 30;
 
+/** First-party shelf ids — Desk can enable/disable without wiping partner review. */
+export const kFirstPartyMiniAppIds = [
+  'obic-notes',
+  'obic-documents',
+  'obic-spreadsheets',
+  'obic-pdf',
+  'obic-slides',
+  'obic-china-in-hand',
+  'obic-mideast-in-hand',
+  'obic-africa-in-hand',
+  'obic-daily',
+  'obic-travel',
+  'obic-yemen-in-hand',
+  'obic-music',
+  'obic-web',
+] as const;
+
 export type ServedPackageFile = {
   data: Buffer;
   mime: string;
@@ -46,10 +64,52 @@ export class MiniAppsService {
     private readonly apps: Repository<MiniApp>,
     @InjectRepository(MiniAppFile)
     private readonly files: Repository<MiniAppFile>,
+    @InjectRepository(DeskMiniAppFlag)
+    private readonly deskFlags: Repository<DeskMiniAppFlag>,
     @InjectRepository(User)
     private readonly users: Repository<User>,
     private readonly notifications: NotificationsService,
   ) {}
+
+  /** Public map of first-party mini-app enablement for the mobile shelf. */
+  async listFirstPartyFlags(): Promise<{
+    rows: Array<{ appId: string; enabled: boolean }>;
+  }> {
+    const rows = await this.deskFlags.find();
+    const byId = new Map(rows.map((r) => [r.appId, r.enabled]));
+    return {
+      rows: kFirstPartyMiniAppIds.map((appId) => ({
+        appId,
+        enabled: byId.has(appId) ? Boolean(byId.get(appId)) : appId !== 'obic-slides',
+      })),
+    };
+  }
+
+  async listDeskFlags(actor: AuthUser) {
+    await this.requireSuperAdmin(actor);
+    return this.listFirstPartyFlags();
+  }
+
+  async setDeskFlag(actor: AuthUser, appId: string, enabled: boolean) {
+    await this.requireSuperAdmin(actor);
+    const id = appId.trim().toLowerCase();
+    if (!(kFirstPartyMiniAppIds as readonly string[]).includes(id)) {
+      throw new BadRequestException('Unknown first-party mini-app');
+    }
+    let row = await this.deskFlags.findOne({ where: { appId: id } });
+    if (!row) {
+      row = this.deskFlags.create({
+        appId: id,
+        enabled,
+        updatedBy: actor.userId,
+      });
+    } else {
+      row.enabled = enabled;
+      row.updatedBy = actor.userId;
+    }
+    await this.deskFlags.save(row);
+    return { appId: id, enabled: row.enabled };
+  }
 
   async submit(
     actor: AuthUser,

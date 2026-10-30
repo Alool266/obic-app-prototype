@@ -14,21 +14,37 @@ class HomeServiceLayout {
     this.order = const [],
     this.favorites = const {},
     this.hidden = const {},
+    this.miniOrder = const [],
+    this.miniFavorites = const {},
+    this.miniHidden = const {},
   });
 
   final List<String> order;
   final Set<String> favorites;
   final Set<String> hidden;
+  final List<String> miniOrder;
+  final Set<String> miniFavorites;
+  final Set<String> miniHidden;
 
   static const empty = HomeServiceLayout();
 
   bool get isEmpty =>
-      order.isEmpty && favorites.isEmpty && hidden.isEmpty;
+      order.isEmpty &&
+      favorites.isEmpty &&
+      hidden.isEmpty &&
+      miniOrder.isEmpty &&
+      miniFavorites.isEmpty &&
+      miniHidden.isEmpty;
 
   Map<String, dynamic> toJson() => {
         'order': order,
         'favorites': favorites.toList(),
         'hidden': hidden.toList(),
+        'miniApps': {
+          'order': miniOrder,
+          'favorites': miniFavorites.toList(),
+          'hidden': miniHidden.toList(),
+        },
       };
 
   factory HomeServiceLayout.fromJson(Map<String, dynamic> json) {
@@ -38,10 +54,22 @@ class HomeServiceLayout {
         (json['favorites'] as List?)?.whereType<String>().toSet() ?? const {};
     final hidden =
         (json['hidden'] as List?)?.whereType<String>().toSet() ?? const {};
+    final mini = json['miniApps'];
+    final miniMap = mini is Map ? Map<String, dynamic>.from(mini) : const {};
+    final miniOrder =
+        (miniMap['order'] as List?)?.whereType<String>().toList() ?? const [];
+    final miniFavorites =
+        (miniMap['favorites'] as List?)?.whereType<String>().toSet() ??
+            const {};
+    final miniHidden =
+        (miniMap['hidden'] as List?)?.whereType<String>().toSet() ?? const {};
     return HomeServiceLayout(
       order: order,
       favorites: favorites,
       hidden: hidden,
+      miniOrder: miniOrder,
+      miniFavorites: miniFavorites,
+      miniHidden: miniHidden,
     );
   }
 
@@ -49,11 +77,17 @@ class HomeServiceLayout {
     List<String>? order,
     Set<String>? favorites,
     Set<String>? hidden,
+    List<String>? miniOrder,
+    Set<String>? miniFavorites,
+    Set<String>? miniHidden,
   }) {
     return HomeServiceLayout(
       order: order ?? this.order,
       favorites: favorites ?? this.favorites,
       hidden: hidden ?? this.hidden,
+      miniOrder: miniOrder ?? this.miniOrder,
+      miniFavorites: miniFavorites ?? this.miniFavorites,
+      miniHidden: miniHidden ?? this.miniHidden,
     );
   }
 }

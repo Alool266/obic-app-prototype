@@ -24,6 +24,8 @@ type MiniAppRow = {
   reviewedAt?: string | null;
 };
 
+type DeskFlag = { appId: string; enabled: boolean };
+
 function isSuperAdmin(me: Record<string, unknown>): boolean {
   return me.isSuperAdmin === true || me.role === 'SuperAdmin';
 }
@@ -44,6 +46,7 @@ export default function MiniAppsReviewPage() {
   const [lang, setLang] = useState<Lang>('ar');
   const [me, setMe] = useState<Record<string, unknown> | null>(null);
   const [rows, setRows] = useState<MiniAppRow[]>([]);
+  const [deskFlags, setDeskFlags] = useState<DeskFlag[]>([]);
   const [selected, setSelected] = useState<MiniAppRow | null>(null);
   const [reason, setReason] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -52,6 +55,16 @@ export default function MiniAppsReviewPage() {
   const loadList = useCallback(async (token: string) => {
     const list = await adminFetch('/v1/admin/mini-apps', token);
     setRows(Array.isArray(list) ? (list as MiniAppRow[]) : []);
+    try {
+      const flags = await adminFetch('/v1/admin/mini-apps/desk-flags', token);
+      const flagRows =
+        flags && typeof flags === 'object' && Array.isArray((flags as { rows?: unknown }).rows)
+          ? ((flags as { rows: DeskFlag[] }).rows)
+          : [];
+      setDeskFlags(flagRows);
+    } catch {
+      setDeskFlags([]);
+    }
   }, []);
 
   const load = useCallback(
@@ -65,6 +78,21 @@ export default function MiniAppsReviewPage() {
     },
     [loadList],
   );
+
+  async function toggleDeskFlag(appId: string, enabled: boolean) {
+    const token = sessionStorage.getItem(TOKEN_KEY);
+    if (!token) return;
+    try {
+      await adminFetch(`/v1/admin/mini-apps/desk-flags/${appId}`, token, {
+        method: 'PUT',
+        body: JSON.stringify({ enabled }),
+      });
+      setError(null);
+      await loadList(token);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed');
+    }
+  }
 
   useEffect(() => {
     const saved = sessionStorage.getItem(LANG_KEY) as Lang | null;
@@ -200,6 +228,37 @@ export default function MiniAppsReviewPage() {
         </div>
       </header>
       {error ? <p className="err">{error}</p> : null}
+      {deskFlags.length > 0 ? (
+        <div className="web-card" style={{ marginBottom: 16 }}>
+          <h3>{t(lang, 'miniAppsDeskFlagsTitle')}</h3>
+          <p className="web-note">{t(lang, 'miniAppsDeskFlagsHint')}</p>
+          <ul className="inbox-list">
+            {deskFlags.map((flag) => (
+              <li key={flag.appId}>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: 12,
+                    padding: '8px 4px',
+                  }}
+                >
+                  <span dir="ltr">{flag.appId}</span>
+                  <button
+                    type="button"
+                    onClick={() => toggleDeskFlag(flag.appId, !flag.enabled)}
+                  >
+                    {flag.enabled
+                      ? t(lang, 'miniAppsDeskFlagsOn')
+                      : t(lang, 'miniAppsDeskFlagsOff')}
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
       <div className="web-card">
         {rows.length === 0 ? (
           <p className="web-note">{t(lang, 'miniAppsAdminEmpty')}</p>

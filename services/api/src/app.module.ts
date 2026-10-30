@@ -45,6 +45,7 @@ import { AdminIpAllowlistMiddleware } from './common/middleware/admin-ip-allowli
 import { FriendsModule } from './friends/friends.module';
 import { HealthModule } from './health/health.module';
 import { MiniAppsModule } from './mini-apps/mini-apps.module';
+import { UserOfficeModule } from './user-office/user-office.module';
 import { ModerationModule } from './moderation/moderation.module';
 import { MomentsModule } from './moments/moments.module';
 import { loadOptionalApnsEnvFiles } from './notifications/apns-env.loader';
@@ -139,6 +140,7 @@ loadOptionalAgoraEnvFiles();
     MomentsModule,
     ModerationModule,
     MiniAppsModule,
+    UserOfficeModule,
     NotificationsModule,
     FriendsModule,
     UploadsModule,
