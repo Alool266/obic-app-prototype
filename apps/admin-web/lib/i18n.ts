@@ -31,6 +31,7 @@ const ar = {
     offersAlwaysOn: 'المشرف الأعلى يدير عروض الفنادق والطيران دائماً.',
     offers: 'عروض',
     offersNav: 'عروض الفنادق والطيران',
+    hubContentNav: 'محتوى المراكز',
     offersTitle: 'مكتب العروض',
     offersHint:
       'بحث وتصفية — نفس واجهة برمجة GET /v1/admin/offers · إنشاء وتعديل كامل من تطبيق الجوال',
@@ -680,6 +681,7 @@ const en = {
     offersAlwaysOn: 'Super Admin always manages Hotel & Flight offers.',
     offers: 'Offers',
     offersNav: 'Hotel & flight offers',
+    hubContentNav: 'Hub content',
     offersTitle: 'Offers desk',
     offersHint:
       'Search & filter — GET /v1/admin/offers · full create/edit in the mobile app',
@@ -1401,6 +1403,7 @@ const zh: Record<keyof typeof en, string> = {
   bugStatusResolved: '已解决',
   bugStatusDismissed: '已驳回',
   offersNav: '酒店与机票',
+  hubContentNav: '中心内容',
   inboxTitle: '通知',
   employee: '员工',
   superAdmin: '超级管理员',
@@ -1856,6 +1859,7 @@ const fr: Record<keyof typeof en, string> = {
     'Saisissez le code à 6 chiffres de votre application Authenticator',
   totpStepUpInvalid: 'Code Authenticator invalide',
   offersNav: 'Offres',
+  hubContentNav: 'Contenu hubs',
   ordersNav: 'Commandes',
   moderationNav: 'Modération',
   bugReportsNav: 'Rapports de bugs',

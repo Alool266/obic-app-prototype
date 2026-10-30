@@ -49,6 +49,8 @@ import { ModerationModule } from './moderation/moderation.module';
 import { MomentsModule } from './moments/moments.module';
 import { loadOptionalApnsEnvFiles } from './notifications/apns-env.loader';
 import { NotificationsModule } from './notifications/notifications.module';
+import { HubContentModule } from './hub-content/hub-content.module';
+import { MarketplaceModule } from './marketplace/marketplace.module';
 import { OffersModule } from './offers/offers.module';
 import { OrdersModule } from './orders/orders.module';
 import { RealtimeModule } from './realtime/realtime.module';
@@ -127,6 +129,8 @@ loadOptionalAgoraEnvFiles();
     RegistrationModule,
     VipModule,
     OffersModule,
+    MarketplaceModule,
+    HubContentModule,
     OrdersModule,
     ChatModule,
     CallsModule,

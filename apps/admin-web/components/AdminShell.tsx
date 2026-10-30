@@ -62,6 +62,7 @@ type Props = {
     | 'vip'
     | 'accounts'
     | 'offers'
+    | 'hub-content'
     | 'services'
     | 'settings';
   me: Me;
@@ -168,6 +169,7 @@ const NAV_GROUPS: NavGroup[] = [
     label: 'navGroupCatalog',
     links: [
       { id: 'offers', href: '/offers', label: 'offersNav', gate: 'offers' },
+      { id: 'hub-content', href: '/hub-content', label: 'hubContentNav', gate: 'all' },
       { id: 'services', href: '/services', label: 'servicesNav', gate: 'sa' },
       { id: 'mini-apps', href: '/mini-apps', label: 'miniAppsNav', gate: 'sa' },
       { id: 'prices', href: '/prices', label: 'pricesNav', gate: 'sa' },

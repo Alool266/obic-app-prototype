@@ -62,6 +62,9 @@ flutter:
   generate: true
   assets:
     - assets/banners/
+    - assets/china/
+    - assets/daily/
+    - assets/travel/
     - assets/icon/
     - assets/lottie/
     - assets/sounds/

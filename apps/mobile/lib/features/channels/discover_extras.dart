@@ -13,6 +13,14 @@ import '../../widgets/obic_cached_image.dart';
 import '../../widgets/obic_lottie_empty.dart';
 import '../../widgets/obic_soft_motion.dart';
 import '../auth/auth_controller.dart';
+import '../africa_in_hand/africa_in_hand_page.dart';
+import '../africa_in_hand/africa_in_hand_strings.dart';
+import '../africa_in_hand/africa_media.dart';
+import '../china_in_hand/china_in_hand_page.dart';
+import '../china_in_hand/china_in_hand_strings.dart';
+import '../china_in_hand/china_media.dart';
+import '../exhibitions/exhibitions_hub_page.dart';
+import '../mideast_in_hand/mideast_media.dart';
 import '../mini_apps/mini_apps_api.dart';
 import '../mini_apps/mini_apps_catalog.dart';
 import '../mini_apps/mini_apps_pull_panel.dart';
@@ -23,6 +31,9 @@ import '../services/service_catalog.dart';
 import '../services/service_detail_page.dart';
 import '../services/service_hub_page.dart';
 import '../services/service_sub_catalog.dart';
+import '../yemen_in_hand/yemen_flag_icon.dart';
+import '../yemen_in_hand/yemen_in_hand_page.dart';
+import '../yemen_in_hand/yemen_in_hand_strings.dart';
 
 class DiscoverScroll extends StatefulWidget {
   const DiscoverScroll({
@@ -191,6 +202,54 @@ class _DiscoverScrollState extends State<DiscoverScroll> {
     );
   }
 
+  void _openExhibitions() {
+    final lang = Localizations.localeOf(context).languageCode;
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => ExhibitionsHubPage(
+          authController: widget.authController,
+          langCode: lang,
+        ),
+      ),
+    );
+  }
+
+  void _openChinaInHand() {
+    final lang = Localizations.localeOf(context).languageCode;
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => ChinaInHandPage(
+          authController: widget.authController,
+          langCode: lang,
+        ),
+      ),
+    );
+  }
+
+  void _openAfricaInHand() {
+    final lang = Localizations.localeOf(context).languageCode;
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => AfricaInHandPage(
+          authController: widget.authController,
+          langCode: lang,
+        ),
+      ),
+    );
+  }
+
+  void _openYemenInHand() {
+    final lang = Localizations.localeOf(context).languageCode;
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => YemenInHandPage(
+          authController: widget.authController,
+          langCode: lang,
+        ),
+      ),
+    );
+  }
+
   void _openOffers() {
     final lang = Localizations.localeOf(context).languageCode;
     final l10n = AppLocalizations.of(context);
@@ -310,7 +369,7 @@ class _DiscoverScrollState extends State<DiscoverScroll> {
           subtitle: l10n.openBankDesc,
           colors: const [ObicColors.blue, ObicColors.navy],
           asset: 'assets/banners/open-bank.jpg',
-          onTap: () => _openSub('business', 'company-yiwu'),
+          onTap: () => _openSub('business', 'company-registration'),
         ),
       );
     } else {
@@ -353,9 +412,7 @@ class _DiscoverScrollState extends State<DiscoverScroll> {
   List<MiniAppEntry> _miniApps(AppLocalizations l10n) {
     final lang = Localizations.localeOf(context).languageCode;
     final site = obicWebsiteMiniApp(l10n.miniAppWebsiteName);
-    final merged = mergeApprovedMiniApps(site, _remote);
-    if (merged.isEmpty) return [obicMusicMiniApp(lang)];
-    return [merged.first, obicMusicMiniApp(lang), ...merged.skip(1)];
+    return mergeApprovedMiniApps(site, _remote);
   }
 
   @override
@@ -385,11 +442,24 @@ class _DiscoverScrollState extends State<DiscoverScroll> {
           delay: const Duration(milliseconds: 40),
           child: _Shortcuts(
             l10n: l10n,
+            chinaLabel: ChinaInHandStrings(
+              Localizations.localeOf(context).languageCode,
+            ).title,
+            africaLabel: AfricaInHandStrings(
+              Localizations.localeOf(context).languageCode,
+            ).title,
+            yemenLabel: YemenInHandStrings(
+              Localizations.localeOf(context).languageCode,
+            ).title,
             onMoments: widget.onMoments,
             onChannels: widget.onChannels,
             onMusic: _openMusic,
             onMiniApps: widget.onMiniApps,
             onOffers: _openOffers,
+            onExhibitions: _openExhibitions,
+            onChinaInHand: _openChinaInHand,
+            onAfricaInHand: _openAfricaInHand,
+            onYemenInHand: _openYemenInHand,
           ),
         ),
         ObicFadeIn(
@@ -398,6 +468,30 @@ class _DiscoverScrollState extends State<DiscoverScroll> {
             title: l10n.discoverTrending,
             empty: l10n.discoverEmpty,
             services: trending,
+            chinaLabel: ChinaInHandStrings(
+              Localizations.localeOf(context).languageCode,
+            ).title,
+            chinaHint: ChinaInHandStrings(
+              Localizations.localeOf(context).languageCode,
+            ).subtitle,
+            africaLabel: AfricaInHandStrings(
+              Localizations.localeOf(context).languageCode,
+            ).title,
+            africaHint: AfricaInHandStrings(
+              Localizations.localeOf(context).languageCode,
+            ).subtitle,
+            yemenLabel: YemenInHandStrings(
+              Localizations.localeOf(context).languageCode,
+            ).title,
+            yemenHint: YemenInHandStrings(
+              Localizations.localeOf(context).languageCode,
+            ).subtitle,
+            exhibitionsLabel: l10n.discoverExhibitions,
+            exhibitionsHint: l10n.discoverExhibitionsHint,
+            onChinaInHand: _openChinaInHand,
+            onAfricaInHand: _openAfricaInHand,
+            onYemenInHand: _openYemenInHand,
+            onExhibitions: _openExhibitions,
             onTap: (service) => _openService(service.slug),
           ),
         ),
@@ -409,6 +503,7 @@ class _DiscoverScrollState extends State<DiscoverScroll> {
             empty: l10n.discoverEmpty,
             apps: apps.take(8).toList(),
             displayName: widget.authController.user?.name,
+            authController: widget.authController,
             onSeeAll: widget.onMiniApps,
           ),
         ),
@@ -581,52 +676,105 @@ class _Carousel extends StatelessWidget {
 class _Shortcuts extends StatelessWidget {
   const _Shortcuts({
     required this.l10n,
+    required this.chinaLabel,
+    required this.africaLabel,
+    required this.yemenLabel,
     required this.onMoments,
     required this.onChannels,
     required this.onMusic,
     required this.onMiniApps,
     required this.onOffers,
+    required this.onExhibitions,
+    required this.onChinaInHand,
+    required this.onAfricaInHand,
+    required this.onYemenInHand,
   });
 
   final AppLocalizations l10n;
+  final String chinaLabel;
+  final String africaLabel;
+  final String yemenLabel;
   final VoidCallback onMoments;
   final VoidCallback onChannels;
   final VoidCallback onMusic;
   final VoidCallback onMiniApps;
   final VoidCallback onOffers;
+  final VoidCallback onExhibitions;
+  final VoidCallback onChinaInHand;
+  final VoidCallback onAfricaInHand;
+  final VoidCallback onYemenInHand;
 
   @override
   Widget build(BuildContext context) {
-    final items = [
+    final items = <({
+      String label,
+      IconData icon,
+      Color color,
+      VoidCallback onTap,
+      String? photoUrl,
+    })>[
       (
-        l10n.momentsTitle,
-        Icons.photo_camera_outlined,
-        const Color(0xFFE75D5C),
-        onMoments,
+        label: chinaLabel,
+        icon: Icons.public_rounded,
+        color: const Color(0xFFC9A227),
+        onTap: onChinaInHand,
+        photoUrl: ChinaMedia.discoverChinaInHand,
       ),
       (
-        l10n.channelTitle,
-        Icons.play_circle_outline,
-        const Color(0xFFF5A623),
-        onChannels,
+        label: africaLabel,
+        icon: Icons.travel_explore_rounded,
+        color: const Color(0xFFD97706),
+        onTap: onAfricaInHand,
+        photoUrl: AfricaMedia.discoverAfricaInHand,
       ),
       (
-        l10n.discoverMusic,
-        Icons.music_note_rounded,
-        const Color(0xFF6366F1),
-        onMusic,
+        label: yemenLabel,
+        icon: Icons.flag_rounded,
+        color: const Color(0xFFCE1126),
+        onTap: onYemenInHand,
+        photoUrl: MideastMedia.mosque,
       ),
       (
-        l10n.miniAppsTitle,
-        Icons.apps_rounded,
-        const Color(0xFF576B95),
-        onMiniApps,
+        label: l10n.momentsTitle,
+        icon: Icons.photo_camera_outlined,
+        color: const Color(0xFFE75D5C),
+        onTap: onMoments,
+        photoUrl: null,
       ),
       (
-        l10n.discoverOffers,
-        Icons.local_offer_outlined,
-        const Color(0xFFE11D48),
-        onOffers,
+        label: l10n.channelTitle,
+        icon: Icons.play_circle_outline,
+        color: const Color(0xFFF5A623),
+        onTap: onChannels,
+        photoUrl: null,
+      ),
+      (
+        label: l10n.discoverExhibitions,
+        icon: Icons.storefront_rounded,
+        color: const Color(0xFFC9A227),
+        onTap: onExhibitions,
+        photoUrl: ChinaMedia.discoverExhibitions,
+      ),
+      (
+        label: l10n.discoverMusic,
+        icon: Icons.music_note_rounded,
+        color: const Color(0xFF6366F1),
+        onTap: onMusic,
+        photoUrl: null,
+      ),
+      (
+        label: l10n.miniAppsTitle,
+        icon: Icons.apps_rounded,
+        color: const Color(0xFF576B95),
+        onTap: onMiniApps,
+        photoUrl: null,
+      ),
+      (
+        label: l10n.discoverOffers,
+        icon: Icons.local_offer_outlined,
+        color: const Color(0xFFE11D48),
+        onTap: onOffers,
+        photoUrl: null,
       ),
     ];
     return Column(
@@ -643,30 +791,71 @@ class _Shortcuts extends StatelessWidget {
             separatorBuilder: (_, _) => const SizedBox(width: 8),
             itemBuilder: (context, i) {
               final item = items[i];
+              final photo = item.photoUrl;
               return ObicBounce(
-                onTap: item.$4,
+                onTap: item.onTap,
                 child: SizedBox(
                   width: 76,
                   child: Column(
                     children: [
-                      Container(
-                        width: 52,
-                        height: 52,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: ObicColors.surfaceOf(context),
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: ObicColors.lineOf(
-                              context,
-                            ).withValues(alpha: 0.8),
+                      if (photo != null)
+                        Container(
+                          width: 52,
+                          height: 52,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: const Color(0xFFC9A227),
+                              width: 1.4,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFF0B1F3A)
+                                    .withValues(alpha: 0.22),
+                                blurRadius: 8,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
                           ),
+                          clipBehavior: Clip.antiAlias,
+                          child: Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              ObicCachedImage(
+                                photo,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, _, _) => Image.asset(
+                                  ChinaMedia.fallbackCover,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                              DecoratedBox(
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withValues(alpha: 0.22),
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      else
+                        Container(
+                          width: 52,
+                          height: 52,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: ObicColors.surfaceOf(context),
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: ObicColors.lineOf(
+                                context,
+                              ).withValues(alpha: 0.8),
+                            ),
+                          ),
+                          child: Icon(item.icon, color: item.color, size: 24),
                         ),
-                        child: Icon(item.$2, color: item.$3, size: 24),
-                      ),
                       const SizedBox(height: 6),
                       Text(
-                        item.$1,
+                        item.label,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         textAlign: TextAlign.center,
@@ -694,22 +883,139 @@ class _Trending extends StatelessWidget {
     required this.empty,
     required this.services,
     required this.onTap,
+    required this.chinaLabel,
+    required this.chinaHint,
+    required this.africaLabel,
+    required this.africaHint,
+    required this.yemenLabel,
+    required this.yemenHint,
+    required this.exhibitionsLabel,
+    required this.exhibitionsHint,
+    required this.onChinaInHand,
+    required this.onAfricaInHand,
+    required this.onYemenInHand,
+    required this.onExhibitions,
   });
 
   final String title;
   final String empty;
   final List<ObicService> services;
   final ValueChanged<ObicService> onTap;
+  final String chinaLabel;
+  final String chinaHint;
+  final String africaLabel;
+  final String africaHint;
+  final String yemenLabel;
+  final String yemenHint;
+  final String exhibitionsLabel;
+  final String exhibitionsHint;
+  final VoidCallback onChinaInHand;
+  final VoidCallback onAfricaInHand;
+  final VoidCallback onYemenInHand;
+  final VoidCallback onExhibitions;
+
+  Widget _photoCard({
+    required BuildContext context,
+    required bool dark,
+    required VoidCallback onTap,
+    required String photoUrl,
+    required String label,
+    required String hint,
+  }) {
+    return ObicBounce(
+      onTap: onTap,
+      child: Container(
+        width: 196,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: const Color(0xFFC9A227).withValues(alpha: 0.45),
+          ),
+          boxShadow: dark
+              ? null
+              : [
+                  BoxShadow(
+                    color: const Color(0xFF0B1F3A).withValues(alpha: 0.28),
+                    blurRadius: 12,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            ObicCachedImage(
+              photoUrl,
+              fit: BoxFit.cover,
+              errorBuilder: (_, _, _) => Image.asset(
+                ChinaMedia.fallbackCover,
+                fit: BoxFit.cover,
+              ),
+            ),
+            const DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Color(0x33071526),
+                    Color(0xCC071526),
+                    Color(0xF2071526),
+                  ],
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Spacer(),
+                  Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Color(0xFFF8F5EE),
+                      fontWeight: FontWeight.w800,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    hint,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: const Color(0xFFE8D48B).withValues(alpha: 0.95),
+                      fontSize: 12,
+                      height: 1.2,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final lang = Localizations.localeOf(context).languageCode;
     final dark = ObicColors.isDark(context);
+    final count = services.length + 4;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _SectionTitle(title: title),
-        if (services.isEmpty)
+        if (services.isEmpty &&
+            chinaLabel.isEmpty &&
+            africaLabel.isEmpty &&
+            yemenLabel.isEmpty &&
+            exhibitionsLabel.isEmpty)
           ObicLottieEmpty(message: empty)
         else
           SizedBox(
@@ -718,10 +1024,50 @@ class _Trending extends StatelessWidget {
               scrollDirection: Axis.horizontal,
               primary: false,
               padding: const EdgeInsetsDirectional.fromSTEB(16, 0, 16, 0),
-              itemCount: services.length,
+              itemCount: count,
               separatorBuilder: (_, _) => const SizedBox(width: 10),
               itemBuilder: (context, i) {
-                final service = services[i];
+                if (i == 0) {
+                  return _photoCard(
+                    context: context,
+                    dark: dark,
+                    onTap: onChinaInHand,
+                    photoUrl: ChinaMedia.discoverChinaInHand,
+                    label: chinaLabel,
+                    hint: chinaHint,
+                  );
+                }
+                if (i == 1) {
+                  return _photoCard(
+                    context: context,
+                    dark: dark,
+                    onTap: onAfricaInHand,
+                    photoUrl: AfricaMedia.discoverAfricaInHand,
+                    label: africaLabel,
+                    hint: africaHint,
+                  );
+                }
+                if (i == 2) {
+                  return _photoCard(
+                    context: context,
+                    dark: dark,
+                    onTap: onYemenInHand,
+                    photoUrl: MideastMedia.mosque,
+                    label: yemenLabel,
+                    hint: yemenHint,
+                  );
+                }
+                if (i == 3) {
+                  return _photoCard(
+                    context: context,
+                    dark: dark,
+                    onTap: onExhibitions,
+                    photoUrl: ChinaMedia.discoverExhibitions,
+                    label: exhibitionsLabel,
+                    hint: exhibitionsHint,
+                  );
+                }
+                final service = services[i - 4];
                 final theme = ServiceTheme.of(service.colorKey);
                 return ObicBounce(
                   onTap: () => onTap(service),
@@ -796,6 +1142,7 @@ class _MiniPreview extends StatelessWidget {
     required this.apps,
     required this.onSeeAll,
     this.displayName,
+    this.authController,
   });
 
   final String title;
@@ -804,6 +1151,7 @@ class _MiniPreview extends StatelessWidget {
   final List<MiniAppEntry> apps;
   final VoidCallback onSeeAll;
   final String? displayName;
+  final AuthController? authController;
 
   @override
   Widget build(BuildContext context) {
@@ -839,7 +1187,12 @@ class _MiniPreview extends StatelessWidget {
               return ObicBounce(
                 onTap: () {
                   unawaited(
-                    openMiniAppEntry(context, app, displayName: displayName),
+                    openMiniAppEntry(
+                      context,
+                      app,
+                      displayName: displayName,
+                      authController: authController,
+                    ),
                   );
                 },
                 child: Column(
@@ -899,6 +1252,14 @@ class _MiniIcon extends StatelessWidget {
   }
 
   Widget _fallback() {
+    if (app.id == kObicYemenMiniAppId) {
+      return const ColoredBox(
+        color: Color(0xFF071628),
+        child: Center(
+          child: YemenFlagIcon(width: 30, height: 20, borderRadius: 2),
+        ),
+      );
+    }
     if (app.native || app.id == kObicMusicMiniAppId) {
       return const Icon(
         Icons.music_note_rounded,
