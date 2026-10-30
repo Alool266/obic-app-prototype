@@ -167,6 +167,7 @@ export class ChannelsService {
     tab: ChannelFeedTab,
     limit = 40,
     viewerId?: string | null,
+    geo?: { city?: string; lat?: number; lng?: number },
   ): Promise<object[]> {
     const take = Math.min(Math.max(limit, 1), 80);
     const friendIds = await this.friendIdSet(viewerId);
@@ -194,7 +195,16 @@ export class ChannelsService {
     if (tab === 'nearby') {
       if (!viewerId) return [];
       const me = await this.users.findOne({ where: { id: viewerId } });
-      const city = me?.city?.trim();
+      const city = (geo?.city?.trim() || me?.city?.trim() || '').trim();
+      // Persist GPS city so later Nearby loads stay location-aware.
+      if (
+        geo?.city?.trim() &&
+        me &&
+        (me.city ?? '').trim().toLowerCase() !== geo.city.trim().toLowerCase()
+      ) {
+        me.city = geo.city.trim().slice(0, 80);
+        await this.users.save(me);
+      }
       if (!city) {
         return this.friendsFeed(viewerId, friendIds, take);
       }
@@ -205,7 +215,21 @@ export class ChannelsService {
         .take(80)
         .getMany();
       const nearbyIds = nearbyUsers.map((u) => u.id);
-      if (nearbyIds.length === 0) return [];
+      if (nearbyIds.length === 0) {
+        // Still surface official when no peers share the city yet.
+        const official = await this.channels.find({
+          where: { official: true },
+        });
+        const channelIds = official.map((c) => c.id);
+        if (channelIds.length === 0) return [];
+        const rows = await this.videos.find({
+          where: { channelId: In(channelIds), deletedAt: IsNull() },
+          relations: { author: true, channel: true },
+          order: { createdAt: 'DESC' },
+          take: take * 2,
+        });
+        return this.filterAndMapVideos(rows, viewerId, friendIds, take);
+      }
       const nearbyChannels = await this.channels.find({
         where: [
           { ownerUserId: In(nearbyIds) },

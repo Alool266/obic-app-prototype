@@ -53,6 +53,9 @@ export class ChannelsController {
     @Req() req: Request & { user?: AuthUser },
     @Query('tab') tabRaw?: string,
     @Query('limit') limit?: string,
+    @Query('city') city?: string,
+    @Query('lat') latRaw?: string,
+    @Query('lng') lngRaw?: string,
   ) {
     const tab = (tabRaw ?? 'hot').toLowerCase();
     if (!isChannelFeedTab(tab)) {
@@ -61,10 +64,17 @@ export class ChannelsController {
       );
     }
     const n = limit ? Number.parseInt(limit, 10) : 40;
+    const lat = latRaw != null ? Number.parseFloat(latRaw) : undefined;
+    const lng = lngRaw != null ? Number.parseFloat(lngRaw) : undefined;
     return this.channels.feed(
       tab,
       Number.isFinite(n) ? n : 40,
       req.user?.userId ?? null,
+      {
+        city: city?.trim() || undefined,
+        lat: Number.isFinite(lat) ? lat : undefined,
+        lng: Number.isFinite(lng) ? lng : undefined,
+      },
     );
   }
 

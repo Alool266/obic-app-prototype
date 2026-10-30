@@ -17,6 +17,7 @@ import '../../core/media_url.dart';
 import '../../theme/obic_colors.dart';
 import '../auth/auth_controller.dart';
 import '../auth/require_auth.dart';
+import '../hub_chrome/hub_gps.dart';
 import '../moments/moment_avatar.dart';
 import '../moments/moment_compose_screen.dart';
 import '../social/social_api.dart';
@@ -114,9 +115,23 @@ class _ChannelViewerScreenState extends State<ChannelViewerScreen>
     });
     try {
       final token = await widget.authController.accessToken();
+      String? city;
+      double? lat;
+      double? lng;
+      if (tab == ChannelFeedTab.nearby) {
+        final gps = await readHubGps(forcePrompt: false);
+        if (gps != null) {
+          city = gps.city;
+          lat = gps.lat;
+          lng = gps.lng;
+        }
+      }
       final rows = await _api.listChannelFeed(
         tab: tab.api,
         accessToken: token,
+        city: city,
+        lat: lat,
+        lng: lng,
       );
       if (!mounted) return;
       setState(() {

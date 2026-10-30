@@ -155,6 +155,59 @@ export class ChatService {
       const tb = b.lastMessage?.createdAt?.getTime() ?? b.updatedAt.getTime();
       return tb - ta;
     });
+    return this.dedupeThreadRows(out);
+  }
+
+  /** One inbox row per conversation / order; newest wins for same title. */
+  private dedupeThreadRows<
+    T extends {
+      id: string;
+      kind: string;
+      title: string | null;
+      orderId: string | null;
+      pinned: boolean;
+      lastMessage: { createdAt: Date } | null;
+      updatedAt: Date;
+    },
+  >(rows: T[]): T[] {
+    if (rows.length < 2) return rows;
+    const activity = (t: T) =>
+      t.lastMessage?.createdAt?.getTime() ?? t.updatedAt.getTime();
+    const byId = new Map<string, T>();
+    for (const t of rows) {
+      const prev = byId.get(t.id);
+      if (!prev || activity(t) >= activity(prev)) byId.set(t.id, t);
+    }
+    const byOrder = new Map<string, T>();
+    const rest: T[] = [];
+    for (const t of byId.values()) {
+      if (t.orderId) {
+        const prev = byOrder.get(t.orderId);
+        if (!prev || activity(t) >= activity(prev)) byOrder.set(t.orderId, t);
+      } else {
+        rest.push(t);
+      }
+    }
+    const combined = [...byOrder.values(), ...rest];
+    const byTitle = new Map<string, T>();
+    const out: T[] = [];
+    for (const t of combined) {
+      const title = (t.title ?? '').trim().toLowerCase();
+      if ((t.kind !== 'order' && t.kind !== 'support') || !title) {
+        out.push(t);
+        continue;
+      }
+      const key = `${t.kind}|${title}`;
+      const prev = byTitle.get(key);
+      if (!prev || activity(t) >= activity(prev)) byTitle.set(key, t);
+    }
+    out.push(...byTitle.values());
+    out.sort((a, b) => {
+      const pinA = a.pinned ? 1 : 0;
+      const pinB = b.pinned ? 1 : 0;
+      if (pinA !== pinB) return pinB - pinA;
+      return activity(b) - activity(a);
+    });
     return out;
   }
 
@@ -548,13 +601,15 @@ export class ChatService {
         ? message.senderName.trim()
         : 'OBIC';
     const preview = chatPushPreview(message);
-    const targets = this.realtime.filterNotViewing(
-      badgeIds.filter((id) => id && id !== senderId),
-      conversationId,
-    );
-    if (targets.length) {
+    // Always APNs/FCM for chat — do not use filterNotViewing here.
+    // Viewing is per-user (not per-device) and stays set while a ChatScreen is
+    // mounted; with the socket kept alive in background that used to suppress
+    // message push while CallKit still rang. The phone suppresses the banner
+    // only when that thread is open and the app is in the foreground.
+    const pushTargets = badgeIds.filter((id) => id && id !== senderId);
+    if (pushTargets.length) {
       void this.notifications.pushAlert({
-        userIds: targets,
+        userIds: pushTargets,
         title,
         body: preview,
         data: {

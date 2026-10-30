@@ -8,17 +8,19 @@ import '../../theme/obic_colors.dart';
 
 enum ChatListFilter { all, unread, groups, services }
 
-String chatListFilterLabel(ChatListFilter filter, AppLocalizations l10n) {
-  switch (filter) {
-    case ChatListFilter.all:
-      return l10n.messagesFilterAll;
-    case ChatListFilter.unread:
-      return l10n.messagesFilterUnread;
-    case ChatListFilter.groups:
-      return l10n.messagesFilterGroups;
-    case ChatListFilter.services:
-      return l10n.messagesFilterServices;
-  }
+String chatListFilterLabel(
+  ChatListFilter filter,
+  AppLocalizations l10n, {
+  int? count,
+}) {
+  final base = switch (filter) {
+    ChatListFilter.all => l10n.messagesFilterAll,
+    ChatListFilter.unread => l10n.messagesFilterUnread,
+    ChatListFilter.groups => l10n.messagesFilterGroups,
+    ChatListFilter.services => l10n.messagesFilterServices,
+  };
+  if (count == null || count <= 0) return base;
+  return '$base · $count';
 }
 
 /// Last activity: last message time, then thread `updatedAt`.
@@ -107,12 +109,33 @@ class ChatListFilterBar extends StatelessWidget {
     required this.showGroups,
     required this.showServices,
     required this.onChanged,
+    this.allCount = 0,
+    this.unreadCount = 0,
+    this.groupsCount = 0,
+    this.servicesCount = 0,
   });
 
   final ChatListFilter selected;
   final bool showGroups;
   final bool showServices;
   final ValueChanged<ChatListFilter> onChanged;
+  final int allCount;
+  final int unreadCount;
+  final int groupsCount;
+  final int servicesCount;
+
+  int _countFor(ChatListFilter filter) {
+    switch (filter) {
+      case ChatListFilter.all:
+        return allCount;
+      case ChatListFilter.unread:
+        return unreadCount;
+      case ChatListFilter.groups:
+        return groupsCount;
+      case ChatListFilter.services:
+        return servicesCount;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -143,7 +166,13 @@ class ChatListFilterBar extends StatelessWidget {
             final filter = filters[i];
             final on = filter == selected;
             return ChoiceChip(
-              label: Text(chatListFilterLabel(filter, l10n)),
+              label: Text(
+                chatListFilterLabel(
+                  filter,
+                  l10n,
+                  count: _countFor(filter),
+                ),
+              ),
               selected: on,
               showCheckmark: false,
               visualDensity: VisualDensity.compact,

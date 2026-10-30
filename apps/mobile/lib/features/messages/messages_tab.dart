@@ -27,6 +27,8 @@ import '../social/social_api.dart';
 import 'app_sounds.dart';
 import 'unread_count.dart';
 import 'chat_call_body.dart';
+import 'chat_contact_card.dart';
+import 'chat_location_body.dart';
 import 'obic_stickers.dart';
 import 'chat_draft_store.dart';
 import 'chat_list_row.dart';
@@ -766,7 +768,60 @@ class MessagesTabState extends State<MessagesTab> {
       final local = localById[id];
       if (local != null) merged.add(local);
     }
-    return merged;
+    return _dedupeThreads(merged);
+  }
+
+  /// One row per conversation id / order id; collapse same-title order chats
+  /// (e.g. duplicate «شانغهاي بيزنس إن») to the newest activity.
+  List<Map<String, dynamic>> _dedupeThreads(List<Map<String, dynamic>> rows) {
+    if (rows.length < 2) return rows;
+    final byId = <String, Map<String, dynamic>>{};
+    for (final t in rows) {
+      final id = t['id']?.toString() ?? '';
+      if (id.isEmpty) continue;
+      final prev = byId[id];
+      if (prev == null || _threadIsNewer(t, prev)) byId[id] = t;
+    }
+    final byOrder = <String, Map<String, dynamic>>{};
+    final noOrder = <Map<String, dynamic>>[];
+    for (final t in byId.values) {
+      final orderId = (t['orderId'] as String?)?.trim() ?? '';
+      if (orderId.isEmpty) {
+        noOrder.add(t);
+        continue;
+      }
+      final prev = byOrder[orderId];
+      if (prev == null || _threadIsNewer(t, prev)) byOrder[orderId] = t;
+    }
+    final combined = [...byOrder.values, ...noOrder];
+    final byTitle = <String, Map<String, dynamic>>{};
+    final out = <Map<String, dynamic>>[];
+    for (final t in combined) {
+      final kind = _threadKind(t);
+      final title = (t['title'] as String?)?.trim() ?? '';
+      if ((kind != 'order' && kind != 'support') || title.isEmpty) {
+        out.add(t);
+        continue;
+      }
+      final key = '$kind|${title.toLowerCase()}';
+      final prev = byTitle[key];
+      if (prev == null) {
+        byTitle[key] = t;
+        continue;
+      }
+      if (_threadIsNewer(t, prev)) {
+        byTitle[key] = t;
+      }
+    }
+    out.addAll(byTitle.values);
+    out.sort(compareChatThreads);
+    return out;
+  }
+
+  bool _threadIsNewer(Map<String, dynamic> a, Map<String, dynamic> b) {
+    final ta = threadActivityAt(a)?.millisecondsSinceEpoch ?? 0;
+    final tb = threadActivityAt(b)?.millisecondsSinceEpoch ?? 0;
+    return ta >= tb;
   }
 
   Future<void> _load({bool silent = false}) async {
@@ -795,7 +850,7 @@ class MessagesTabState extends State<MessagesTab> {
     final cached = await OfflineCacheStore.instance.loadThreads(userId);
     if (!mounted || _threads.isNotEmpty) return;
     if (cached == null || cached.isEmpty) return;
-    final shown = _withPendingRead(cached);
+    final shown = _withPendingRead(_dedupeThreads(cached));
     _notifyUnreadTotal(shown);
     setState(() {
       _threads = shown;
@@ -978,23 +1033,46 @@ class MessagesTabState extends State<MessagesTab> {
               ? last['body'] as String
               : (last['attachmentKind'] as String?) ?? '')
         : l10n.messagesNoPreview;
-    if (parseObicSticker(preview) != null) {
+    final lang = Localizations.localeOf(context).languageCode;
+    if (parseContactCardBody(preview) != null) {
+      preview = contactCardPreviewLabel(preview, languageCode: lang);
+    } else if (parseLocationShareBody(preview) != null) {
+      final loc = parseLocationShareBody(preview)!;
+      final kind = switch (lang) {
+        'zh' => '位置',
+        'ar' => 'الموقع',
+        'fr' => 'Lieu',
+        _ => 'Location',
+      };
+      final label = loc.label.trim();
+      preview = label.isEmpty || looksLikeCoordinates(label)
+          ? kind
+          : '$kind · $label';
+    } else if (parseObicSticker(preview) != null) {
       final sticker = parseObicSticker(preview)!;
-      final arabic = Localizations.localeOf(context).languageCode == 'ar';
+      final arabic = lang == 'ar';
       preview = arabic ? 'ملصق ${sticker.ar}' : 'Sticker ${sticker.en}';
-    } else if (preview.startsWith('[[status]]')) {
-      preview = l10n.ordersTitle;
     } else if (parseCallRecordBody(preview) != null) {
+      // Must run before the generic [[obic: catch-all — call bodies are
+      // `[[obic:call:v1]]…` and were wrongly shown as [ملف]/[File].
       final rec = parseCallRecordBody(preview)!;
       final mine =
           last is Map && last['senderId'] == widget.authController.user?.id;
       preview = callRecordLabel(
         rec,
-        arabic: Localizations.localeOf(context).languageCode == 'ar',
+        arabic: lang == 'ar',
         mine: mine,
         myUserId: widget.authController.user?.id,
-        lang: Localizations.localeOf(context).languageCode,
+        lang: lang,
       );
+    } else if (preview.startsWith('[[status]]') ||
+        preview.contains('[[obic:')) {
+      // Never leak machine tokens into the conversation list.
+      if (preview.startsWith('[[status]]')) {
+        preview = l10n.ordersTitle;
+      } else {
+        preview = l10n.chatPreviewFile;
+      }
     } else if (preview == 'audio' ||
         (last is Map &&
             (last['attachmentKind'] as String?) == 'audio' &&
@@ -1246,12 +1324,18 @@ class MessagesTabState extends State<MessagesTab> {
     final rows = _visibleThreads();
     final query = widget.listQuery.trim();
     final searching = query.isNotEmpty;
-    final hasGroups = _sourceThreads.any(
-      (t) => t['hidden'] != true && _threadKind(t) == 'group',
-    );
-    final hasServices = _sourceThreads.any(
-      (t) => t['hidden'] != true && _isServiceThread(t),
-    );
+    final visibleSource = _sourceThreads
+        .where((t) => t['hidden'] != true)
+        .toList();
+    final hasGroups = visibleSource.any((t) => _threadKind(t) == 'group');
+    final hasServices = visibleSource.any(_isServiceThread);
+    final allCount = visibleSource.length;
+    final unreadCount = visibleSource
+        .where((t) => _threadUnread(t) > 0)
+        .length;
+    final groupsCount =
+        visibleSource.where((t) => _threadKind(t) == 'group').length;
+    final servicesCount = visibleSource.where(_isServiceThread).length;
     final waiting =
         _loading &&
         _threads.isEmpty &&
@@ -1344,6 +1428,10 @@ class MessagesTabState extends State<MessagesTab> {
               selected: _effectiveFilter,
               showGroups: hasGroups,
               showServices: hasServices,
+              allCount: allCount,
+              unreadCount: unreadCount,
+              groupsCount: groupsCount,
+              servicesCount: servicesCount,
               onChanged: (filter) => setState(() => _filter = filter),
             ),
           Expanded(

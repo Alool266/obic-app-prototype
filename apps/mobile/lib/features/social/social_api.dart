@@ -882,9 +882,18 @@ class SocialApi {
     required String tab,
     String? accessToken,
     int limit = 40,
+    String? city,
+    double? lat,
+    double? lng,
   }) async {
     final res = await _client.get(
-      _uri('/v1/channels/feed', {'tab': tab, 'limit': '$limit'}),
+      _uri('/v1/channels/feed', {
+        'tab': tab,
+        'limit': '$limit',
+        if (city != null && city.trim().isNotEmpty) 'city': city.trim(),
+        if (lat != null) 'lat': '$lat',
+        if (lng != null) 'lng': '$lng',
+      }),
       headers: {
         'Accept': 'application/json',
         if (accessToken != null && accessToken.isNotEmpty)
