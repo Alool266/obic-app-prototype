@@ -22,6 +22,24 @@ export class AiHistoryTurnDto {
   content!: string;
 }
 
+export class AiAttachmentDto {
+  @IsIn(['image', 'file'])
+  kind!: 'image' | 'file';
+
+  @IsString()
+  @MaxLength(180)
+  filename!: string;
+
+  @IsString()
+  @MaxLength(160)
+  mime!: string;
+
+  /** Raw base64 (no data-URL prefix required). Decoded size is capped at 4 MB. */
+  @IsString()
+  @MaxLength(6_000_000)
+  dataBase64!: string;
+}
+
 export class AiAssistantDto {
   @IsString()
   @MaxLength(4000)
@@ -47,6 +65,32 @@ export class AiAssistantDto {
   @IsOptional()
   @IsUUID()
   threadId?: string;
+
+  /** Photo, PDF, or spreadsheet. The API key stays on the server. */
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => AiAttachmentDto)
+  attachment?: AiAttachmentDto;
+}
+
+export class AiSeeTextDto {
+  @IsString()
+  @MaxLength(6_000_000)
+  dataBase64!: string;
+
+  @IsString()
+  @MaxLength(80)
+  mime!: string;
+}
+
+export class AiTranscribeDto {
+  @IsString()
+  @MaxLength(8_000_000)
+  dataBase64!: string;
+
+  @IsString()
+  @MaxLength(80)
+  mime!: string;
 }
 
 /** WeChat-style message translation (AR / EN / ZH). */

@@ -10,6 +10,7 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { OrderChatService } from '../orders/order-chat.service';
 import { Order } from '../orders/order.entity';
 import { User } from '../users/user.entity';
+import { FriendsService } from '../friends/friends.service';
 import { AuditLog } from './audit-log.entity';
 import { ChatService } from './chat.service';
 import { ConversationParticipant } from './conversation-participant.entity';
@@ -61,6 +62,7 @@ describe('ChatService sendMessage attachment URL', () => {
     publishChatMessage: jest.fn(),
     publishNotification: jest.fn(),
     publishBadgeHint: jest.fn(),
+    filterNotViewing: jest.fn((ids: string[]) => ids),
   };
 
   const actor = new AuthUser('u1', 'sid', UserRole.Customer);
@@ -94,6 +96,7 @@ describe('ChatService sendMessage attachment URL', () => {
         { provide: AiAutoReplyService, useValue: aiAutoReply },
         { provide: OrderChatService, useValue: orderChat },
         { provide: RealtimeService, useValue: realtime },
+        { provide: FriendsService, useValue: { friendIdsOf: jest.fn(async () => []) } },
       ],
     }).compile();
     service = module.get(ChatService);

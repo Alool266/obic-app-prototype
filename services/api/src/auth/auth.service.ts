@@ -4,6 +4,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -20,16 +21,27 @@ import { StartEmailVerifyDto } from '../users/dto/start-email-verify.dto';
 import { StartPhoneVerifyDto } from '../users/dto/start-phone-verify.dto';
 import { User } from '../users/user.entity';
 import { PublicUser, toPublicUser } from '../users/user.mapper';
-import { isChinaRegionCode } from './china-cohort.util';
+import { isChinaRegionCode, normalizeRegionCode } from './china-cohort.util';
+import { normalizeChinaMobile } from './china-phone.util';
 import {
-  CHINA_PHONE_ONLY_MSG,
-  normalizeChinaMobile,
-} from './china-phone.util';
+  normalizeSmsMobile,
+  smsCountryOf,
+  SMS_PHONE_COUNTRIES_MSG,
+} from './sms-phone.util';
 import { LoginDto } from './dto/login.dto';
+import { PhoneLoginStartDto } from './dto/phone-login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { SocialSignInDto } from './dto/social-sign-in.dto';
 import { TotpVerifyDto } from './dto/totp-verify.dto';
 import { ObicJwtPayload } from './jwt-payload.interface';
 import { RefreshSession } from './refresh-session.entity';
+import {
+  PROVIDER_EMAIL_NOT_VERIFIED,
+  SOCIAL_LOGIN_ROLE_NOT_ALLOWED,
+  SocialProvider,
+  VerifiedSocialIdentity,
+} from './social-identity';
+import { SocialTokenVerifier } from './social-token.verifier';
 import { TotpCryptoService } from './totp/totp-crypto.service';
 import { TotpService } from './totp/totp.service';
 import {
@@ -74,6 +86,7 @@ export class AuthService {
     private readonly totpCrypto: TotpCryptoService,
     private readonly totp: TotpService,
     private readonly verification: VerificationService,
+    private readonly socialTokens: SocialTokenVerifier,
   ) {}
 
   async register(dto: RegisterDto): Promise<RegisterResult> {
@@ -141,6 +154,91 @@ export class AuthService {
   }
 
   /**
+   * WeChat-style phone sign-in: phone number + SMS code, no password.
+   * Known customer number → login OTP. New number → account is created
+   * (Customer, phone unverified) and the same code completes registration.
+   * Completing the OTP marks the phone verified — for +86 numbers this is
+   * also the China mainland phone verification. Staff/SuperAdmin accounts
+   * are refused here so TOTP/password policy can never be bypassed.
+   */
+  async startPhoneLogin(
+    dto: PhoneLoginStartDto,
+  ): Promise<VerifyPendingResult> {
+    const phone = normalizeSmsMobile(dto.phone);
+    if (!phone) {
+      throw new BadRequestException(SMS_PHONE_COUNTRIES_MSG);
+    }
+
+    let user = await this.usersRepo.findOne({ where: { phone } });
+    if (user?.deletedAt) {
+      throw new UnauthorizedException('Account deactivated');
+    }
+    if (user && user.role !== UserRole.Customer) {
+      throw new ForbiddenException('PHONE_LOGIN_CUSTOMERS_ONLY');
+    }
+
+    if (!user) {
+      user = this.usersRepo.create({
+        email: null,
+        phone,
+        // Unusable random password — this account signs in by code only.
+        passwordHash: await bcrypt.hash(randomUUID(), BCRYPT_ROUNDS),
+        name: 'OBIC user',
+        role: UserRole.Customer,
+        country:
+          normalizeRegionCode(dto.regionCountry) ??
+          smsCountryOf(phone) ??
+          null,
+        emailVerifiedAt: null,
+        phoneVerifiedAt: null,
+      });
+      await this.usersRepo.save(user);
+      return this.startPhoneChallenge(user, phone, 'register', dto.locale);
+    }
+
+    return this.startPhoneChallenge(
+      user,
+      phone,
+      'login',
+      dto.locale,
+      user.email,
+    );
+  }
+
+  /**
+   * Phone OTP challenge with an honest error when no SMS provider is
+   * configured and there is no email inbox to fall back to (trial mode
+   * delivers codes by email; real SMS needs Aliyun/Tencent/Twilio keys).
+   */
+  private async startPhoneChallenge(
+    user: User,
+    phone: string,
+    purpose: 'register' | 'login',
+    locale?: string,
+    backupEmail?: string | null,
+  ): Promise<VerifyPendingResult> {
+    try {
+      return await this.verification.startChallenge({
+        user,
+        channel: 'phone',
+        purpose,
+        destination: phone,
+        backupEmail,
+        locale,
+      });
+    } catch (err) {
+      if (
+        err instanceof BadRequestException &&
+        err.message === 'EMAIL_REQUIRED_FOR_PHONE_VERIFY' &&
+        !backupEmail
+      ) {
+        throw new BadRequestException('SMS_NOT_CONFIGURED');
+      }
+      throw err;
+    }
+  }
+
+  /**
    * Logged-in: start OTP to add/verify China mainland mobile.
    * Trial (no SMS keys): code emailed to account email. Completing OTP sets phone.
    */
@@ -152,9 +250,9 @@ export class AuthService {
     if (!user || user.deletedAt) {
       throw new NotFoundException('User not found');
     }
-    const phone = normalizeChinaMobile(dto.phone);
+    const phone = normalizeSmsMobile(dto.phone);
     if (!phone) {
-      throw new BadRequestException(CHINA_PHONE_ONLY_MSG);
+      throw new BadRequestException(SMS_PHONE_COUNTRIES_MSG);
     }
     const taken = await this.usersRepo.exist({
       where: { phone, id: Not(user.id) },
@@ -280,6 +378,53 @@ export class AuthService {
     return this.issueAuthResult(user);
   }
 
+  /**
+   * Google or Apple sign-in.
+   * The provider token is verified here. A verified provider email skips OBIC
+   * email OTP and sets emailVerifiedAt. Phone is never marked verified — China
+   * cohort still hits the existing phone gate. New users are always Customers.
+   */
+  async socialSignIn(dto: SocialSignInDto): Promise<AuthResult> {
+    const identity = await this.socialTokens.verify(dto.provider, dto.idToken);
+    const email = identity.email;
+
+    let user = await this.usersRepo.findOne({
+      where: this.socialSubjectWhere(dto.provider, identity.subject),
+    });
+    if (!user && email && identity.emailVerified) {
+      user = await this.usersRepo.findOne({ where: { email } });
+    }
+
+    if (!user) {
+      if (!email || !identity.emailVerified) {
+        throw new BadRequestException(PROVIDER_EMAIL_NOT_VERIFIED);
+      }
+      const created = await this.createSocialUser(dto, identity, email);
+      return this.issueAuthResult(created);
+    }
+
+    if (user.deletedAt) {
+      throw new UnauthorizedException('Account deactivated');
+    }
+    // Staff and SuperAdmin stay on password (+ TOTP). Never link or promote.
+    if (user.role !== UserRole.Customer) {
+      throw new ForbiddenException(SOCIAL_LOGIN_ROLE_NOT_ALLOWED);
+    }
+
+    this.linkSocialSubject(user, dto.provider, identity.subject);
+    if (
+      identity.emailVerified &&
+      email &&
+      user.email &&
+      user.email.trim().toLowerCase() === email &&
+      !user.emailVerifiedAt
+    ) {
+      user.emailVerifiedAt = new Date();
+    }
+    await this.usersRepo.save(user);
+    return this.issueAuthResult(user);
+  }
+
   async verifyOtp(opts: {
     verifySession: string;
     code: string;
@@ -355,16 +500,24 @@ export class AuthService {
       throw new UnauthorizedException('Invalid refresh token');
     }
 
-    // Rotate: revoke current, issue a sibling in the same family.
-    const tokens = await this.issueTokenPair(user, session.familyId);
-    session.revokedAt = new Date();
-    session.replacedById = tokens.sessionId;
-    await this.sessionsRepo.save(session);
+    // Issue a new access JWT only. Do not rotate the refresh token.
+    // Rotation + reuse-detection signed people out when the app was closed
+    // before the new refresh token was saved, or when two requests refreshed
+    // the same token at once (the second looked like theft and revoked the family).
+    const expiresInConfig = this.config.get<string>('JWT_EXPIRES_IN') ?? '15m';
+    const accessToken = await this.jwt.signAsync(
+      {
+        sub: user.id,
+        sid: session.id,
+        role: user.role,
+      } satisfies ObicJwtPayload,
+      { expiresIn: this.parseExpiresInSeconds(expiresInConfig) },
+    );
 
     return {
-      accessToken: tokens.accessToken,
-      refreshToken: tokens.refreshToken,
-      expiresIn: tokens.expiresIn,
+      accessToken,
+      refreshToken: rawRefreshToken,
+      expiresIn: `${this.parseExpiresInSeconds(expiresInConfig)}s`,
       tokenType: 'Bearer',
     };
   }
@@ -378,6 +531,87 @@ export class AuthService {
     }
     // Always OK — do not leak whether the token existed.
     return { ok: true };
+  }
+
+  private async createSocialUser(
+    dto: SocialSignInDto,
+    identity: VerifiedSocialIdentity,
+    email: string,
+  ): Promise<User> {
+    const region = normalizeRegionCode(dto.regionCountry);
+    const china = isChinaRegionCode(region);
+    const passwordHash = await bcrypt.hash(
+      randomBytes(32).toString('base64url'),
+      BCRYPT_ROUNDS,
+    );
+    const user = this.usersRepo.create({
+      email,
+      phone: null,
+      passwordHash,
+      name: this.socialDisplayName(dto.name, identity.name, email),
+      role: UserRole.Customer,
+      country: china ? region : null,
+      emailVerifiedAt: new Date(),
+      phoneVerifiedAt: null,
+      googleSub: null,
+      appleSub: null,
+    });
+    this.linkSocialSubject(user, dto.provider, identity.subject);
+    await this.usersRepo.save(user);
+    return user;
+  }
+
+  private socialDisplayName(
+    explicit: string | undefined,
+    tokenName: string | null,
+    email: string,
+  ): string {
+    const fromEmail = email.split('@')[0] ?? '';
+    const raw = (explicit?.trim() || tokenName?.trim() || fromEmail || 'OBIC')
+      .replace(/\s+/g, ' ')
+      .slice(0, 120);
+    return raw.length >= 2 ? raw : 'OBIC user';
+  }
+
+  private socialSubjectWhere(
+    provider: SocialProvider,
+    subject: string,
+  ): { googleSub: string } | { appleSub: string } {
+    switch (provider) {
+      case 'google':
+        return { googleSub: subject };
+      case 'apple':
+        return { appleSub: subject };
+      default: {
+        const _exhaustive: never = provider;
+        throw new BadRequestException(String(_exhaustive));
+      }
+    }
+  }
+
+  private linkSocialSubject(
+    user: User,
+    provider: SocialProvider,
+    subject: string,
+  ): void {
+    switch (provider) {
+      case 'google':
+        if (user.googleSub && user.googleSub !== subject) {
+          throw new ConflictException('SOCIAL_ACCOUNT_ALREADY_LINKED');
+        }
+        user.googleSub = subject;
+        return;
+      case 'apple':
+        if (user.appleSub && user.appleSub !== subject) {
+          throw new ConflictException('SOCIAL_ACCOUNT_ALREADY_LINKED');
+        }
+        user.appleSub = subject;
+        return;
+      default: {
+        const _exhaustive: never = provider;
+        throw new BadRequestException(String(_exhaustive));
+      }
+    }
   }
 
   private issueTotpChallenge(user: User): TotpPendingResult {
@@ -457,21 +691,23 @@ export class AuthService {
     return email.trim().toLowerCase();
   }
 
-  /** Register: China mainland mobile only. */
+  /** Register: China, Saudi Arabia, or Yemen mobile. */
   private normalizePhoneRegister(phone?: string): string | null {
     if (!phone?.trim()) return null;
-    const normalized = normalizeChinaMobile(phone);
+    const normalized = normalizeSmsMobile(phone);
     if (!normalized) {
-      throw new BadRequestException(CHINA_PHONE_ONLY_MSG);
+      throw new BadRequestException(SMS_PHONE_COUNTRIES_MSG);
     }
     return normalized;
   }
 
   /**
-   * Login: prefer China E.164; fall back to cleaned digits for grandfathered rows.
+   * Login: China, Saudi Arabia, or Yemen E.164; else cleaned digits for older rows.
    */
   private normalizePhoneLogin(phone?: string): string | null {
     if (!phone?.trim()) return null;
+    const sms = normalizeSmsMobile(phone);
+    if (sms) return sms;
     const cn = normalizeChinaMobile(phone);
     if (cn) return cn;
     const cleaned = phone.trim().replace(/[^\d+]/g, '');

@@ -7,7 +7,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
+import type { AiCatalogParent } from './ai-catalog-snapshot';
 import { RedisService } from '../redis/redis.service';
 import {
   AdminCreateServiceDto,
@@ -117,6 +118,54 @@ export class ServicesService {
       );
     await this.redis.setJson(cacheKey, dtos, SERVICES_LIST_TTL_SEC);
     return dtos;
+  }
+
+  /**
+   * Active customer catalog only (parents + sub-services).
+   * Inactive legacy rows and staff admin modules are excluded.
+   */
+  async listActiveCatalogForAi(): Promise<AiCatalogParent[]> {
+    const parents = await this.servicesRepo.find({
+      where: { isActive: true },
+      order: { sortOrder: 'ASC' },
+    });
+    if (parents.length === 0) return [];
+
+    const subs = await this.subsRepo.find({
+      where: { serviceId: In(parents.map((p) => p.id)), isActive: true },
+      order: { sortOrder: 'ASC' },
+    });
+    const byParent = new Map<string, ServiceSub[]>();
+    for (const sub of subs) {
+      const list = byParent.get(sub.serviceId) ?? [];
+      list.push(sub);
+      byParent.set(sub.serviceId, list);
+    }
+
+    return parents.map((parent) => ({
+      slug: parent.slug,
+      nameAr: parent.nameAr,
+      nameEn: parent.nameEn,
+      nameZh: parent.nameZh,
+      descAr: parent.descAr,
+      descEn: parent.descEn,
+      descZh: parent.descZh,
+      priceAr: parent.priceAr,
+      priceEn: parent.priceEn,
+      priceZh: parent.priceZh,
+      subs: (byParent.get(parent.id) ?? []).map((sub) => ({
+        id: sub.externalId,
+        nameAr: sub.nameAr,
+        nameEn: sub.nameEn,
+        nameZh: sub.nameZh,
+        descAr: sub.descAr,
+        descEn: sub.descEn,
+        descZh: sub.descZh,
+        priceAr: sub.priceAr,
+        priceEn: sub.priceEn,
+        priceZh: sub.priceZh,
+      })),
+    }));
   }
 
   async listAllAdmin(): Promise<AdminServiceDto[]> {

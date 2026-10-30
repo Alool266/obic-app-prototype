@@ -12,6 +12,7 @@ import { JwtStrategy } from './jwt.strategy';
 import { RefreshSession } from './refresh-session.entity';
 import { TotpModule } from './totp/totp.module';
 import { MailSenderService } from './mail-sender.service';
+import { SocialTokenVerifier } from './social-token.verifier';
 import { SmsSenderService } from './sms-sender.service';
 import { VerificationChallenge } from './verification-challenge.entity';
 import { VerificationService } from './verification.service';
@@ -44,6 +45,7 @@ import { User } from '../users/user.entity';
   controllers: [AuthController],
   providers: [
     AuthService,
+    SocialTokenVerifier,
     JwtStrategy,
     MailSenderService,
     SmsSenderService,

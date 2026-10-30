@@ -8,6 +8,8 @@ import { UserRole } from '../common/enums/user-role.enum';
 import { AuthUser } from '../common/interfaces/auth-user.interface';
 import { MomentComment } from '../moments/moment-comment.entity';
 import { Moment } from '../moments/moment.entity';
+import { NotificationsService } from '../notifications/notifications.service';
+import { User } from '../users/user.entity';
 import { BannedWord } from './banned-word.entity';
 import { ContentReport, ReportTargetType } from './content-report.entity';
 import { CONTENT_BLOCKED, ModerationService } from './moderation.service';
@@ -53,6 +55,14 @@ describe('ModerationService', () => {
         },
         { provide: getRepositoryToken(Moment), useValue: momentsRepo },
         { provide: getRepositoryToken(MomentComment), useValue: commentsRepo },
+        {
+          provide: getRepositoryToken(User),
+          useValue: { findOne: jest.fn(async () => null) },
+        },
+        {
+          provide: NotificationsService,
+          useValue: { createForUsers: jest.fn() },
+        },
       ],
     }).compile();
     service = module.get(ModerationService);

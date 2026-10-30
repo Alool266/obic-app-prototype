@@ -52,6 +52,31 @@ export class FriendsService {
     });
   }
 
+  /**
+   * Profile card for the signed-in user or an accepted friend.
+   * Omits email, phone, role, staff, and admin flags.
+   */
+  async friendProfile(actor: AuthUser, userId: string) {
+    const user = await this.users.findOne({ where: { id: userId } });
+    if (!user || user.deletedAt) {
+      throw new NotFoundException('User not found');
+    }
+    const self = user.id === actor.userId;
+    if (!self && !(await this.areFriends(actor.userId, user.id))) {
+      throw new ForbiddenException('Friends only');
+    }
+    return {
+      id: user.id,
+      name: user.name,
+      avatarUrl: user.avatarUrl ?? null,
+      city: user.city ?? null,
+      country: user.country ?? null,
+      gender: user.gender ?? null,
+      whatsUp: user.whatsUp ?? null,
+      obicId: user.obicId ?? null,
+    };
+  }
+
   /** Mutual friend user ids (accepted friendships only). */
   async friendIdsOf(userId: string): Promise<string[]> {
     const rows = await this.friendships.find({
@@ -148,15 +173,25 @@ export class FriendsService {
       return this.accept(actor, reciprocal.id);
     }
 
-    const existing = await this.requests.findOne({
+    const existingRows = await this.requests.find({
       where: {
         fromUserId: me.id,
         toUserId: target.id,
         status: FriendRequestStatus.Pending,
       },
+      order: { createdAt: 'DESC' },
+      take: 1,
     });
+    const existing = existingRows[0];
     if (existing) {
-      throw new ConflictException('Request already pending');
+      // WeChat: one pending row — latest note wins; never spam duplicates.
+      const note = dto.message?.trim().slice(0, 120) || null;
+      if (note != null && note !== existing.message) {
+        existing.message = note;
+        await this.requests.save(existing);
+        await this.notifyFriendRequest(target.id, existing.id, me);
+      }
+      return this.requestDto(existing, me, target);
     }
 
     const note = dto.message?.trim().slice(0, 120) || null;
@@ -170,15 +205,7 @@ export class FriendsService {
       }),
     );
 
-    await this.notifications.createForUsers({
-      userIds: [target.id],
-      kind: NotificationKind.FriendRequest,
-      title: 'Friend request',
-      body: note
-        ? `${me.name}: ${note}`
-        : `${me.name} sent you a friend request`,
-      data: { requestId: saved.id, fromUserId: me.id },
-    });
+    await this.notifyFriendRequest(target.id, saved.id, me);
 
     return this.requestDto(saved, me, target);
   }
@@ -200,14 +227,31 @@ export class FriendsService {
       relations: { fromUser: true, toUser: true },
       order: { createdAt: 'DESC' },
     });
+    // WeChat New Friends: one row per peer (latest note / newest wins).
     return {
-      incoming: incoming.map((r) =>
+      incoming: this.dedupeByPeer(incoming, (r) => r.fromUserId).map((r) =>
         this.requestDto(r, r.fromUser, r.toUser),
       ),
-      outgoing: outgoing.map((r) =>
+      outgoing: this.dedupeByPeer(outgoing, (r) => r.toUserId).map((r) =>
         this.requestDto(r, r.fromUser, r.toUser),
       ),
     };
+  }
+
+  /** Keep newest pending per peer id (list already DESC by createdAt). */
+  private dedupeByPeer(
+    rows: FriendRequest[],
+    peerId: (r: FriendRequest) => string,
+  ): FriendRequest[] {
+    const seen = new Set<string>();
+    const out: FriendRequest[] = [];
+    for (const r of rows) {
+      const id = peerId(r);
+      if (seen.has(id)) continue;
+      seen.add(id);
+      out.push(r);
+    }
+    return out;
   }
 
   async accept(actor: AuthUser, requestId: string) {
@@ -224,6 +268,17 @@ export class FriendsService {
     req.status = FriendRequestStatus.Accepted;
     await this.requests.save(req);
 
+    // Collapse any duplicate pending rows from the same peer (legacy spam).
+    await this.requests
+      .createQueryBuilder()
+      .update(FriendRequest)
+      .set({ status: FriendRequestStatus.Accepted })
+      .where('from_user_id = :from', { from: req.fromUserId })
+      .andWhere('to_user_id = :to', { to: req.toUserId })
+      .andWhere('status = :pending', { pending: FriendRequestStatus.Pending })
+      .andWhere('id != :id', { id: req.id })
+      .execute();
+
     const [low, high] =
       req.fromUserId < req.toUserId
         ? [req.fromUserId, req.toUserId]
@@ -237,13 +292,7 @@ export class FriendsService {
       );
     }
 
-    await this.notifications.createForUsers({
-      userIds: [req.fromUserId],
-      kind: NotificationKind.FriendAccepted,
-      title: 'Friend request accepted',
-      body: `${req.toUser?.name ?? 'Someone'} accepted your friend request`,
-      data: { requestId: req.id },
-    });
+    await this.notifyFriendAccepted(req);
 
     return this.requestDto(req, req.fromUser, req.toUser);
   }
@@ -261,7 +310,47 @@ export class FriendsService {
     }
     req.status = FriendRequestStatus.Rejected;
     await this.requests.save(req);
+
+    // Reject every pending from this peer so New Friends stays a single row.
+    await this.requests
+      .createQueryBuilder()
+      .update(FriendRequest)
+      .set({ status: FriendRequestStatus.Rejected })
+      .where('from_user_id = :from', { from: req.fromUserId })
+      .andWhere('to_user_id = :to', { to: req.toUserId })
+      .andWhere('status = :pending', { pending: FriendRequestStatus.Pending })
+      .andWhere('id != :id', { id: req.id })
+      .execute();
+
     return this.requestDto(req, req.fromUser, req.toUser);
+  }
+
+  private async notifyFriendRequest(toUserId: string, requestId: string, from: User) {
+    try {
+      await this.notifications.createForUsers({
+        userIds: [toUserId],
+        kind: NotificationKind.System,
+        title: 'New friend request',
+        body: `${from.name ?? 'Someone'} wants to add you as a friend`,
+        data: { type: 'friend_request', requestId, fromUserId: from.id },
+      });
+    } catch {
+      // The request row is already saved.
+    }
+  }
+
+  private async notifyFriendAccepted(req: FriendRequest) {
+    try {
+      await this.notifications.createForUsers({
+        userIds: [req.fromUserId],
+        kind: NotificationKind.System,
+        title: 'Friend request accepted',
+        body: `${req.toUser?.name ?? 'Your friend'} accepted your friend request`,
+        data: { type: 'friend_accepted', requestId: req.id, userId: req.toUserId },
+      });
+    } catch {
+      // The friendship is already saved.
+    }
   }
 
   private requestDto(r: FriendRequest, from?: User, to?: User) {

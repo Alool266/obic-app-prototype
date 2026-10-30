@@ -9,6 +9,8 @@ import { Message } from '../chat/message.entity';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { Order } from '../orders/order.entity';
 import { RealtimeModule } from '../realtime/realtime.module';
+import { ServicesModule } from '../services/services.module';
+import { UploadsModule } from '../uploads/uploads.module';
 import { User } from '../users/user.entity';
 import { AiAssistantMessage } from './assistant-message.entity';
 import { AiAssistantThread } from './assistant-thread.entity';
@@ -16,6 +18,7 @@ import { AppSetting } from './app-setting.entity';
 import { AiAutoReplyService } from './ai-auto-reply.service';
 import { AiConfig } from './ai.config';
 import { AiController } from './ai.controller';
+import { AiPublicController } from './ai-public.controller';
 import { AiGroundingService } from './ai-grounding.service';
 import { AiHistoryService } from './ai-history.service';
 import { AiService } from './ai.service';
@@ -35,8 +38,10 @@ import { AiSettingsService } from './ai-settings.service';
     ]),
     NotificationsModule,
     RealtimeModule,
+    ServicesModule,
+    UploadsModule,
   ],
-  controllers: [AiController],
+  controllers: [AiController, AiPublicController],
   providers: [
     AiConfig,
     AiGroundingService,

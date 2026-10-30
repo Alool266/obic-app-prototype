@@ -9,6 +9,7 @@ import { RealtimeService } from '../realtime/realtime.service';
 import { User } from '../users/user.entity';
 import { CallsConfig } from './calls.config';
 import { CallsService } from './calls.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 describe('CallsService ACL', () => {
   const convId = '11111111-1111-1111-1111-111111111111';
@@ -49,6 +50,10 @@ describe('CallsService ACL', () => {
         CallsService,
         { provide: CallsConfig, useValue: config },
         { provide: RealtimeService, useValue: realtime },
+        {
+          provide: NotificationsService,
+          useValue: { pushAlert: jest.fn() },
+        },
         { provide: getRepositoryToken(Conversation), useValue: conversations },
         {
           provide: getRepositoryToken(ConversationParticipant),
@@ -90,6 +95,7 @@ describe('CallsService ACL', () => {
       ended: false,
       conversationKind: 'direct',
       conversationTitle: null,
+      joinedUserIds: [memberId],
     });
     conversations.findOne.mockResolvedValue({
       id: convId,

@@ -10,6 +10,7 @@ import {
   Notification,
   NotificationKind,
 } from './notification.entity';
+import { PushService } from './push.service';
 
 @Injectable()
 export class NotificationsService {
@@ -17,7 +18,17 @@ export class NotificationsService {
     @InjectRepository(Notification)
     private readonly repo: Repository<Notification>,
     private readonly realtime: RealtimeService,
+    private readonly push: PushService,
   ) {}
+
+  pushAlert(options: {
+    userIds: string[];
+    title: string;
+    body: string;
+    data?: Record<string, unknown>;
+  }) {
+    void this.push.sendToUsers(options);
+  }
 
   async listMine(actor: AuthUser, limit = 50) {
     const rows = await this.repo.find({
@@ -55,6 +66,19 @@ export class NotificationsService {
     return { ok: true };
   }
 
+  /**
+   * Hard-remove a row (WeChat: open chat must not leave stubs in the inbox).
+   * Idempotent — missing / foreign id → ok.
+   */
+  async dismiss(actor: AuthUser, id: string) {
+    const row = await this.repo.findOne({ where: { id } });
+    if (!row || row.userId !== actor.userId) {
+      return { ok: true, deleted: false };
+    }
+    await this.repo.remove(row);
+    return { ok: true, deleted: true };
+  }
+
   /** Fan-out helper used by Moments / Friends — never exposed as a public write API. */
   async createForUsers(options: {
     userIds: string[];
@@ -63,7 +87,12 @@ export class NotificationsService {
     body: string;
     data?: Record<string, unknown>;
   }) {
-    const unique = [...new Set(options.userIds)].filter(Boolean);
+    const convId = this.conversationIdFromData(options.data);
+    // WeChat: if the recipient has that chat open, do not write an inbox row.
+    const unique = this.realtime.filterNotViewing(
+      options.userIds,
+      convId,
+    );
     if (!unique.length) return;
     const rows = unique.map((userId) =>
       this.repo.create({
@@ -81,6 +110,22 @@ export class NotificationsService {
         notification: this.toDto(row),
       });
     }
+    this.pushAlert({
+      userIds: rows.map((row) => row.userId),
+      title: options.title,
+      body: options.body,
+      data: options.data,
+    });
+  }
+
+  private conversationIdFromData(
+    data?: Record<string, unknown> | null,
+  ): string | null {
+    if (!data) return null;
+    const raw = data['conversationId'];
+    if (typeof raw !== 'string') return null;
+    const id = raw.trim();
+    return id.length ? id : null;
   }
 
   async createForAllUsersExcept(

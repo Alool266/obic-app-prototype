@@ -1,0 +1,26 @@
+# Production keep-alive — api.obicgp.com must not cold-start.
+# ECS is always-on; this cron is a belt-and-suspenders health ping ≤5 min.
+# Made by Dr Ali
+
+name: Wake production API
+
+on:
+  schedule:
+    # GitHub may delay cron slightly; script retries cover that.
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Health ping api.obicgp.com
+        env:
+          HEALTH_URL: https://api.obicgp.com/v1/health
+          # Prod ECS is warm; fewer retries than Render cold-start.
+          MAX_ATTEMPTS: "4"
+          SLEEP_BETWEEN: "3"
+        run: bash scripts/wake-trial-api.sh

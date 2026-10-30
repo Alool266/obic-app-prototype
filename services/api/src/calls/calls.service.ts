@@ -3,6 +3,7 @@
 // ACL = conversation participants (direct, support, group, order — same rule).
 
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
   Logger,
@@ -16,6 +17,7 @@ import { ConversationParticipant } from '../chat/conversation-participant.entity
 import { Conversation } from '../chat/conversation.entity';
 import { AuthUser } from '../common/interfaces/auth-user.interface';
 import { RealtimeService } from '../realtime/realtime.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { User } from '../users/user.entity';
 import {
   agoraUidFromUserId,
@@ -38,6 +40,8 @@ export type CallSession = {
   ended: boolean;
   conversationKind: string;
   conversationTitle: string | null;
+  /** People currently in the channel. The call ends when this is empty. */
+  joinedUserIds: string[];
 };
 
 export type CallJoinPayload = {
@@ -67,6 +71,7 @@ export class CallsService {
   constructor(
     private readonly config: CallsConfig,
     private readonly realtime: RealtimeService,
+    private readonly notifications: NotificationsService,
     @InjectRepository(Conversation)
     private readonly conversations: Repository<Conversation>,
     @InjectRepository(ConversationParticipant)
@@ -107,6 +112,7 @@ export class CallsService {
       ended: false,
       conversationKind: conv.kind,
       conversationTitle: conv.title ?? null,
+      joinedUserIds: [actor.userId],
     };
     this.sessions.set(callId, session);
     this.pruneExpired();
@@ -117,9 +123,25 @@ export class CallsService {
     const peers = await this.participants.find({
       where: { conversationId: dto.conversationId },
     });
-    const calleeIds = peers
+    let calleeIds = peers
       .map((p) => p.userId)
       .filter((id) => id !== actor.userId);
+    if (dto.inviteUserIds?.length) {
+      const allowed = new Set(calleeIds);
+      const picked = [...new Set(dto.inviteUserIds)].filter((id) => allowed.has(id));
+      const cap = dto.mode === 'video' ? 8 : 15;
+      if (!picked.length) {
+        throw new BadRequestException('Pick at least one person in this chat');
+      }
+      if (picked.length > cap) {
+        throw new BadRequestException(
+          dto.mode === 'video'
+            ? 'Video calls can include up to 9 people'
+            : 'Voice calls can include up to 16 people',
+        );
+      }
+      calleeIds = picked;
+    }
 
     const caller = await this.users.findOne({ where: { id: actor.userId } });
     const isGroup = conv.kind === 'group';
@@ -138,6 +160,25 @@ export class CallsService {
         isGroup,
       },
     });
+    if (calleeIds.length) {
+      void this.notifications.pushAlert({
+        userIds: calleeIds,
+        title: caller?.name ?? 'OBIC',
+        body: dto.mode === 'video' ? 'مكالمة فيديو' : 'مكالمة صوتية',
+        data: {
+          kind: 'call',
+          callId,
+          conversationId: dto.conversationId,
+          channelName,
+          mode: dto.mode,
+          fromUserId: actor.userId,
+          fromName: caller?.name ?? 'OBIC',
+          conversationKind: conv.kind,
+          conversationTitle: conv.title ?? '',
+          isGroup: isGroup ? '1' : '0',
+        },
+      });
+    }
 
     this.logger.log(
       `call created id=${callId} mode=${dto.mode} kind=${conv.kind} conv=${dto.conversationId} ring=${calleeIds.length}`,
@@ -152,6 +193,9 @@ export class CallsService {
       throw new NotFoundException('Call not found or expired');
     }
     await this.requireParticipant(actor.userId, session.conversationId);
+    if (!session.joinedUserIds.includes(actor.userId)) {
+      session.joinedUserIds.push(actor.userId);
+    }
     const join = this.mintForUser(session, actor.userId);
     this.logger.log(
       `call token minted id=${callId} uid=${join.uid} user=${actor.userId}`,
@@ -227,6 +271,104 @@ export class CallsService {
     return out;
   }
 
+  async active(actor: AuthUser, conversationId: string) {
+    await this.requireParticipant(actor.userId, conversationId);
+    this.pruneExpired();
+    for (const session of this.sessions.values()) {
+      if (session.ended) continue;
+      if (session.conversationId !== conversationId) continue;
+      if (session.expiresAt.getTime() < Date.now()) continue;
+      const ids = session.joinedUserIds ?? [];
+      if (!ids.length) continue;
+      return {
+        call: {
+          callId: session.id,
+          mode: session.mode,
+          count: ids.length,
+          title: session.conversationTitle,
+          conversationId: session.conversationId,
+        },
+      };
+    }
+    return { call: null };
+  }
+
+  async invite(actor: AuthUser, callId: string, userIds: string[]) {
+    const session = this.sessions.get(callId);
+    if (!session || session.ended || session.expiresAt.getTime() < Date.now()) {
+      throw new NotFoundException('Call not found or expired');
+    }
+    await this.requireParticipant(actor.userId, session.conversationId);
+    const peers = await this.participants.find({
+      where: { conversationId: session.conversationId },
+    });
+    const allowed = new Set(peers.map((p) => p.userId));
+    const cap = session.mode === 'video' ? 9 : 16;
+    const already = new Set(session.joinedUserIds);
+    const picked = [...new Set(userIds)].filter(
+      (id) => allowed.has(id) && id !== actor.userId && !already.has(id),
+    );
+    if (already.size + picked.length > cap) {
+      throw new BadRequestException(
+        session.mode === 'video'
+          ? 'Video calls can include up to 9 people'
+          : 'Voice calls can include up to 16 people',
+      );
+    }
+    if (!picked.length) return { ok: true, callId, invited: 0 };
+    const caller = await this.users.findOne({ where: { id: actor.userId } });
+    this.realtime.publishCallIncoming({
+      userIds: picked,
+      payload: {
+        callId,
+        conversationId: session.conversationId,
+        channelName: session.channelName,
+        mode: session.mode,
+        fromUserId: actor.userId,
+        fromName: caller?.name ?? 'OBIC',
+        fromAvatarUrl: caller?.avatarUrl ?? null,
+        conversationKind: session.conversationKind,
+        conversationTitle: session.conversationTitle,
+        isGroup: session.conversationKind === 'group',
+      },
+    });
+    void this.notifications.pushAlert({
+      userIds: picked,
+      title: caller?.name ?? 'OBIC',
+      body: session.mode === 'video' ? 'مكالمة فيديو' : 'مكالمة صوتية',
+      data: {
+        kind: 'call',
+        callId,
+        conversationId: session.conversationId,
+        channelName: session.channelName,
+        mode: session.mode,
+        fromUserId: actor.userId,
+        fromName: caller?.name ?? 'OBIC',
+        conversationKind: session.conversationKind,
+        conversationTitle: session.conversationTitle ?? '',
+        isGroup: session.conversationKind === 'group' ? '1' : '0',
+      },
+    });
+    return { ok: true, callId, invited: picked.length };
+  }
+
+  /** Group: drop this person. End the call only when nobody is left. */
+  async leave(actor: AuthUser, callId: string) {
+    const session = this.sessions.get(callId);
+    if (!session) throw new NotFoundException('Call not found');
+    await this.requireParticipant(actor.userId, session.conversationId);
+    if (session.conversationKind !== 'group') {
+      return this.endCall(actor, callId);
+    }
+    session.joinedUserIds = (session.joinedUserIds ?? []).filter(
+      (id) => id !== actor.userId,
+    );
+    if (!session.joinedUserIds.length) {
+      return this.endCall(actor, callId);
+    }
+    return { ok: true, callId, count: session.joinedUserIds.length };
+  }
+
   async endCall(actor: AuthUser, callId: string) {
     const session = this.sessions.get(callId);
     if (!session) {
@@ -237,14 +379,29 @@ export class CallsService {
     const peers = await this.participants.find({
       where: { conversationId: session.conversationId },
     });
+    const peerIds = peers.map((p) => p.userId);
     this.realtime.publishCallEnded({
-      userIds: peers.map((p) => p.userId),
+      userIds: peerIds,
       payload: {
         callId,
         conversationId: session.conversationId,
         endedBy: actor.userId,
       },
     });
+    const notify = peerIds.filter((id) => id !== actor.userId);
+    if (notify.length) {
+      void this.notifications.pushAlert({
+        userIds: notify,
+        title: 'OBIC',
+        body: '',
+        data: {
+          kind: 'call_ended',
+          callId,
+          conversationId: session.conversationId,
+          endedBy: actor.userId,
+        },
+      });
+    }
     return { ok: true, callId };
   }
 

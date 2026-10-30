@@ -1,9 +1,12 @@
 // Made by Dr Ali
-// Keyword retrieval over curated FAQ + mega catalog (titles/prices).
-// No user data — corpus is static seed only (never other users' chats).
+// Full customer catalog + FAQ grounding for OBIC AI.
+// Live active services when the DB is up; mega-catalog seed otherwise.
+// No user data and no staff-only admin modules.
 
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
+import { AiCatalogItem, AiCatalogParent } from '../services/ai-catalog-snapshot';
 import { MEGA_CATALOG_SEED } from '../services/mega-catalog.seed';
+import { ServicesService } from '../services/services.service';
 import { AiLocale } from './obic-ai.constants';
 import { FaqEntry, OBIC_FAQ } from './ai-grounding.faq';
 
@@ -13,55 +16,49 @@ type CatalogHit = {
 };
 
 const MAX_FAQ = 3;
-const MAX_CATALOG = 5;
-const MAX_CONTEXT_CHARS = 2200;
+const MAX_CATALOG = 6;
+const CATALOG_TTL_MS = 60_000;
+
+/** Customer branches only — mirrors apps/mobile lib/core/obic_org.dart. No managers. */
+const CUSTOMER_BRANCHES = [
+  'Yiwu | إيوو | 义乌',
+  'Guangzhou | قوانغتشو | 广州',
+  'Foshan | فوشان | 佛山',
+  'Hangzhou | هانغتشو | 杭州',
+  'Hainan | هاينان | 海南',
+  'Yemen | اليمن | 也门',
+  'Shanghai | شنغهاي | 上海',
+];
 
 @Injectable()
 export class AiGroundingService {
+  private readonly logger = new Logger(AiGroundingService.name);
+  private catalogCache: { at: number; parents: AiCatalogParent[] } | null =
+    null;
+
+  constructor(@Optional() private readonly services?: ServicesService) {}
+
   /**
-   * Build a short grounding block for the system prompt.
-   * Prefer catalog price lines when they match — model must not invent prices.
+   * Grounding block from the shared mega-catalog seed (tests and DB fallback).
+   * Always includes the full customer catalog, not only keyword hits.
    */
-  retrieve(query: string, locale: AiLocale = 'en'): string {
-    const tokens = this.tokenize(query);
-    if (tokens.length === 0) {
-      return this.fallbackRules(locale);
-    }
+  retrieve(
+    query: string,
+    locale: AiLocale = 'en',
+    catalog?: AiCatalogParent[],
+  ): string {
+    return this.compose(query, locale, catalog ?? this.seedCatalog());
+  }
 
-    const faqHits = this.scoreFaq(tokens, locale);
-    const catalogHits = this.scoreCatalog(tokens, locale);
-
-    const parts: string[] = [
-      'Grounded OBIC facts (use these; do not invent prices or confirmations):',
-    ];
-
-    if (faqHits.length > 0) {
-      parts.push('FAQ:');
-      for (const f of faqHits) {
-        parts.push(`- ${f}`);
-      }
-    }
-
-    if (catalogHits.length > 0) {
-      parts.push(
-        'Catalog (use listed prices only; if unsure say staff will confirm):',
-      );
-      for (const c of catalogHits) {
-        parts.push(`- ${c.line}`);
-      }
-    } else {
-      parts.push(
-        'No strong catalog price match — do not invent a price; suggest Services catalog or staff.',
-      );
-    }
-
-    parts.push(this.fallbackRules(locale));
-
-    let out = parts.join('\n');
-    if (out.length > MAX_CONTEXT_CHARS) {
-      out = out.slice(0, MAX_CONTEXT_CHARS - 1) + '…';
-    }
-    return out;
+  /**
+   * Prefer the live active catalog so newly added services are included.
+   * Falls back to the mega-catalog seed when the DB is empty or unavailable.
+   */
+  async retrieveForMessage(
+    query: string,
+    locale: AiLocale = 'en',
+  ): Promise<string> {
+    return this.compose(query, locale, await this.resolveCatalog());
   }
 
   /** Exposed for tests — corpus must never include user ids / messages. */
@@ -132,9 +129,120 @@ export class AiGroundingService {
     return score;
   }
 
-  private scoreCatalog(tokens: string[], locale: AiLocale): CatalogHit[] {
+  private compose(
+    query: string,
+    locale: AiLocale,
+    parents: AiCatalogParent[],
+  ): string {
+    const parts: string[] = [
+      'Grounded OBIC facts (use these; do not invent services, prices, or confirmations):',
+      this.catalogIndex(parents),
+    ];
+
+    const tokens = this.tokenize(query);
+    if (tokens.length > 0) {
+      const faqHits = this.scoreFaq(tokens, locale);
+      const catalogHits = this.scoreCatalog(tokens, locale, parents);
+      if (faqHits.length > 0) {
+        parts.push('FAQ:');
+        for (const f of faqHits) {
+          parts.push(`- ${f}`);
+        }
+      }
+      if (catalogHits.length > 0) {
+        parts.push(
+          'Closest catalog matches (use these descriptions and listed prices only):',
+        );
+        for (const c of catalogHits) {
+          parts.push(`- ${c.line}`);
+        }
+      }
+    }
+
+    parts.push(this.fallbackRules(locale));
+    return parts.join('\n');
+  }
+
+  private seedCatalog(): AiCatalogParent[] {
+    return MEGA_CATALOG_SEED.map((parent) => ({
+      slug: parent.slug,
+      nameAr: parent.nameAr,
+      nameEn: parent.nameEn,
+      nameZh: parent.nameZh,
+      descAr: parent.descAr,
+      descEn: parent.descEn,
+      descZh: parent.descZh,
+      priceAr: parent.priceAr,
+      priceEn: parent.priceEn,
+      priceZh: parent.priceZh,
+      subs: parent.subs.map((sub) => ({
+        id: sub.id,
+        nameAr: sub.nameAr,
+        nameEn: sub.nameEn,
+        nameZh: sub.nameZh,
+        descAr: sub.descAr,
+        descEn: sub.descEn,
+        descZh: sub.descZh,
+        priceAr: sub.priceAr,
+        priceEn: sub.priceEn,
+        priceZh: sub.priceZh,
+      })),
+    }));
+  }
+
+  private async resolveCatalog(): Promise<AiCatalogParent[]> {
+    const now = Date.now();
+    if (
+      this.catalogCache &&
+      now - this.catalogCache.at < CATALOG_TTL_MS
+    ) {
+      return this.catalogCache.parents;
+    }
+    const live = await this.loadLiveCatalog();
+    const parents = live.length > 0 ? live : this.seedCatalog();
+    this.catalogCache = { at: now, parents };
+    return parents;
+  }
+
+  private async loadLiveCatalog(): Promise<AiCatalogParent[]> {
+    if (!this.services) return [];
+    try {
+      return await this.services.listActiveCatalogForAi();
+    } catch {
+      this.logger.warn('ai_catalog_live_unavailable');
+      return [];
+    }
+  }
+
+  private catalogIndex(parents: AiCatalogParent[]): string {
+    // Names only. Descriptions and prices stay on the closest matches so a
+    // short question is not waiting on the whole catalog.
+    const lines = [
+      'Services that exist (Arabic | English | 中文). Do not invent others.',
+      'Request path: Services, category, item, order. Published hotel and flight deals are in Offers. Demande : Services → catégorie → élément → commande.',
+      'Home shortcuts: VIP trip opens Travel; visa express opens Government; the open-bank banner opens Business. There is no separate bank service.',
+      `Branches: ${CUSTOMER_BRANCHES.join('; ')}.`,
+    ];
+    for (const parent of parents) {
+      const subs = parent.subs.map((sub) => this.triName(sub)).join('; ');
+      lines.push(
+        subs ? `- ${this.triName(parent)}: ${subs}` : `- ${this.triName(parent)}`,
+      );
+    }
+    return lines.join('\n');
+  }
+
+  private triName(item: AiCatalogItem): string {
+    return `${item.nameAr} | ${item.nameEn} | ${item.nameZh}`;
+  }
+
+  private scoreCatalog(
+    tokens: string[],
+    locale: AiLocale,
+    parents: AiCatalogParent[],
+  ): CatalogHit[] {
     const hits: CatalogHit[] = [];
-    for (const parent of MEGA_CATALOG_SEED) {
+    for (const parent of parents) {
       const parentText = this.catalogBlob(parent, locale);
       const parentScore = this.textScore(parentText, tokens);
       if (parentScore > 0) {

@@ -78,7 +78,23 @@ export class UploadsController {
       storage: memoryStorage(),
       limits: { fileSize: 80 * 1024 * 1024 }, // 80MB — videos
       fileFilter: (_req, file, cb) => {
-        const ext = extname(file.originalname || '').toLowerCase();
+        let ext = extname(file.originalname || '').toLowerCase();
+        // Android Photo Picker sometimes sends cache names with no extension.
+        if (!ext) {
+          const mime = (file.mimetype || '').toLowerCase();
+          if (mime === 'image/jpeg' || mime === 'image/jpg') ext = '.jpg';
+          else if (mime === 'image/png') ext = '.png';
+          else if (mime === 'image/webp') ext = '.webp';
+          else if (mime === 'image/gif') ext = '.gif';
+          else if (mime === 'image/heic' || mime === 'image/heif') {
+            ext = '.heic';
+          }
+          if (ext && file.originalname) {
+            file.originalname = `${file.originalname}${ext}`;
+          } else if (ext) {
+            file.originalname = `upload${ext}`;
+          }
+        }
         if (!ALLOWED.has(ext)) {
           return cb(
             new BadRequestException(`File type not allowed: ${ext || 'unknown'}`),

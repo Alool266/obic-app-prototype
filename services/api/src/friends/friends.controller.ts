@@ -57,4 +57,13 @@ export class FriendsController {
   ) {
     return this.friends.reject(actor, id);
   }
+
+  /** Self or accepted friend. Not a dump of the users table. */
+  @Get(':userId/profile')
+  profile(
+    @CurrentUser() actor: AuthUser,
+    @Param('userId', ParseUUIDPipe) userId: string,
+  ) {
+    return this.friends.friendProfile(actor, userId);
+  }
 }

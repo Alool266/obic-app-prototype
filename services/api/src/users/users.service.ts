@@ -11,11 +11,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
 import { IsNull, Not, Repository } from 'typeorm';
-import {
-  isChinaMobile,
-  normalizeChinaMobile,
-  CHINA_PHONE_ONLY_MSG,
-} from '../auth/china-phone.util';
+import { normalizeSmsMobile } from '../auth/sms-phone.util';
 import { normalizeRegionCode } from '../auth/china-cohort.util';
 import { UserRole } from '../common/enums/user-role.enum';
 import { AuthUser } from '../common/interfaces/auth-user.interface';
@@ -24,6 +20,7 @@ import { ChangeEmailDto } from './dto/change-email.dto';
 import { DeleteMeDto } from './dto/delete-me.dto';
 import { UpdateMeDto } from './dto/update-me.dto';
 import { UpdateAddressesDto } from './dto/update-addresses.dto';
+import { UpdateHomeLayoutDto } from './dto/update-home-layout.dto';
 import { decideObicIdChange } from './obic-id.util';
 import {
   canSuperAdminSelfDelete,
@@ -31,15 +28,31 @@ import {
 } from './superadmin-self-delete';
 import { UserAddress } from './user-address.interface';
 import { User } from './user.entity';
+import { UserHomeLayout } from './user-home-layout.entity';
 import { PublicUser, toPublicUser } from './user.mapper';
 
 const BCRYPT_ROUNDS = 12;
+
+export type MiniAppsLayoutPayload = {
+  order: string[];
+  favorites: string[];
+  hidden: string[];
+};
+
+export type HomeLayoutPayload = {
+  order: string[];
+  favorites: string[];
+  hidden: string[];
+  miniApps: MiniAppsLayoutPayload;
+};
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User)
     private readonly usersRepo: Repository<User>,
+    @InjectRepository(UserHomeLayout)
+    private readonly homeLayoutRepo: Repository<UserHomeLayout>,
   ) {}
 
   /** "Me" profile — never accept a client-supplied userId for this path. */
@@ -85,15 +98,12 @@ export class UsersService {
         user.phone = null;
         user.phoneVerifiedAt = null;
       } else {
-        // Profile phone edits that look like China mobile must go through OTP.
-        const cn = normalizeChinaMobile(raw);
-        if (cn) {
+        // China, Saudi, and Yemen mobiles must go through the OTP.
+        const sms = normalizeSmsMobile(raw);
+        if (sms) {
           throw new BadRequestException(
-            'Use phone verification OTP to set a China mainland number',
+            'Use phone verification OTP to set this mobile number',
           );
-        }
-        if (isChinaMobile(raw)) {
-          throw new BadRequestException(CHINA_PHONE_ONLY_MSG);
         }
         const phone = raw;
         const taken = await this.usersRepo.findOne({
@@ -120,6 +130,24 @@ export class UsersService {
         // Prefer ISO code when recognizable; otherwise store trimmed label.
         user.country = normalizeRegionCode(raw) ?? raw.slice(0, 120);
       }
+    }
+
+    if (dto.gender !== undefined) {
+      const raw = dto.gender.trim().toLowerCase();
+      if (raw.length === 0) {
+        user.gender = null;
+      } else if (raw === 'male' || raw === 'female' || raw === 'other') {
+        user.gender = raw;
+      } else {
+        throw new BadRequestException(
+          'Gender must be male, female, other, or empty',
+        );
+      }
+    }
+
+    if (dto.whatsUp !== undefined) {
+      const raw = dto.whatsUp.trim();
+      user.whatsUp = raw.length === 0 ? null : raw.slice(0, 120);
     }
 
     if (dto.obicId !== undefined) {
@@ -224,6 +252,7 @@ export class UsersService {
   async updateMomentsCover(
     actor: AuthUser,
     coverUrl: string,
+    focusY?: number,
   ): Promise<PublicUser> {
     const user = await this.usersRepo.findOne({ where: { id: actor.userId } });
     if (!user) {
@@ -234,8 +263,38 @@ export class UsersService {
     }
     const url = coverUrl.trim();
     user.momentsCoverUrl = url.length === 0 ? null : url.slice(0, 1024);
+    if (typeof focusY === 'number' && Number.isFinite(focusY)) {
+      user.momentsCoverFocusY = Math.min(1, Math.max(-1, focusY));
+    } else if (url.length === 0) {
+      user.momentsCoverFocusY = 0;
+    }
     await this.usersRepo.save(user);
     return toPublicUser(user);
+  }
+
+  /**
+   * Public Moments profile header (name / avatar / cover) — no email/phone.
+   * Used when opening a friend’s Moments album.
+   */
+  async momentsProfile(userId: string) {
+    const user = await this.usersRepo.findOne({ where: { id: userId } });
+    if (!user || user.deletedAt) {
+      throw new NotFoundException('User not found');
+    }
+    return {
+      id: user.id,
+      name: user.name,
+      role: user.role,
+      avatarUrl: user.avatarUrl ?? null,
+      whatsUp: user.whatsUp ?? null,
+      city: user.city ?? null,
+      country: user.country ?? null,
+      momentsCoverUrl: user.momentsCoverUrl ?? null,
+      momentsCoverFocusY:
+        typeof user.momentsCoverFocusY === 'number'
+          ? user.momentsCoverFocusY
+          : 0,
+    };
   }
 
   /**
@@ -270,6 +329,105 @@ export class UsersService {
     user.deletedAt = new Date();
     await this.usersRepo.save(user);
     return { ok: true };
+  }
+
+  /** Home icon layout — empty arrays mean catalog defaults on the client. */
+  async getHomeLayout(actor: AuthUser): Promise<HomeLayoutPayload> {
+    const row = await this.homeLayoutRepo.findOne({
+      where: { userId: actor.userId },
+    });
+    if (!row) {
+      return {
+        order: [],
+        favorites: [],
+        hidden: [],
+        miniApps: { order: [], favorites: [], hidden: [] },
+      };
+    }
+    return {
+      order: this.normalizeSlugList(row.orderSlugs),
+      favorites: this.normalizeSlugList(row.favorites),
+      hidden: this.normalizeSlugList(row.hidden),
+      miniApps: {
+        order: this.normalizeSlugList(row.miniOrder),
+        favorites: this.normalizeSlugList(row.miniFavorites),
+        hidden: this.normalizeSlugList(row.miniHidden),
+      },
+    };
+  }
+
+  async putHomeLayout(
+    actor: AuthUser,
+    dto: UpdateHomeLayoutDto,
+  ): Promise<HomeLayoutPayload> {
+    const user = await this.usersRepo.findOne({ where: { id: actor.userId } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const order = this.normalizeSlugList(dto.order);
+    const hidden = this.normalizeSlugList(dto.hidden);
+    const hiddenSet = new Set(hidden);
+    const favorites = this.normalizeSlugList(dto.favorites).filter(
+      (slug) => !hiddenSet.has(slug),
+    );
+
+    let row = await this.homeLayoutRepo.findOne({
+      where: { userId: actor.userId },
+    });
+    if (!row) {
+      row = this.homeLayoutRepo.create({
+        userId: actor.userId,
+        orderSlugs: order,
+        favorites,
+        hidden,
+        miniOrder: [],
+        miniFavorites: [],
+        miniHidden: [],
+      });
+    } else {
+      row.orderSlugs = order;
+      row.favorites = favorites;
+      row.hidden = hidden;
+    }
+
+    if (dto.miniApps) {
+      const miniHidden = this.normalizeSlugList(dto.miniApps.hidden);
+      const miniHiddenSet = new Set(miniHidden);
+      row.miniOrder = this.normalizeSlugList(dto.miniApps.order);
+      row.miniFavorites = this.normalizeSlugList(dto.miniApps.favorites).filter(
+        (id) => !miniHiddenSet.has(id),
+      );
+      row.miniHidden = miniHidden;
+    }
+
+    await this.homeLayoutRepo.save(row);
+    return {
+      order,
+      favorites,
+      hidden,
+      miniApps: {
+        order: this.normalizeSlugList(row.miniOrder),
+        favorites: this.normalizeSlugList(row.miniFavorites),
+        hidden: this.normalizeSlugList(row.miniHidden),
+      },
+    };
+  }
+
+  private normalizeSlugList(raw: unknown): string[] {
+    if (!Array.isArray(raw)) return [];
+    const seen = new Set<string>();
+    const out: string[] = [];
+    for (const item of raw) {
+      if (typeof item !== 'string') continue;
+      const slug = item.trim().toLowerCase();
+      if (!slug || seen.has(slug)) continue;
+      if (!/^[a-z0-9][a-z0-9_-]{0,62}$/.test(slug)) continue;
+      seen.add(slug);
+      out.push(slug);
+      if (out.length >= 64) break;
+    }
+    return out;
   }
 
   /** Replace saved delivery addresses (max 20). */

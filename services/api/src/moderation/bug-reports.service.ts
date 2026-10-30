@@ -11,6 +11,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { UserRole } from '../common/enums/user-role.enum';
 import { AuthUser } from '../common/interfaces/auth-user.interface';
+import { NotificationKind } from '../notifications/notification.entity';
+import { NotificationsService } from '../notifications/notifications.service';
+import { customerAlertDeskEmail } from '../notifications/customer-alert-routing';
 import { User } from '../users/user.entity';
 import { BugReport, BugReportStatus } from './bug-report.entity';
 
@@ -21,6 +24,7 @@ export class BugReportsService {
     private readonly reports: Repository<BugReport>,
     @InjectRepository(User)
     private readonly users: Repository<User>,
+    private readonly notifications: NotificationsService,
   ) {}
 
   async create(
@@ -43,6 +47,7 @@ export class BugReportsService {
         status: BugReportStatus.Open,
       }),
     );
+    await this.alertDesk(actor.userId, saved.id, saved.description);
     return this.toDto(saved);
   }
 
@@ -103,6 +108,26 @@ export class BugReportsService {
     row.reviewedAt = new Date();
     const saved = await this.reports.save(row);
     return this.toDto(saved);
+  }
+
+  private async alertDesk(customerUserId: string, id: string, description: string) {
+    try {
+      const email = customerAlertDeskEmail('bug_report');
+      const user = await this.users.findOne({
+        where: { email, role: UserRole.Employee },
+      });
+      if (!user || user.id === customerUserId) return;
+      const text = description.trim();
+      await this.notifications.createForUsers({
+        userIds: [user.id],
+        kind: NotificationKind.System,
+        title: 'New bug report',
+        body: text.length > 140 ? `${text.slice(0, 137)}…` : text,
+        data: { type: 'bug_report', bugReportId: id },
+      });
+    } catch {
+      // The report is already saved. A missing desk must not fail the customer.
+    }
   }
 
   private requireStaff(actor: AuthUser) {

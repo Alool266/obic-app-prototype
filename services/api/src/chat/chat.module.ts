@@ -10,9 +10,11 @@ import { PhoneVerifiedGuard } from '../common/guards/phone-verified.guard';
 import { AuditLog } from './audit-log.entity';
 import { ChatController } from './chat.controller';
 import { ChatService } from './chat.service';
+import { LiveLocationService } from './live-location.service';
 import { ConversationParticipant } from './conversation-participant.entity';
 import { Conversation } from './conversation.entity';
 import { Message } from './message.entity';
+import { FriendsModule } from '../friends/friends.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { Order } from '../orders/order.entity';
 import { RealtimeModule } from '../realtime/realtime.module';
@@ -32,9 +34,10 @@ import { RealtimeModule } from '../realtime/realtime.module';
     AiModule,
     OrdersModule,
     RealtimeModule,
+    FriendsModule,
   ],
   controllers: [ChatController],
-  providers: [ChatService, PhoneVerifiedGuard],
+  providers: [ChatService, LiveLocationService, PhoneVerifiedGuard],
   exports: [ChatService],
 })
 export class ChatModule {}

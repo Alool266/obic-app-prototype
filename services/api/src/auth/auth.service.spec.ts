@@ -11,6 +11,7 @@ import { AuthService } from './auth.service';
 import { RefreshSession } from './refresh-session.entity';
 import { TotpCryptoService } from './totp/totp-crypto.service';
 import { TotpService } from './totp/totp.service';
+import { SocialTokenVerifier } from './social-token.verifier';
 import { VerificationService } from './verification.service';
 
 jest.mock('bcrypt', () => ({
@@ -55,6 +56,7 @@ describe('AuthService.login', () => {
         { provide: TotpCryptoService, useValue: { decrypt: jest.fn() } },
         { provide: TotpService, useValue: { verify: jest.fn() } },
         { provide: VerificationService, useValue: verification },
+        { provide: SocialTokenVerifier, useValue: { verify: jest.fn() } },
       ],
     }).compile();
     service = module.get(AuthService);

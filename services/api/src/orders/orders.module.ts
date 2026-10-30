@@ -2,6 +2,7 @@
 
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { AiModule } from '../ai/ai.module';
 import { AuditLog } from '../chat/audit-log.entity';
 import { ConversationParticipant } from '../chat/conversation-participant.entity';
 import { Conversation } from '../chat/conversation.entity';
@@ -31,6 +32,7 @@ import { OrdersService } from './orders.service';
     OffersModule,
     NotificationsModule,
     RealtimeModule,
+    AiModule,
   ],
   controllers: [OrdersController],
   providers: [OrdersService, OrderChatService, PhoneVerifiedGuard],

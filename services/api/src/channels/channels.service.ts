@@ -167,6 +167,7 @@ export class ChannelsService {
     tab: ChannelFeedTab,
     limit = 40,
     viewerId?: string | null,
+    geo?: { city?: string; lat?: number; lng?: number },
   ): Promise<object[]> {
     const take = Math.min(Math.max(limit, 1), 80);
     const friendIds = await this.friendIdSet(viewerId);
@@ -194,7 +195,16 @@ export class ChannelsService {
     if (tab === 'nearby') {
       if (!viewerId) return [];
       const me = await this.users.findOne({ where: { id: viewerId } });
-      const city = me?.city?.trim();
+      const city = (geo?.city?.trim() || me?.city?.trim() || '').trim();
+      // Persist GPS city so later Nearby loads stay location-aware.
+      if (
+        geo?.city?.trim() &&
+        me &&
+        (me.city ?? '').trim().toLowerCase() !== geo.city.trim().toLowerCase()
+      ) {
+        me.city = geo.city.trim().slice(0, 80);
+        await this.users.save(me);
+      }
       if (!city) {
         return this.friendsFeed(viewerId, friendIds, take);
       }
@@ -205,7 +215,21 @@ export class ChannelsService {
         .take(80)
         .getMany();
       const nearbyIds = nearbyUsers.map((u) => u.id);
-      if (nearbyIds.length === 0) return [];
+      if (nearbyIds.length === 0) {
+        // Still surface official when no peers share the city yet.
+        const official = await this.channels.find({
+          where: { official: true },
+        });
+        const channelIds = official.map((c) => c.id);
+        if (channelIds.length === 0) return [];
+        const rows = await this.videos.find({
+          where: { channelId: In(channelIds), deletedAt: IsNull() },
+          relations: { author: true, channel: true },
+          order: { createdAt: 'DESC' },
+          take: take * 2,
+        });
+        return this.filterAndMapVideos(rows, viewerId, friendIds, take);
+      }
       const nearbyChannels = await this.channels.find({
         where: [
           { ownerUserId: In(nearbyIds) },
@@ -278,32 +302,47 @@ export class ChannelsService {
     const obic = await this.ensureObic();
     const obicVideos = await this.videos.find({
       where: { channelId: obic.id, deletedAt: IsNull() },
-      relations: { author: true },
+      relations: { author: true, channel: true },
       order: { createdAt: 'DESC' },
-      take: 1,
+      take: 12,
     });
 
-    let friendsPreview: ChannelVideo | null = null;
+    let friendsRows: ChannelVideo[] = [];
     if (viewerId && friendIds.size > 0) {
       const friendChannels = await this.channels.find({
         where: { ownerUserId: In([...friendIds]) },
       });
       if (friendChannels.length > 0) {
-        const rows = await this.videos.find({
+        friendsRows = await this.videos.find({
           where: {
             channelId: In(friendChannels.map((c) => c.id)),
             deletedAt: IsNull(),
           },
           relations: { author: true, channel: true },
           order: { createdAt: 'DESC' },
-          take: 1,
+          take: 12,
         });
-        friendsPreview = rows[0] ?? null;
       }
     }
 
+    const officialTip = this.pickDiscoverTipVideo(obicVideos, viewerId);
+    const friendsTip = this.pickDiscoverTipVideo(friendsRows, viewerId);
+
     const myChannel = viewerId
       ? await this.ensurePersonal(viewerId)
+      : null;
+
+    const tipDtos = await this.mapVideos(
+      [officialTip, friendsTip].filter((v): v is ChannelVideo => !!v),
+      viewerId,
+    );
+    const officialPreviewDto = officialTip
+      ? tipDtos.find((d) => (d as { id: string }).id === officialTip.id) ??
+        this.toVideoDto(officialTip, viewerId)
+      : null;
+    const friendsPreviewDto = friendsTip
+      ? tipDtos.find((d) => (d as { id: string }).id === friendsTip.id) ??
+        this.toVideoDto(friendsTip, viewerId)
       : null;
 
     return {
@@ -314,16 +353,14 @@ export class ChannelsService {
       channels: {
         key: 'channels',
         official: await this.toChannelDto(obic, viewerId),
-        officialPreview: obicVideos[0]
-          ? this.toVideoDto(obicVideos[0], viewerId)
-          : null,
-        friendsPreview: friendsPreview
-          ? this.toVideoDto(friendsPreview, viewerId)
-          : null,
+        officialPreview: officialPreviewDto,
+        friendsPreview: friendsPreviewDto,
         myChannel: myChannel
           ? await this.toChannelDto(myChannel, viewerId)
           : null,
-        unreadDot: !!(obicVideos[0] || friendsPreview),
+        // Clients compute the Discover red tip via local last-seen vs preview
+        // createdAt (WeChat-style). Never force unread just because content exists.
+        unreadDot: false,
       },
       canPostOfficial: viewerId
         ? canPostOnOfficial(
@@ -331,6 +368,18 @@ export class ChannelsService {
           )
         : false,
     };
+  }
+
+  /** Tip video: never the viewer's own post; prefer a real thumb over avatar fallback. */
+  private pickDiscoverTipVideo(
+    rows: ChannelVideo[],
+    viewerId?: string | null,
+  ): ChannelVideo | null {
+    const pool = viewerId
+      ? rows.filter((v) => v.authorId !== viewerId)
+      : rows;
+    if (pool.length === 0) return null;
+    return pool.find((v) => !!(v.thumbUrl && v.thumbUrl.trim())) ?? pool[0];
   }
 
   // ── Engagement ───────────────────────────────────────────────────────

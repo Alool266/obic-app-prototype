@@ -1,5 +1,5 @@
 // Made by Dr Ali
-// Server Moments notify prefs — defaults when no row; friendship-gated mutes.
+// Server Moments notify prefs — mutes (不看他) + hide-from (不让他看).
 
 import {
   BadRequestException,
@@ -12,6 +12,7 @@ import { AuthUser } from '../common/interfaces/auth-user.interface';
 import { FriendsService } from '../friends/friends.service';
 import { User } from '../users/user.entity';
 import { UpdateMomentNotifyPrefsDto } from './dto/moment-notify-prefs.dto';
+import { MomentFriendHide } from './moment-friend-hide.entity';
 import { MomentFriendMute } from './moment-friend-mute.entity';
 import {
   filterMomentNotifyRecipients,
@@ -23,6 +24,8 @@ export type MomentNotifyPrefsDto = {
   notifyEnabled: boolean;
   muteUpdates: boolean;
   mutedFriendIds: string[];
+  /** Friends who cannot see my Moments (不让他看). */
+  hiddenFromFriendIds: string[];
 };
 
 @Injectable()
@@ -32,6 +35,8 @@ export class MomentNotifyPrefsService {
     private readonly prefs: Repository<MomentNotifyPrefs>,
     @InjectRepository(MomentFriendMute)
     private readonly mutes: Repository<MomentFriendMute>,
+    @InjectRepository(MomentFriendHide)
+    private readonly hides: Repository<MomentFriendHide>,
     @InjectRepository(User)
     private readonly users: Repository<User>,
     private readonly friends: FriendsService,
@@ -43,10 +48,15 @@ export class MomentNotifyPrefsService {
       where: { userId: actor.userId },
       order: { createdAt: 'DESC' },
     });
+    const hidden = await this.hides.find({
+      where: { userId: actor.userId },
+      order: { createdAt: 'DESC' },
+    });
     return {
       notifyEnabled: row?.notifyEnabled ?? true,
       muteUpdates: row?.muteUpdates ?? false,
       mutedFriendIds: muted.map((m) => m.mutedFriendId),
+      hiddenFromFriendIds: hidden.map((h) => h.hiddenFromFriendId),
     };
   }
 
@@ -82,6 +92,9 @@ export class MomentNotifyPrefsService {
 
     if (dto.mutedFriendIds !== undefined) {
       await this.replaceMutes(actor.userId, dto.mutedFriendIds);
+    }
+    if (dto.hiddenFromFriendIds !== undefined) {
+      await this.replaceHides(actor.userId, dto.hiddenFromFriendIds);
     }
 
     return this.getMine(actor);
@@ -123,6 +136,59 @@ export class MomentNotifyPrefsService {
     return this.getMine(actor);
   }
 
+  async hideFromFriend(
+    actor: AuthUser,
+    friendId: string,
+  ): Promise<MomentNotifyPrefsDto> {
+    if (friendId === actor.userId) {
+      throw new BadRequestException('Cannot hide Moments from yourself');
+    }
+    const ok = await this.friends.areFriends(actor.userId, friendId);
+    if (!ok) {
+      throw new BadRequestException('Can only hide Moments from friends');
+    }
+    const friend = await this.users.findOne({ where: { id: friendId } });
+    if (!friend) throw new NotFoundException('User not found');
+
+    const existing = await this.hides.findOne({
+      where: { userId: actor.userId, hiddenFromFriendId: friendId },
+    });
+    if (!existing) {
+      await this.hides.save(
+        this.hides.create({
+          userId: actor.userId,
+          hiddenFromFriendId: friendId,
+        }),
+      );
+    }
+    return this.getMine(actor);
+  }
+
+  async unhideFromFriend(
+    actor: AuthUser,
+    friendId: string,
+  ): Promise<MomentNotifyPrefsDto> {
+    await this.hides.delete({
+      userId: actor.userId,
+      hiddenFromFriendId: friendId,
+    });
+    return this.getMine(actor);
+  }
+
+  /** Authors the viewer has muted (不看他) — for feed filtering. */
+  async mutedAuthorIdsOf(viewerId: string): Promise<string[]> {
+    const rows = await this.mutes.find({ where: { userId: viewerId } });
+    return rows.map((m) => m.mutedFriendId);
+  }
+
+  /** Authors who hid this viewer (不让他看) — for feed filtering. */
+  async authorsHidingViewer(viewerId: string): Promise<string[]> {
+    const rows = await this.hides.find({
+      where: { hiddenFromFriendId: viewerId },
+    });
+    return rows.map((h) => h.userId);
+  }
+
   /** True when this recipient should receive Moments fan-out from author. */
   async shouldNotifyRecipient(
     recipientId: string,
@@ -132,6 +198,10 @@ export class MomentNotifyPrefsService {
     const muted = await this.mutes.findOne({
       where: { userId: recipientId, mutedFriendId: authorId },
     });
+    const hidden = await this.hides.findOne({
+      where: { userId: authorId, hiddenFromFriendId: recipientId },
+    });
+    if (hidden) return false;
     return shouldReceiveMomentNotify(
       recipientId,
       authorId,
@@ -148,6 +218,7 @@ export class MomentNotifyPrefsService {
 
   /**
    * Filter user ids that still want Moments notifications from [authorId].
+   * Also drops recipients the author has hidden from.
    */
   async filterNotifyRecipients(
     candidateIds: string[],
@@ -164,9 +235,13 @@ export class MomentNotifyPrefsService {
     const muted = await this.mutes.find({
       where: { userId: In(unique), mutedFriendId: authorId },
     });
+    const hidden = await this.hides.find({
+      where: { userId: authorId, hiddenFromFriendId: In(unique) },
+    });
+    const hiddenSet = new Set(hidden.map((h) => h.hiddenFromFriendId));
 
     return filterMomentNotifyRecipients(
-      unique,
+      unique.filter((id) => !hiddenSet.has(id)),
       authorId,
       prefsRows.map((p) => ({
         userId: p.userId,
@@ -198,6 +273,28 @@ export class MomentNotifyPrefsService {
     await this.mutes.save(
       unique.map((mutedFriendId) =>
         this.mutes.create({ userId, mutedFriendId }),
+      ),
+    );
+  }
+
+  private async replaceHides(
+    userId: string,
+    friendIds: string[],
+  ): Promise<void> {
+    const unique = [...new Set(friendIds)].filter((id) => id && id !== userId);
+    for (const id of unique) {
+      const ok = await this.friends.areFriends(userId, id);
+      if (!ok) {
+        throw new BadRequestException(
+          `Can only hide Moments from friends (${id})`,
+        );
+      }
+    }
+    await this.hides.delete({ userId });
+    if (!unique.length) return;
+    await this.hides.save(
+      unique.map((hiddenFromFriendId) =>
+        this.hides.create({ userId, hiddenFromFriendId }),
       ),
     );
   }

@@ -36,6 +36,13 @@ export class Conversation {
   title!: string | null;
 
   /**
+   * Yiwu handoff — briefing for Secretary (need / facts / urgency).
+   * Also posted as an AI note message in-thread.
+   */
+  @Column({ name: 'handoff_summary', type: 'text', nullable: true })
+  handoffSummary!: string | null;
+
+  /**
    * Phase 5 — when true and AI env is on, customer messages on support/order
    * threads may get an OBIC AI auto-reply. Staff message pauses this (override).
    */

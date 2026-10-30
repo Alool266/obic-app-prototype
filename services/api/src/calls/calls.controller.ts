@@ -9,6 +9,7 @@ import {
   Param,
   ParseUUIDPipe,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
@@ -16,7 +17,7 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { AuthUser } from '../common/interfaces/auth-user.interface';
 import { CallsService } from './calls.service';
-import { CreateCallDto } from './dto/calls.dto';
+import { CreateCallDto, InviteCallDto } from './dto/calls.dto';
 
 @Controller('calls')
 @UseGuards(JwtAuthGuard)
@@ -42,8 +43,18 @@ export class CallsController {
    * Active incoming rings for this user (HTTP backup when Socket.IO missed
    * the push — common on free Render / brief lifecycle flaps).
    */
+  @Get('active')
+  @Throttle({ default: { limit: 120, ttl: 60_000 } })
+  active(
+    @CurrentUser() actor: AuthUser,
+    @Query('conversationId') conversationId?: string,
+  ) {
+    if (!conversationId) return { call: null };
+    return this.calls.active(actor, conversationId);
+  }
+
   @Get('incoming')
-  @Throttle({ default: { limit: 60, ttl: 60_000 } })
+  @Throttle({ default: { limit: 120, ttl: 60_000 } })
   incoming(@CurrentUser() actor: AuthUser) {
     return this.calls.listIncoming(actor);
   }
@@ -66,6 +77,27 @@ export class CallsController {
     @Param('id', ParseUUIDPipe) id: string,
   ) {
     return this.calls.mintToken(actor, id);
+  }
+
+  @Post(':id/invite')
+  @HttpCode(200)
+  @Throttle({ default: { limit: 30, ttl: 60_000 } })
+  invite(
+    @CurrentUser() actor: AuthUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: InviteCallDto,
+  ) {
+    return this.calls.invite(actor, id, dto.userIds ?? []);
+  }
+
+  @Post(':id/leave')
+  @HttpCode(200)
+  @Throttle({ default: { limit: 40, ttl: 60_000 } })
+  leave(
+    @CurrentUser() actor: AuthUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.calls.leave(actor, id);
   }
 
   @Post(':id/end')

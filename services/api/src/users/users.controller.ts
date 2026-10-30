@@ -6,17 +6,21 @@ import {
   Controller,
   Delete,
   Get,
+  Param,
+  ParseUUIDPipe,
   Patch,
   Put,
   UseGuards,
 } from '@nestjs/common';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { OptionalJwtAuthGuard } from '../common/guards/optional-jwt-auth.guard';
 import { AuthUser } from '../common/interfaces/auth-user.interface';
 import { ChangeEmailDto } from './dto/change-email.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { UpdateAvatarDto } from './dto/update-avatar.dto';
 import { UpdateAddressesDto } from './dto/update-addresses.dto';
+import { UpdateHomeLayoutDto } from './dto/update-home-layout.dto';
 import { UpdateMeDto } from './dto/update-me.dto';
 import { DeleteMeDto } from './dto/delete-me.dto';
 import { UpdateMomentsCoverDto } from './dto/update-moments-cover.dto';
@@ -68,13 +72,11 @@ export class UsersController {
     @CurrentUser() actor: AuthUser,
     @Body() dto: UpdateMomentsCoverDto,
   ) {
-    return this.usersService.updateMomentsCover(actor, dto.coverUrl);
-  }
-
-  @Delete('me')
-  @UseGuards(JwtAuthGuard)
-  deleteMe(@CurrentUser() actor: AuthUser, @Body() dto: DeleteMeDto) {
-    return this.usersService.deleteMe(actor, dto);
+    return this.usersService.updateMomentsCover(
+      actor,
+      dto.coverUrl,
+      dto.focusY,
+    );
   }
 
   @Put('me/addresses')
@@ -84,5 +86,34 @@ export class UsersController {
     @Body() dto: UpdateAddressesDto,
   ) {
     return this.usersService.updateAddresses(actor, dto);
+  }
+
+  /** Home mega-icon layout (order / favorites / hidden). */
+  @Get('me/home-layout')
+  @UseGuards(JwtAuthGuard)
+  getHomeLayout(@CurrentUser() actor: AuthUser) {
+    return this.usersService.getHomeLayout(actor);
+  }
+
+  @Put('me/home-layout')
+  @UseGuards(JwtAuthGuard)
+  putHomeLayout(
+    @CurrentUser() actor: AuthUser,
+    @Body() dto: UpdateHomeLayoutDto,
+  ) {
+    return this.usersService.putHomeLayout(actor, dto);
+  }
+
+  @Delete('me')
+  @UseGuards(JwtAuthGuard)
+  deleteMe(@CurrentUser() actor: AuthUser, @Body() dto: DeleteMeDto) {
+    return this.usersService.deleteMe(actor, dto);
+  }
+
+  /** Friend Moments profile header (cover + name) — optional JWT. */
+  @Get(':id/moments-profile')
+  @UseGuards(OptionalJwtAuthGuard)
+  momentsProfile(@Param('id', ParseUUIDPipe) id: string) {
+    return this.usersService.momentsProfile(id);
   }
 }
