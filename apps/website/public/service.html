@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>OBIC — Service</title>
+  <link rel="icon" type="image/png" href="favicon-64.png" />
+  <link rel="apple-touch-icon" href="logo.png" />
+  <link rel="stylesheet" href="/css/obic.css?v=20261104nav" />
+  <script>window.OBIC_API_BASE = "";</script>
+</head>
+<body>
+  <header class="nav">
+    <div class="nav-inner">
+      <a class="brand" href="index.html"><img src="logo.png" alt="" width="36" height="36" /> OBIC</a>
+      <ul class="nav-links">
+        <li><a href="index.html" data-i18n="navHome">Home</a></li>
+        <li><a href="index.html#services" data-i18n="navServices">Services</a></li>
+        <li><a href="about.html" data-i18n="navAbout">About</a></li>
+        <li><a href="contact.html" data-i18n="navContact">Contact</a></li>
+      </ul>
+      <div class="nav-actions">
+        <div class="lang">
+          <button type="button" data-lang="en" class="is-on">EN</button>
+          <button type="button" data-lang="ar">AR</button>
+          <button type="button" data-lang="zh">中文</button>
+        </div>
+        <a class="btn btn-primary" href="https://www.obicgp.com/login" data-i18n="navLogin">Login</a>
+        <button class="menu-toggle" type="button" aria-label="Menu"><span></span></button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="wrap page-hero">
+      <p style="margin:0 0 1rem"><a href="index.html#services" data-i18n="navServices">Services</a></p>
+      <h1 id="hub-title">Service</h1>
+      <p id="hub-desc"></p>
+    </div>
+    <div class="wrap" style="padding-bottom:4rem">
+      <div id="listings" class="listing-empty">
+        <strong data-i18n="comingListings">Request this service — our team will guide you.</strong>
+        <p style="margin-top:1.25rem">
+          <a class="btn btn-primary" href="contact.html" data-i18n="ctaContact">Talk to us</a>
+        </p>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap footer-grid">
+      <div>
+        <a class="brand" href="/"><img src="/logo.png" alt="" width="36" height="36" /> OBIC</a>
+        <p data-i18n="footerAbout">Professional services for international clients operating and traveling in China.</p>
+      </div>
+      <div>
+        <h4 data-i18n="footerLinks">Links</h4>
+        <p>
+          <a href="/" data-i18n="navHome">Home</a><br />
+          <a href="/study-china.html" data-i18n="pathStudyTitle">Scholarships &amp; university pathways</a><br />
+          <a href="/open-company.html" data-i18n="pathCompanyTitle">Open a company</a><br />
+          <a href="/about.html" data-i18n="navAbout">About</a><br />
+          <a href="/contact.html" data-i18n="navContact">Contact</a><br />
+          <a href="/mini-apps.html">Mini apps</a><br />
+          <a href="/login" data-i18n="navLogin">Login</a><br />
+          <a href="/terms" data-i18n="legalTerms">Terms</a><br />
+          <a href="/privacy" data-i18n="legalPrivacy">Privacy</a>
+        </p>
+      </div>
+      <div>
+        <h4 data-i18n="footerContact">Contact</h4>
+        <p>
+          <a href="https://wa.me/8615257977914" target="_blank" rel="noopener noreferrer" data-i18n="ctaWhatsApp">WhatsApp</a><br />
+          <span dir="ltr" data-i18n="phone">15257977914</span><br />
+          <span dir="ltr" data-i18n="email">obicproject117@gmail.com</span><br />
+          <span data-i18n="address">Road of Safety</span>
+        </p>
+      </div>
+    </div>
+    <div class="wrap footer-bottom">
+      <span data-i18n="copy">© 2026 OBIC. All rights reserved.</span>
+    </div>
+  </footer>
+
+  <script src="/js/api.js?v=20260913"></script>
+  <script src="/js/obic.js?v=20261105footer"></script>
+  <script src="/js/session.js?v=20260919o"></script>
+  <script>
+    (async function () {
+      const params = new URLSearchParams(location.search);
+      const slug = params.get("slug") || "hotel";
+      const lang = localStorage.getItem("obic_lang") || "en";
+      const hubs = await ObicApi.listServices();
+      const hub = (hubs.items || []).find((h) => (h.slug || h.id) === slug) || { slug, nameEn: slug };
+      document.getElementById("hub-title").textContent = ObicApi.hubLabel(hub, lang);
+      document.getElementById("hub-desc").textContent = ObicApi.hubDesc(hub, lang) || "";
+      document.title = "OBIC — " + ObicApi.hubLabel(hub, lang);
+      // Prefer live category URL when available
+      if (hub.href) {
+        const btn = document.createElement("p");
+        btn.style.marginTop = "1.25rem";
+        btn.innerHTML = '<a class="btn btn-primary" href="' + hub.href + '">Continue on OBIC</a>';
+        document.querySelector(".page-hero").appendChild(btn);
+      }
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>كيف تعبّئ طلب الدراسة — OBIC</title>
+  <meta name="description" content="دليل بصري بخطوات واضحة ولقطات حقيقية لتعبئة نموذج الدراسة والمنح في أوبك." />
+  <link rel="icon" type="image/png" href="/favicon-64.png" />
+  <link rel="stylesheet" href="/css/obic.css?v=20261105howto2" />
+  <style>
+    :root {
+      --guide-navy: #0b1f3a;
+      --guide-blue: #1a6dff;
+      --guide-soft: #eef4ff;
+      --guide-line: rgba(11, 31, 58, 0.1);
+      --guide-bg: #f4f7fb;
+    }
+    body { background: var(--guide-bg); }
+    .guide-wrap {
+      width: min(920px, calc(100% - 2rem));
+      margin: 0 auto;
+    }
+    .guide-hero {
+      padding: 2rem 0 1.1rem;
+      background:
+        radial-gradient(80% 120% at 90% 0%, rgba(26, 109, 255, 0.14), transparent 55%),
+        linear-gradient(180deg, #fff, var(--guide-bg));
+    }
+    .guide-hero h1 {
+      margin: 0.35rem 0 0.45rem;
+      font-size: clamp(1.5rem, 3vw, 2.05rem);
+      color: var(--guide-navy);
+      letter-spacing: -0.02em;
+    }
+    .guide-hero p {
+      margin: 0;
+      color: #64748b;
+      max-width: 40rem;
+      line-height: 1.7;
+    }
+    .guide-lang {
+      display: inline-flex;
+      gap: 0.25rem;
+      margin-top: 0.85rem;
+    }
+    .guide-lang button {
+      border: 1px solid var(--guide-line);
+      background: #fff;
+      border-radius: 999px;
+      padding: 0.3rem 0.7rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .guide-lang button.is-on {
+      background: var(--guide-navy);
+      color: #fff;
+      border-color: transparent;
+    }
+
+    .guide-video {
+      margin: 0 auto 1.35rem;
+      max-width: 920px;
+      border-radius: 18px;
+      overflow: hidden;
+      border: 1px solid var(--guide-line);
+      background: #0b1f3a;
+      box-shadow: 0 14px 36px rgba(11, 31, 58, 0.1);
+    }
+    .guide-video-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
+      background: var(--guide-navy);
+      color: #fff;
+    }
+    .guide-video-head strong { font-size: 0.92rem; }
+    .guide-video-head span { font-size: 0.75rem; opacity: 0.78; }
+    .guide-video video {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 1280 / 832;
+      background: #0b1f3a;
+    }
+
+    .guide-steps {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      gap: 1.15rem;
+      margin: 0.35rem auto 1.5rem;
+      max-width: 920px;
+      padding-bottom: 0.5rem;
+    }
+    .guide-step {
+      display: none;
+      border-radius: 18px;
+      border: 1px solid var(--guide-line);
+      background: #fff;
+      box-shadow: 0 12px 32px rgba(11, 31, 58, 0.06);
+      overflow: hidden;
+    }
+    .guide-step.is-on { display: block; }
+    .guide-step-copy {
+      padding: 1.25rem 1.25rem 0.85rem;
+      background: linear-gradient(180deg, #fff, var(--guide-soft));
+    }
+    .guide-kicker {
+      display: inline-flex;
+      padding: 0.28rem 0.7rem;
+      border-radius: 999px;
+      background: rgba(26, 109, 255, 0.12);
+      color: var(--guide-blue);
+      font-size: 0.78rem;
+      font-weight: 750;
+    }
+    .guide-step h2 {
+      margin: 0.55rem 0 0.4rem;
+      color: var(--guide-navy);
+      font-size: clamp(1.2rem, 2.3vw, 1.55rem);
+    }
+    .guide-step p {
+      margin: 0;
+      color: #334155;
+      font-size: 1rem;
+      line-height: 1.7;
+      max-width: 40rem;
+    }
+    .guide-tip {
+      margin-top: 0.75rem;
+      padding: 0.75rem 0.85rem;
+      border-radius: 12px;
+      border: 1px dashed rgba(26, 109, 255, 0.28);
+      background: rgba(255, 255, 255, 0.85);
+      color: #475569;
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+    .guide-code {
+      display: inline-block;
+      margin-inline: 0.15rem;
+      padding: 0.1rem 0.45rem;
+      border-radius: 8px;
+      background: #0b1f3a;
+      color: #fff;
+      font-weight: 750;
+      letter-spacing: 0.06em;
+      font-family: ui-monospace, Menlo, monospace;
+    }
+    .guide-shot {
+      margin: 0;
+      padding: 0.85rem 0.85rem 1rem;
+      background: #eef2f7;
+      border-top: 1px solid var(--guide-line);
+    }
+    .guide-shot-frame {
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid var(--guide-line);
+      background: #fff;
+      box-shadow: 0 8px 22px rgba(11, 31, 58, 0.06);
+    }
+    .guide-shot img {
+      display: block;
+      width: 100%;
+      height: auto;
+      vertical-align: middle;
+    }
+
+    .guide-bar {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.65rem;
+      align-items: center;
+      justify-content: space-between;
+      max-width: 920px;
+      margin: 0 auto 1.75rem;
+      padding: 0.85rem 1rem;
+      border-radius: 16px;
+      border: 1px solid var(--guide-line);
+      background: #fff;
+      box-shadow: 0 8px 22px rgba(11, 31, 58, 0.05);
+    }
+    .guide-dots { display: flex; gap: 0.35rem; flex-wrap: wrap; }
+    .guide-dots button {
+      width: 0.65rem;
+      height: 0.65rem;
+      border: 0;
+      border-radius: 999px;
+      background: #cbd5e1;
+      cursor: pointer;
+    }
+    .guide-dots button.is-on { background: var(--guide-blue); width: 1.35rem; }
+    .guide-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .guide-actions button { min-width: 6.5rem; }
+    .guide-progress {
+      max-width: 920px;
+      margin: 0 auto 0.85rem;
+      height: 4px;
+      border-radius: 999px;
+      background: #e2e8f0;
+      overflow: hidden;
+    }
+    .guide-progress > span {
+      display: block;
+      height: 100%;
+      width: 0;
+      background: linear-gradient(90deg, #1a6dff, #38bdf8);
+      transition: width 0.25s ease;
+    }
+    .guide-cta {
+      text-align: center;
+      margin: 0 0 2.5rem;
+    }
+    @media (max-width: 640px) {
+      .guide-wrap { width: min(100% - 1.25rem, 920px); }
+      .guide-step-copy { padding: 1.05rem 1rem 0.7rem; }
+      .guide-shot { padding: 0.65rem; }
+    }
+  </style>
+</head>
+<body>
+  <header class="nav">
+    <div class="nav-inner">
+      <a class="brand" href="/"><img src="/logo.png" alt="" width="36" height="36" /> OBIC</a>
+      <div class="nav-actions">
+        <a class="btn btn-primary" href="/study-china.html" data-g="openForm">افتح النموذج</a>
+      </div>
+    </div>
+  </header>
+
+  <section class="guide-hero">
+    <div class="guide-wrap">
+      <span class="eyebrow" data-g="eyebrow">دليل تعبئة الطلب</span>
+      <h1 data-g="title">كيف تعبّئ بيانات الدراسة في أوبك؟</h1>
+      <p data-g="sub">فيديو الشرح بصوت نور — للطلاب والطالبات.</p>
+      <div class="guide-lang" role="group" aria-label="Language">
+        <button type="button" data-lang="ar" class="is-on">عربي</button>
+        <button type="button" data-lang="en">EN</button>
+        <button type="button" data-lang="zh">中文</button>
+      </div>
+    </div>
+  </section>
+
+  <div class="guide-wrap">
+    <figure class="guide-video">
+      <div class="guide-video-head">
+        <strong data-g="videoTitle">فيديو الشرح — صوت نور</strong>
+        <span data-g="videoSub">عربي · للجميع</span>
+      </div>
+      <video
+        controls
+        playsinline
+        preload="metadata"
+        poster="/img/study-howto/01-basics.png?v=20261105pro"
+        src="/study-how-to-ar.mp4?v=20261105noor"
+      ></video>
+    </figure>
+
+    <div class="guide-progress"><span id="guide-progress"></span></div>
+    <div class="guide-steps" id="guide-steps"></div>
+
+    <div class="guide-bar">
+      <div class="guide-dots" id="guide-dots"></div>
+      <div class="guide-actions">
+        <button type="button" class="btn btn-ghost" id="guide-prev" data-g="prev">السابق</button>
+        <button type="button" class="btn btn-ghost" id="guide-pause" data-g="pause">إيقاف</button>
+        <button type="button" class="btn btn-primary" id="guide-next" data-g="next">التالي</button>
+      </div>
+    </div>
+
+    <p class="guide-cta">
+      <a class="btn btn-primary" href="/study-china.html" data-g="cta">ابدأ تعبئة الطلب الآن</a>
+    </p>
+  </div>
+
+  <footer class="footer">
+    <div class="wrap footer-grid">
+      <div>
+        <a class="brand" href="/"><img src="/logo.png" alt="" width="36" height="36" /> OBIC</a>
+        <p data-i18n="footerAbout">Professional services for international clients operating and traveling in China.</p>
+      </div>
+      <div>
+        <h4 data-i18n="footerLinks">Links</h4>
+        <p>
+          <a href="/" data-i18n="navHome">Home</a><br />
+          <a href="/study-china.html" data-i18n="pathStudyTitle">Scholarships &amp; university pathways</a><br />
+          <a href="/open-company.html" data-i18n="pathCompanyTitle">Open a company</a><br />
+          <a href="/about.html" data-i18n="navAbout">About</a><br />
+          <a href="/contact.html" data-i18n="navContact">Contact</a><br />
+          <a href="/mini-apps.html">Mini apps</a><br />
+          <a href="/login" data-i18n="navLogin">Login</a><br />
+          <a href="/terms" data-i18n="legalTerms">Terms</a><br />
+          <a href="/privacy" data-i18n="legalPrivacy">Privacy</a>
+        </p>
+      </div>
+      <div>
+        <h4 data-i18n="footerContact">Contact</h4>
+        <p>
+          <a href="https://wa.me/8615257977914" target="_blank" rel="noopener noreferrer" data-i18n="ctaWhatsApp">WhatsApp</a><br />
+          <span dir="ltr" data-i18n="phone">15257977914</span><br />
+          <span dir="ltr" data-i18n="email">obicproject117@gmail.com</span><br />
+          <span data-i18n="address">Road of Safety</span>
+        </p>
+      </div>
+    </div>
+    <div class="wrap footer-bottom">
+      <span data-i18n="copy">© 2026 OBIC. All rights reserved.</span>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      var lang = "ar";
+      var step = 0;
+      var timer = null;
+      var playing = true;
+      var SEC = 6.5;
+      var SHOTS = [
+        "/img/study-howto/01-basics.png?v=20261105pro",
+        "/img/study-howto/02-majors.png?v=20261105pro",
+        "/img/study-howto/03-provinces.png?v=20261105pro",
+        "/img/study-howto/04-agent.png?v=20261105pro",
+        "/img/study-howto/05-docs.png?v=20261105pro",
+        "/img/study-howto/06-pay.png?v=20261105pro",
+        "/img/study-howto/07-terms.png?v=20261105pro",
+        "/img/study-howto/08-submit.png?v=20261105pro",
+      ];
+
+      var COPY = {
+        ar: {
+          dir: "rtl",
+          eyebrow: "دليل تعبئة الطلب",
+          title: "كيف تعبّئ بيانات الدراسة في أوبك؟",
+          sub: "فيديو الشرح بصوت نور — للطلاب والطالبات.",
+          videoTitle: "فيديو الشرح — صوت نور",
+          videoSub: "عربي · للجميع",
+          prev: "السابق",
+          next: "التالي",
+          pause: "إيقاف",
+          play: "تشغيل",
+          openForm: "افتح النموذج",
+          cta: "ابدأ تعبئة الطلب الآن",
+          steps: [
+            {
+              kicker: "الخطوة 1 من 8",
+              h: "ابدأ بمعلوماتك الأساسية",
+              p: "اكتب الاسم الكامل كما في الجواز، اختر الجنسية، وأدخل رقم واتساب صحيح. البريد وWeChat اختياريان.",
+              tip: "مهم: الهاتف/واتساب مطلوب حتى يتواصل معك فريق أوبك.",
+            },
+            {
+              kicker: "الخطوة 2 من 8",
+              h: "اختر البرنامج ثم التخصصات",
+              p: "اختر البرنامج المطلوب أولاً (لغة / بكالوريوس / ماجستير / دكتوراه). بعدها تظهر قائمة التخصصات.",
+              tip: "يجب اختيار 3 تخصصات على الأقل. استخدم البحث لسرعة الاختيار.",
+            },
+            {
+              kicker: "الخطوة 3 من 8",
+              h: "المقاطعات المفضلة",
+              p: "اختر حتى 3 مقاطعات/مناطق تفضّلها في الصين — ليست مدناً فقط.",
+              tip: "مثال: Zhejiang أو Beijing أو Jiangsu.",
+            },
+            {
+              kicker: "الخطوة 4 من 8",
+              h: "كيف سمعت عنا؟ ورمز الوكيل",
+              p: "أخبرنا كيف عرفت أوبك. إذا جاءك الطلب عبر وكيل متعاقد، اكتب الرمز بأحرف كبيرة.",
+              tip: "رمز الوكيل الحالي مثال: <span class=\"guide-code\">AGT01</span> — اختياري إن لم يكن لديك وكيل.",
+            },
+            {
+              kicker: "الخطوة 5 من 8",
+              h: "ارفع المستندات بوضوح",
+              p: "ارفع جواز السفر والصورة والشهادة وكشف الدرجات وخطة الدراسة والفحص الطبي. الملفات PDF أو صور واضحة.",
+              tip: "كل ملف حتى 12 ميجا. المستندات الواضحة تسرّع المتابعة.",
+            },
+            {
+              kicker: "الخطوة 6 من 8",
+              h: "رسوم 10$ — تحويل أو واتساب",
+              p: "إن استطعت التحويل: حوّل 10$ وارفع الإيصال. إن لم تستطع: اختر «خيارات أخرى» وتواصل عبر واتساب.",
+              tip: "واتساب/وي تشات للدفع البديل: 008617758086952",
+            },
+            {
+              kicker: "الخطوة 7 من 8",
+              h: "اقرأ الشروط ثم وافق",
+              p: "افتح «شروط الاستخدام» واقرأها. بعدها يصبح مربع الموافقة متاحاً.",
+              tip: "لا يمكن الإرسال بدون الموافقة بعد فتح الشروط.",
+            },
+            {
+              kicker: "الخطوة 8 من 8",
+              h: "أرسل الطلب",
+              p: "راجع بياناتك ثم اضغط «إرسال الطلب». سيصل الطلب لمكتب أوبك للمتابعة.",
+              tip: "جاهز؟ اضغط الزر بالأسفل لفتح النموذج والبدء.",
+            },
+          ],
+        },
+        en: {
+          dir: "ltr",
+          eyebrow: "How to apply",
+          title: "How to fill the OBIC study form",
+          sub: "How-to video with Noor’s voice — for everyone.",
+          videoTitle: "How-to video — Noor’s voice",
+          videoSub: "Arabic · for everyone",
+          prev: "Prev",
+          next: "Next",
+          pause: "Pause",
+          play: "Play",
+          openForm: "Open form",
+          cta: "Start the form now",
+          steps: [
+            {
+              kicker: "Step 1 of 8",
+              h: "Start with your basic details",
+              p: "Enter your full passport name, nationality, and a working WhatsApp number. Email and WeChat are optional.",
+              tip: "Phone / WhatsApp is required so OBIC can contact you.",
+            },
+            {
+              kicker: "Step 2 of 8",
+              h: "Choose program, then majors",
+              p: "Pick the desired program first (language / bachelor / master / PhD). Then the majors list unlocks.",
+              tip: "Choose at least 3 majors. Use search to find them faster.",
+            },
+            {
+              kicker: "Step 3 of 8",
+              h: "Preferred provinces",
+              p: "Select up to 3 Chinese provinces/regions — not city free-text.",
+              tip: "Example: Zhejiang, Beijing, or Jiangsu.",
+            },
+            {
+              kicker: "Step 4 of 8",
+              h: "How you heard about us + agent code",
+              p: "Tell us your source. If a contracted agent sent you, enter their CAPITAL code.",
+              tip: "Current agent example: <span class=\"guide-code\">AGT01</span> — leave empty if you have no agent.",
+            },
+            {
+              kicker: "Step 5 of 8",
+              h: "Upload clear documents",
+              p: "Upload passport, ID photo, diploma, transcripts, study plan, and medical form. PDF or clear photos.",
+              tip: "Max 12 MB each. Clear files = faster follow-up.",
+            },
+            {
+              kicker: "Step 6 of 8",
+              h: "$10 fee — transfer or WhatsApp",
+              p: "If you can pay: transfer $10 and upload the receipt. If not: choose “other options” and contact WhatsApp.",
+              tip: "WhatsApp / WeChat for other payment: 008617758086952",
+            },
+            {
+              kicker: "Step 7 of 8",
+              h: "Read Terms, then accept",
+              p: "Open Terms of Use and read them. Then the accept checkbox unlocks.",
+              tip: "You cannot submit without accepting after opening Terms.",
+            },
+            {
+              kicker: "Step 8 of 8",
+              h: "Send your inquiry",
+              p: "Review your answers and click Send inquiry. The OBIC desk will follow up.",
+              tip: "Ready? Use the button below to open the form.",
+            },
+          ],
+        },
+        zh: {
+          dir: "ltr",
+          eyebrow: "填写指南",
+          title: "如何填写 OBIC 留学表单",
+          sub: "诺尔配音讲解视频 — 面向所有人。",
+          videoTitle: "讲解视频 — 诺尔配音",
+          videoSub: "阿拉伯语 · 面向所有人",
+          prev: "上一步",
+          next: "下一步",
+          pause: "暂停",
+          play: "播放",
+          openForm: "打开表单",
+          cta: "现在开始填写",
+          steps: [
+            {
+              kicker: "第 1 / 8 步",
+              h: "先填基本信息",
+              p: "填写护照姓名、国籍和可用的 WhatsApp 号码。邮箱和微信可选。",
+              tip: "电话/WhatsApp 必填，方便 OBIC 联系你。",
+            },
+            {
+              kicker: "第 2 / 8 步",
+              h: "先选项目，再选专业",
+              p: "先选择意向项目（汉语/本科/硕士/博士），专业列表才会出现。",
+              tip: "至少选 3 个专业，可用搜索快速查找。",
+            },
+            {
+              kicker: "第 3 / 8 步",
+              h: "意向省份",
+              p: "最多选择 3 个中国省份/地区（不是自由填写城市）。",
+              tip: "例如：浙江、北京、江苏。",
+            },
+            {
+              kicker: "第 4 / 8 步",
+              h: "获知渠道与代理代码",
+              p: "告诉我们你如何得知 OBIC。若由签约代理介绍，请填写大写代码。",
+              tip: "当前示时代理码：<span class=\"guide-code\">AGT01</span> — 没有代理可留空。",
+            },
+            {
+              kicker: "第 5 / 8 步",
+              h: "上传清晰材料",
+              p: "上传护照、证件照、毕业证、成绩单、学习计划与体检表。PDF 或清晰照片。",
+              tip: "每个文件不超过 12MB。材料清晰跟进更快。",
+            },
+            {
+              kicker: "第 6 / 8 步",
+              h: "10 美元费用 — 转账或 WhatsApp",
+              p: "能转账：转 10 美元并上传凭证。不能转账：选“其他方式”，通过 WhatsApp 联系。",
+              tip: "其他付款联系 WhatsApp/微信：008617758086952",
+            },
+            {
+              kicker: "第 7 / 8 步",
+              h: "阅读条款后勾选同意",
+              p: "先打开并阅读《使用条款》，然后才能勾选同意。",
+              tip: "未打开条款并同意，无法提交。",
+            },
+            {
+              kicker: "第 8 / 8 步",
+              h: "提交咨询",
+              p: "检查信息后点击提交。OBIC 员工后台会跟进。",
+              tip: "准备好了？点击下方按钮打开表单。",
+            },
+          ],
+        },
+      };
+
+      var stepsRoot = document.getElementById("guide-steps");
+      var dots = document.getElementById("guide-dots");
+      var progress = document.getElementById("guide-progress");
+      var prevBtn = document.getElementById("guide-prev");
+      var nextBtn = document.getElementById("guide-next");
+      var pauseBtn = document.getElementById("guide-pause");
+      var slides = [];
+
+      function pack() { return COPY[lang] || COPY.ar; }
+
+      function applyChrome() {
+        var p = pack();
+        document.documentElement.lang = lang === "zh" ? "zh-CN" : lang;
+        document.documentElement.dir = p.dir;
+        document.querySelectorAll("[data-g]").forEach(function (el) {
+          var k = el.getAttribute("data-g");
+          if (k === "pause") el.textContent = playing ? p.pause : p.play;
+          else if (p[k]) el.textContent = p[k];
+        });
+        document.querySelectorAll("[data-g-alt]").forEach(function (el) {
+          var k = el.getAttribute("data-g-alt");
+          if (p[k]) el.setAttribute("alt", p[k]);
+        });
+        document.querySelectorAll(".guide-lang [data-lang]").forEach(function (b) {
+          b.classList.toggle("is-on", b.getAttribute("data-lang") === lang);
+        });
+      }
+
+      function renderSlides() {
+        var steps = pack().steps;
+        stepsRoot.innerHTML = "";
+        slides = steps.map(function (s, i) {
+          var el = document.createElement("article");
+          el.className = "guide-step" + (i === step ? " is-on" : "");
+          el.setAttribute("data-step", String(i));
+          el.innerHTML =
+            '<div class="guide-step-copy">' +
+              '<span class="guide-kicker">' + s.kicker + "</span>" +
+              "<h2>" + s.h + "</h2>" +
+              "<p>" + s.p + "</p>" +
+              '<div class="guide-tip">' + s.tip + "</div>" +
+            "</div>" +
+            '<figure class="guide-shot">' +
+              '<div class="guide-shot-frame">' +
+                '<img src="' + SHOTS[i] + '" alt="" width="1400" height="900" loading="' + (i === 0 ? "eager" : "lazy") + '" />' +
+              "</div>" +
+            "</figure>";
+          stepsRoot.appendChild(el);
+          return el;
+        });
+        dots.innerHTML = "";
+        steps.forEach(function (_, i) {
+          var b = document.createElement("button");
+          b.type = "button";
+          b.setAttribute("aria-label", "Step " + (i + 1));
+          if (i === step) b.className = "is-on";
+          b.addEventListener("click", function () { go(i, true); });
+          dots.appendChild(b);
+        });
+      }
+
+      function go(i, user) {
+        step = (i + slides.length) % slides.length;
+        slides.forEach(function (el, idx) {
+          el.classList.toggle("is-on", idx === step);
+        });
+        Array.prototype.forEach.call(dots.children, function (b, idx) {
+          b.classList.toggle("is-on", idx === step);
+        });
+        progress.style.width = ((step + 1) / slides.length) * 100 + "%";
+        if (user) restart();
+      }
+
+      function restart() {
+        clearInterval(timer);
+        if (!playing) return;
+        timer = setInterval(function () { go(step + 1, false); }, SEC * 1000);
+      }
+
+      prevBtn.addEventListener("click", function () { go(step - 1, true); });
+      nextBtn.addEventListener("click", function () { go(step + 1, true); });
+      pauseBtn.addEventListener("click", function () {
+        playing = !playing;
+        applyChrome();
+        if (playing) restart();
+        else clearInterval(timer);
+      });
+      document.querySelectorAll(".guide-lang [data-lang]").forEach(function (b) {
+        b.addEventListener("click", function () {
+          lang = b.getAttribute("data-lang");
+          applyChrome();
+          renderSlides();
+          go(step, true);
+        });
+      });
+
+      applyChrome();
+      renderSlides();
+      go(0, true);
+    })();
+  </script>
+  <script src="/js/obic.js?v=20261105footer"></script>
+</body>
+</html>

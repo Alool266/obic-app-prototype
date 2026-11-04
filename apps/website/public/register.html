@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>OBIC — Register</title>
+  <link rel="icon" type="image/png" href="/favicon-64.png" />
+  <link rel="apple-touch-icon" href="/logo.png" />
+  <link rel="stylesheet" href="/css/obic.css?v=20261104nav" />
+</head>
+<body class="auth-page">
+  <header class="nav">
+    <div class="nav-inner">
+      <a class="brand" href="/"><img src="/logo.png" alt="" width="36" height="36" /> OBIC</a>
+      <div class="nav-actions">
+        <div class="lang">
+          <button type="button" data-lang="en" class="is-on">EN</button>
+          <button type="button" data-lang="ar">AR</button>
+          <button type="button" data-lang="zh">中文</button>
+        </div>
+        <a class="btn btn-ghost" href="/login" data-i18n="navLogin">Login</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="auth-main">
+    <div class="auth-shell">
+      <aside class="auth-aside" aria-hidden="true">
+        <img src="/hero-city.jpg" alt="" />
+        <div class="auth-aside-copy">
+          <img src="/logo.png" alt="" width="48" height="48" />
+          <p class="brand-word">OBIC</p>
+          <p data-i18n="authAside">Your bridge to China — services, travel, and business.</p>
+        </div>
+      </aside>
+
+      <div class="auth-panel">
+        <div class="auth-panel-inner">
+          <a class="brand auth-mobile-brand" href="/"><img src="/logo.png" alt="" width="40" height="40" /> OBIC</a>
+          <h1 data-i18n="registerTitle">Create your account</h1>
+          <p class="auth-sub" data-i18n="registerSub">Join OBIC to request services across China.</p>
+          <p id="auth-error" class="auth-error" hidden></p>
+
+          <form id="form-register" class="auth-form" action="/register" method="POST" autocomplete="on">
+            <input type="hidden" name="_token" value="" />
+            <div class="field">
+              <label for="name" data-i18n="labelName">Full name</label>
+              <input id="name" type="text" name="name" required autocomplete="name" />
+            </div>
+            <div class="field">
+              <label for="email" data-i18n="labelEmail">Email address</label>
+              <input id="email" type="email" name="email" required autocomplete="email" />
+            </div>
+            <div class="field">
+              <label data-i18n="labelPhone">Phone number</label>
+              <div class="phone-row">
+                <select name="country_code">
+                  <option value="+86" selected>+86</option>
+                  <option value="+966">+966</option>
+                  <option value="+971">+971</option>
+                  <option value="+1">+1</option>
+                  <option value="+44">+44</option>
+                  <option value="+62">+62</option>
+                </select>
+                <input type="text" name="phone_number" required placeholder="812345678" inputmode="tel" autocomplete="tel-national" />
+              </div>
+            </div>
+            <div class="field">
+              <label for="password" data-i18n="labelPassword">Password</label>
+              <input id="password" type="password" name="password" required autocomplete="new-password" />
+            </div>
+            <div class="field">
+              <label for="password_confirmation" data-i18n="labelConfirm">Confirm password</label>
+              <input id="password_confirmation" type="password" name="password_confirmation" required autocomplete="new-password" />
+            </div>
+            <button class="btn btn-primary auth-submit" type="submit" data-i18n="navRegister">Register</button>
+            <p class="auth-legal">
+              <span data-i18n="legalAgree">By creating an account you agree to the</span>
+              <a href="/terms" data-i18n="legalTerms">Terms</a>
+              <span data-i18n="legalAnd">and</span>
+              <a href="/privacy" data-i18n="legalPrivacy">Privacy Policy</a>.
+            </p>
+          </form>
+
+          <p class="auth-footer-note">
+            <span data-i18n="haveAccount">Already have an account?</span>
+            <a href="/login" data-i18n="navLogin">Login</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+    <footer class="footer">
+    <div class="wrap footer-grid">
+      <div>
+        <a class="brand" href="/"><img src="/logo.png" alt="" width="36" height="36" /> OBIC</a>
+        <p data-i18n="footerAbout">Professional services for international clients operating and traveling in China.</p>
+      </div>
+      <div>
+        <h4 data-i18n="footerLinks">Links</h4>
+        <p>
+          <a href="/" data-i18n="navHome">Home</a><br />
+          <a href="/study-china.html" data-i18n="pathStudyTitle">Scholarships &amp; university pathways</a><br />
+          <a href="/open-company.html" data-i18n="pathCompanyTitle">Open a company</a><br />
+          <a href="/about.html" data-i18n="navAbout">About</a><br />
+          <a href="/contact.html" data-i18n="navContact">Contact</a><br />
+          <a href="/mini-apps.html">Mini apps</a><br />
+          <a href="/login" data-i18n="navLogin">Login</a><br />
+          <a href="/terms" data-i18n="legalTerms">Terms</a><br />
+          <a href="/privacy" data-i18n="legalPrivacy">Privacy</a>
+        </p>
+      </div>
+      <div>
+        <h4 data-i18n="footerContact">Contact</h4>
+        <p>
+          <a href="https://wa.me/8615257977914" target="_blank" rel="noopener noreferrer" data-i18n="ctaWhatsApp">WhatsApp</a><br />
+          <span dir="ltr" data-i18n="phone">15257977914</span><br />
+          <span dir="ltr" data-i18n="email">obicproject117@gmail.com</span><br />
+          <span data-i18n="address">Road of Safety</span>
+        </p>
+      </div>
+    </div>
+    <div class="wrap footer-bottom">
+      <span data-i18n="copy">© 2026 OBIC. All rights reserved.</span>
+    </div>
+  </footer>
+
+
+  <script src="/js/api.js?v=20260913"></script>
+  <script src="/js/obic.js?v=20261105footer"></script>
+  <script src="/js/auth.js?v=20260919a"></script>
+  <script src="/js/session.js?v=20260919o"></script>
+</body>
+</html>

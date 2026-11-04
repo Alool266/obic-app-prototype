@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>OBIC AI</title>
+  <link rel="icon" type="image/png" href="/favicon-64.png" />
+  <link rel="apple-touch-icon" href="/logo.png" />
+  <link rel="stylesheet" href="/css/obic.css?v=20261104nav" />
+</head>
+<body class="account-page">
+  <header class="nav">
+    <div class="nav-inner">
+      <a class="brand" href="/"><img src="/logo.png" alt="" width="36" height="36" /> OBIC</a>
+      <ul class="nav-links">
+        <li><a href="/" data-i18n="navHome">Home</a></li>
+        <li><a href="/#services" data-i18n="navServices">Services</a></li>
+        <li><a href="/about.html" data-i18n="navAbout">About</a></li>
+        <li><a href="/contact.html" data-i18n="navContact">Contact</a></li>
+      </ul>
+      <div class="nav-actions">
+        <div class="lang" role="group" aria-label="Language">
+          <button type="button" data-lang="en" class="is-on">EN</button>
+          <button type="button" data-lang="ar">AR</button>
+          <button type="button" data-lang="zh">中文</button>
+        </div>
+        <a class="btn btn-ghost" href="/login" data-i18n="navLogin">Login</a>
+        <a class="btn btn-primary" href="/register" data-i18n="navRegister">Register</a>
+        <button class="menu-toggle" type="button" aria-label="Menu"><span></span></button>
+      </div>
+    </div>
+  </header>
+
+  <main class="account-main">
+    <div class="wrap">
+      <header class="hub-hero">
+        <div>
+          <p class="account-kicker">OBIC</p>
+          <div class="ai-title-row">
+            <img class="ai-mark" src="/ai-mark.svg" alt="" width="44" height="44" />
+            <h1 id="ai-title">OBIC AI</h1>
+          </div>
+        </div>
+        <button type="button" class="btn btn-ghost" id="ai-new" hidden>New chat</button>
+      </header>
+
+      <section id="ai-gate" class="account-guest" hidden>
+        <h2 id="ai-sign-title">Sign in</h2>
+        <p id="ai-sign-body">Use the same account as the OBIC app.</p>
+        <form id="ai-login" class="auth-form">
+          <label for="ai-account" id="ai-account-label">Email or phone</label>
+          <input id="ai-account" type="text" autocomplete="username" required />
+          <label for="ai-password" id="ai-password-label">Password</label>
+          <input id="ai-password" type="password" autocomplete="current-password" required />
+          <div id="ai-totp-wrap" hidden>
+            <label for="ai-totp" id="ai-totp-label">Authenticator code</label>
+            <input id="ai-totp" inputmode="numeric" autocomplete="one-time-code" />
+          </div>
+          <button class="btn btn-primary" type="submit" id="ai-sign-in">Sign in</button>
+          <p id="ai-login-error" class="profile-flash is-err" hidden></p>
+        </form>
+      </section>
+
+      <section id="ai-desk">
+        <div class="ai-tabs" role="tablist">
+          <button type="button" id="ai-tab-guide" data-tab="guide">Guide</button>
+          <button type="button" id="ai-tab-chat" class="is-on" data-tab="chat">Chat</button>
+          <button type="button" id="ai-tab-history" data-tab="history">History</button>
+        </div>
+        <p id="ai-offline" class="ai-offline" hidden></p>
+
+        <section id="ai-pane-guide" class="ai-guide" hidden></section>
+
+        <section id="ai-pane-chat">
+          <div class="chat-shell">
+            <div class="chat-stream ai-stream" id="ai-stream" aria-live="polite"></div>
+            <div id="ai-pending" class="ai-pending" hidden></div>
+            <form id="ai-form" class="chat-compose ai-compose">
+              <div class="ai-attach">
+                <button type="button" class="btn btn-ghost" id="ai-attach">Attach</button>
+                <div id="ai-attach-menu" class="ai-attach-menu" hidden>
+                  <button type="button" data-kind="photo">Photo</button>
+                  <button type="button" data-kind="pdf">PDF</button>
+                  <button type="button" data-kind="sheet">Spreadsheet</button>
+                </div>
+              </div>
+              <input id="ai-input" type="text" maxlength="4000" autocomplete="off" />
+              <button class="btn btn-primary" type="submit" id="ai-send">Send</button>
+            </form>
+            <p id="ai-error" class="profile-flash is-err" hidden></p>
+          </div>
+          <input id="ai-file-photo" type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" hidden />
+          <input id="ai-file-pdf" type="file" accept="application/pdf,.pdf" hidden />
+          <input id="ai-file-sheet" type="file" accept=".csv,.xls,.xlsx,text/csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden />
+        </section>
+
+        <section id="ai-pane-history" hidden>
+          <div id="ai-history" class="chat-threads"></div>
+        </section>
+        <button type="button" class="btn btn-ghost" id="ai-sign-out" hidden>Sign out</button>
+      </section>
+    </div>
+  </main>
+  <p id="ai-toast" class="ai-toast" hidden></p>
+
+    <footer class="footer">
+    <div class="wrap footer-grid">
+      <div>
+        <a class="brand" href="/"><img src="/logo.png" alt="" width="36" height="36" /> OBIC</a>
+        <p data-i18n="footerAbout">Professional services for international clients operating and traveling in China.</p>
+      </div>
+      <div>
+        <h4 data-i18n="footerLinks">Links</h4>
+        <p>
+          <a href="/" data-i18n="navHome">Home</a><br />
+          <a href="/study-china.html" data-i18n="pathStudyTitle">Scholarships &amp; university pathways</a><br />
+          <a href="/open-company.html" data-i18n="pathCompanyTitle">Open a company</a><br />
+          <a href="/about.html" data-i18n="navAbout">About</a><br />
+          <a href="/contact.html" data-i18n="navContact">Contact</a><br />
+          <a href="/mini-apps.html">Mini apps</a><br />
+          <a href="/login" data-i18n="navLogin">Login</a><br />
+          <a href="/terms" data-i18n="legalTerms">Terms</a><br />
+          <a href="/privacy" data-i18n="legalPrivacy">Privacy</a>
+        </p>
+      </div>
+      <div>
+        <h4 data-i18n="footerContact">Contact</h4>
+        <p>
+          <a href="https://wa.me/8615257977914" target="_blank" rel="noopener noreferrer" data-i18n="ctaWhatsApp">WhatsApp</a><br />
+          <span dir="ltr" data-i18n="phone">15257977914</span><br />
+          <span dir="ltr" data-i18n="email">obicproject117@gmail.com</span><br />
+          <span data-i18n="address">Road of Safety</span>
+        </p>
+      </div>
+    </div>
+    <div class="wrap footer-bottom">
+      <span data-i18n="copy">© 2026 OBIC. All rights reserved.</span>
+    </div>
+  </footer>
+
+
+  <script src="/js/obic.js?v=20261105footer"></script>
+  <script src="/js/session.js?v=20260919o"></script>
+  <script src="/js/ai.js?v=20261026a"></script>
+</body>
+</html>

@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>OBIC — Mini apps</title>
+  <meta name="description" content="Sign in with your OBIC account and submit a mini app for review." />
+  <link rel="icon" type="image/png" href="favicon-64.png" />
+  <link rel="apple-touch-icon" href="logo.png" />
+  <link rel="stylesheet" href="/css/obic.css?v=20261104nav" />
+  <style>
+    .mini-panel { max-width: 640px; }
+    .mini-card {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #fff;
+      padding: 1rem 1.1rem;
+      margin-bottom: 0.75rem;
+    }
+    .mini-card strong { color: var(--navy); display: block; }
+    .mini-card p { margin: 0.35rem 0 0; color: var(--muted); }
+    .mini-error { color: #b42318; margin: 0.75rem 0 0; }
+    .mini-ok { color: var(--navy); font-weight: 650; margin: 0.75rem 0 0; }
+    .mini-url { direction: ltr; unicode-bidi: isolate; word-break: break-all; }
+  </style>
+</head>
+<body>
+  <header class="nav">
+    <div class="nav-inner">
+      <a class="brand" href="index.html"><img src="logo.png" alt="" width="36" height="36" /> OBIC</a>
+      <ul class="nav-links">
+        <li><a href="index.html" data-i18n="navHome">Home</a></li>
+        <li><a href="index.html#services" data-i18n="navServices">Services</a></li>
+        <li><a href="about.html" data-i18n="navAbout">About</a></li>
+        <li><a href="contact.html" data-i18n="navContact">Contact</a></li>
+      </ul>
+      <div class="nav-actions">
+        <div class="lang" role="group" aria-label="Language">
+          <button type="button" data-lang="en" class="is-on">EN</button>
+          <button type="button" data-lang="ar">AR</button>
+          <button type="button" data-lang="zh">中文</button>
+        </div>
+        <a class="btn btn-ghost" href="/login" data-i18n="navLogin">Login</a>
+        <a class="btn btn-primary" href="/register" data-i18n="navRegister">Register</a>
+        <button class="menu-toggle" type="button" aria-label="Menu"><span></span></button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="wrap page-hero reveal">
+      <span class="eyebrow">Mini apps</span>
+      <h1 id="mini-title">Submit a mini app</h1>
+      <p id="mini-lead">Sign in with your OBIC account, then send a zip package. It stays Pending until OBIC approves it.</p>
+    </div>
+
+    <section class="section" style="padding-top:0">
+      <div class="wrap mini-panel">
+        <form id="mini-gate" class="form-grid">
+          <div class="field">
+            <label for="mini-email" id="mini-email-label">Email</label>
+            <input id="mini-email" type="email" autocomplete="username" required dir="ltr" />
+          </div>
+          <div class="field">
+            <label for="mini-password" id="mini-password-label">Password</label>
+            <input id="mini-password" type="password" autocomplete="current-password" required dir="ltr" />
+          </div>
+          <div class="field" id="mini-totp-wrap" hidden>
+            <label for="mini-totp" id="mini-totp-label">Authenticator code</label>
+            <input id="mini-totp" inputmode="numeric" autocomplete="one-time-code" dir="ltr" />
+          </div>
+          <button class="btn btn-primary" type="submit" id="mini-sign-in">Sign in</button>
+          <p class="mini-error" id="mini-gate-error" hidden></p>
+        </form>
+
+        <form id="mini-form" class="form-grid" hidden>
+          <div class="field">
+            <label for="mini-name" id="mini-name-label">Name</label>
+            <input id="mini-name" type="text" maxlength="80" required />
+          </div>
+          <div class="field">
+            <label for="mini-description" id="mini-description-label">Short description</label>
+            <textarea id="mini-description" maxlength="400" required></textarea>
+          </div>
+          <div class="field">
+            <label for="mini-icon" id="mini-icon-label">Icon</label>
+            <input id="mini-icon" type="file" accept="image/png,image/jpeg,image/webp,image/gif" />
+          </div>
+          <div class="field">
+            <label for="mini-package" id="mini-package-label">Package (.zip)</label>
+            <input id="mini-package" type="file" accept=".zip,application/zip" required />
+            <p id="mini-rules">Put index.html at the root of the zip. About 8 MB.</p>
+          </div>
+          <button class="btn btn-primary" type="submit" id="mini-submit">Submit</button>
+          <p class="mini-ok" id="mini-done" hidden></p>
+          <p class="mini-error" id="mini-form-error" hidden></p>
+          <button class="btn btn-ghost" type="button" id="mini-sign-out">Sign out</button>
+        </form>
+
+        <div id="mini-mine-wrap" hidden>
+          <h2 id="mini-mine-title">Your submissions</h2>
+          <p id="mini-empty" class="listing-empty" hidden></p>
+          <div id="mini-mine"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap footer-grid">
+      <div>
+        <a class="brand" href="index.html"><img src="logo.png" alt="" width="36" height="36" /> OBIC</a>
+        <p data-i18n="footerAbout">Professional services for international clients operating and traveling in China.</p>
+      </div>
+      <div>
+        <h4 data-i18n="footerLinks">Links</h4>
+        <p>
+          <a href="index.html" data-i18n="navHome">Home</a><br />
+          <a href="about.html" data-i18n="navAbout">About</a><br />
+          <a href="contact.html" data-i18n="navContact">Contact</a><br />
+          <a href="/login" data-i18n="navLogin">Login</a><br />
+          <a href="/terms" data-i18n="legalTerms">Terms</a><br />
+          <a href="/privacy" data-i18n="legalPrivacy">Privacy</a>
+        </p>
+      </div>
+      <div>
+        <h4 data-i18n="footerContact">Contact</h4>
+        <p>
+          <span dir="ltr" data-i18n="phone">15257977914</span><br />
+          <span dir="ltr" data-i18n="email">obicproject117@gmail.com</span><br />
+          <span data-i18n="address">Road of Safety</span>
+        </p>
+      </div>
+    </div>
+    <div class="wrap footer-bottom">
+      <span data-i18n="copy">© 2026 OBIC. All rights reserved.</span>
+    </div>
+  </footer>
+
+  <script src="/js/obic.js?v=20261105footer"></script>
+  <script src="/js/session.js?v=20260919o"></script>
+  <script>
+  (function () {
+    var API = "https://api.obicgp.com";
+    var TOKEN_KEY = "obicTrialMiniSubmitToken";
+    var MAX_ZIP = 8 * 1024 * 1024;
+    var totpSession = "";
+    var COPY = {
+      en: {
+        title: "Submit a mini app",
+        lead: "Sign in with your OBIC account, then send a zip package. It stays Pending until OBIC approves it.",
+        email: "Email",
+        password: "Password",
+        totp: "Authenticator code",
+        signIn: "Sign in",
+        name: "Name",
+        description: "Short description",
+        icon: "Icon",
+        pack: "Package (.zip)",
+        rules: "Put index.html at the root of the zip. About 8 MB.",
+        submit: "Submit",
+        pending: "Submitted. Status: Pending.",
+        mine: "Your submissions",
+        empty: "You have not submitted a mini app yet.",
+        signOut: "Sign out",
+        zip: "Choose a .zip package with index.html at the root.",
+        big: "The package must be about 8 MB or smaller.",
+        need: "Enter a name and a short description.",
+        pendingStatus: "Pending",
+        approved: "Approved",
+        rejected: "Rejected",
+        disabled: "Disabled",
+        reason: "Reason"
+      },
+      ar: {
+        title: "إرسال تطبيق مصغّر",
+        lead: "سجّل الدخول بحساب OBIC، ثم أرسل ملف zip. يبقى قيد الانتظار حتى توافق OBIC.",
+        email: "البريد",
+        password: "كلمة المرور",
+        totp: "رمز تطبيق المصادقة",
+        signIn: "تسجيل الدخول",
+        name: "الاسم",
+        description: "وصف قصير",
+        icon: "الأيقونة",
+        pack: "الحزمة (.zip)",
+        rules: "ضع index.html في جذر ملف zip. الحجم حوالي 8 ميغابايت.",
+        submit: "إرسال",
+        pending: "تم الإرسال. الحالة: قيد الانتظار.",
+        mine: "إرسالاتك",
+        empty: "لم ترسل تطبيقاً مصغّراً بعد.",
+        signOut: "تسجيل الخروج",
+        zip: "اختر ملف zip وفيه index.html في الجذر.",
+        big: "يجب أن يكون حجم الحزمة حوالي 8 ميغابايت أو أقل.",
+        need: "أدخل الاسم ووصفاً قصيراً.",
+        pendingStatus: "قيد الانتظار",
+        approved: "مقبول",
+        rejected: "مرفوض",
+        disabled: "متوقف",
+        reason: "السبب"
+      },
+      zh: {
+        title: "提交小程序",
+        lead: "使用 OBIC 账号登录，然后上传 zip 包。审核通过前状态为待处理。",
+        email: "邮箱",
+        password: "密码",
+        totp: "验证器验证码",
+        signIn: "登录",
+        name: "名称",
+        description: "简短说明",
+        icon: "图标",
+        pack: "安装包（.zip）",
+        rules: "zip 根目录需要 index.html。大约 8 MB。",
+        submit: "提交",
+        pending: "已提交。状态：待处理。",
+        mine: "我的提交",
+        empty: "你还没有提交小程序。",
+        signOut: "退出",
+        zip: "请选择根目录含 index.html 的 .zip。",
+        big: "安装包需在大约 8 MB 以内。",
+        need: "请填写名称和简短说明。",
+        pendingStatus: "待处理",
+        approved: "已通过",
+        rejected: "已拒绝",
+        disabled: "已停用",
+        reason: "原因"
+      }
+    };
+
+    function lang() {
+      var code = window.ObicI18n && ObicI18n.getLang ? ObicI18n.getLang() : "en";
+      return COPY[code] ? code : "en";
+    }
+    function t() { return COPY[lang()]; }
+    function el(id) { return document.getElementById(id); }
+    function token() { return sessionStorage.getItem(TOKEN_KEY) || ""; }
+    function showError(id, message) {
+      var node = el(id);
+      node.hidden = !message;
+      node.textContent = message || "";
+    }
+    function statusLabel(status) {
+      var copy = t();
+      if (status === "pending") return copy.pendingStatus;
+      if (status === "approved") return copy.approved;
+      if (status === "rejected") return copy.rejected;
+      if (status === "disabled") return copy.disabled;
+      return status || "";
+    }
+    function applyPage() {
+      var copy = t();
+      el("mini-title").textContent = copy.title;
+      el("mini-lead").textContent = copy.lead;
+      el("mini-email-label").textContent = copy.email;
+      el("mini-password-label").textContent = copy.password;
+      el("mini-totp-label").textContent = copy.totp;
+      el("mini-sign-in").textContent = copy.signIn;
+      el("mini-name-label").textContent = copy.name;
+      el("mini-description-label").textContent = copy.description;
+      el("mini-icon-label").textContent = copy.icon;
+      el("mini-package-label").textContent = copy.pack;
+      el("mini-rules").textContent = copy.rules;
+      el("mini-submit").textContent = copy.submit;
+      el("mini-sign-out").textContent = copy.signOut;
+      el("mini-mine-title").textContent = copy.mine;
+      el("mini-empty").textContent = copy.empty;
+      document.title = "OBIC — " + copy.title;
+    }
+
+    async function readJson(res) {
+      var bodyText = await res.text();
+      var json = {};
+      if (bodyText) {
+        try { json = JSON.parse(bodyText); } catch (e) { json = {}; }
+      }
+      if (!res.ok) {
+        var message = json.message;
+        if (Array.isArray(message)) message = message.join("\n");
+        if (typeof message !== "string") message = "Request failed (" + res.status + ")";
+        throw new Error(message);
+      }
+      return json;
+    }
+
+    function renderMine(rows) {
+      var list = el("mini-mine");
+      list.replaceChildren();
+      el("mini-empty").hidden = rows.length !== 0;
+      rows.forEach(function (row) {
+        var card = document.createElement("article");
+        card.className = "mini-card";
+        var title = document.createElement("strong");
+        title.textContent = (row.name || "") + " · " + statusLabel(row.status);
+        var desc = document.createElement("p");
+        desc.textContent = row.description || "";
+        card.appendChild(title);
+        card.appendChild(desc);
+        var note = (row.reviewNote || "").trim();
+        if (note) {
+          var reason = document.createElement("p");
+          reason.textContent = t().reason + ": " + note;
+          card.appendChild(reason);
+        }
+        list.appendChild(card);
+      });
+    }
+
+    async function loadMine() {
+      var res = await fetch(API + "/v1/mini-apps/mine", {
+        headers: { Accept: "application/json", Authorization: "Bearer " + token() }
+      });
+      var json = await readJson(res);
+      renderMine(Array.isArray(json) ? json : []);
+    }
+
+    function showDesk(on) {
+      el("mini-gate").hidden = on;
+      el("mini-form").hidden = !on;
+      el("mini-mine-wrap").hidden = !on;
+    }
+
+    async function uploadIcon(file) {
+      var body = new FormData();
+      body.append("files", file, file.name);
+      var res = await fetch(API + "/v1/uploads", {
+        method: "POST",
+        headers: { Accept: "application/json", Authorization: "Bearer " + token() },
+        body: body
+      });
+      var json = await readJson(res);
+      var items = json.items || [];
+      var url = items[0] && items[0].url;
+      if (typeof url !== "string" || !url) throw new Error(t().icon);
+      return url;
+    }
+
+    el("mini-gate").addEventListener("submit", async function (event) {
+      event.preventDefault();
+      showError("mini-gate-error", "");
+      try {
+        if (totpSession) {
+          var verified = await fetch(API + "/v1/auth/totp/verify", {
+            method: "POST",
+            headers: { Accept: "application/json", "Content-Type": "application/json" },
+            body: JSON.stringify({ totpSession: totpSession, code: el("mini-totp").value.trim() })
+          });
+          var verifiedJson = await readJson(verified);
+          sessionStorage.setItem(TOKEN_KEY, verifiedJson.accessToken);
+          totpSession = "";
+          el("mini-password").value = "";
+          showDesk(true);
+          await loadMine();
+          return;
+        }
+        var res = await fetch(API + "/v1/auth/login", {
+          method: "POST",
+          headers: { Accept: "application/json", "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: el("mini-email").value.trim(),
+            password: el("mini-password").value
+          })
+        });
+        var json = await readJson(res);
+        if (json.requiresTotp) {
+          totpSession = json.totpSession || "";
+          el("mini-totp-wrap").hidden = false;
+          return;
+        }
+        if (!json.accessToken) throw new Error(t().signIn);
+        sessionStorage.setItem(TOKEN_KEY, json.accessToken);
+        el("mini-password").value = "";
+        showDesk(true);
+        await loadMine();
+      } catch (err) {
+        showError("mini-gate-error", err && err.message ? err.message : t().signIn);
+      }
+    });
+
+    el("mini-form").addEventListener("submit", async function (event) {
+      event.preventDefault();
+      showError("mini-form-error", "");
+      el("mini-done").hidden = true;
+      var name = el("mini-name").value.trim();
+      var description = el("mini-description").value.trim();
+      var pack = el("mini-package").files && el("mini-package").files[0];
+      if (!name || !description) {
+        showError("mini-form-error", t().need);
+        return;
+      }
+      if (!pack || !/\.zip$/i.test(pack.name)) {
+        showError("mini-form-error", t().zip);
+        return;
+      }
+      if (pack.size > MAX_ZIP) {
+        showError("mini-form-error", t().big);
+        return;
+      }
+      el("mini-submit").disabled = true;
+      try {
+        var icon = el("mini-icon").files && el("mini-icon").files[0];
+        var iconUrl = icon ? await uploadIcon(icon) : "";
+        var body = new FormData();
+        body.append("name", name);
+        body.append("description", description);
+        if (iconUrl) body.append("iconUrl", iconUrl);
+        body.append("package", pack, pack.name);
+        var res = await fetch(API + "/v1/mini-apps", {
+          method: "POST",
+          headers: { Accept: "application/json", Authorization: "Bearer " + token() },
+          body: body
+        });
+        await readJson(res);
+        el("mini-name").value = "";
+        el("mini-description").value = "";
+        el("mini-icon").value = "";
+        el("mini-package").value = "";
+        el("mini-done").hidden = false;
+        el("mini-done").textContent = t().pending;
+        await loadMine();
+      } catch (err) {
+        if (err && err.message && /401|unauthorized/i.test(err.message)) {
+          sessionStorage.removeItem(TOKEN_KEY);
+          showDesk(false);
+        }
+        showError("mini-form-error", err && err.message ? err.message : t().submit);
+      } finally {
+        el("mini-submit").disabled = false;
+      }
+    });
+
+    el("mini-sign-out").addEventListener("click", function () {
+      sessionStorage.removeItem(TOKEN_KEY);
+      totpSession = "";
+      showDesk(false);
+      el("mini-done").hidden = true;
+    });
+
+    applyPage();
+    if (window.ObicI18n && ObicI18n.onLangChange) {
+      ObicI18n.onLangChange(function () {
+        applyPage();
+        if (token()) loadMine().catch(function () {});
+      });
+    }
+    if (token()) {
+      showDesk(true);
+      loadMine().catch(function () {
+        sessionStorage.removeItem(TOKEN_KEY);
+        showDesk(false);
+      });
+    }
+  })();
+  </script>
+</body>
+</html>
