@@ -57,49 +57,12 @@
       border-color: transparent;
     }
 
-    /* Preview GIF — fixed aspect, never overlaps steps */
-    .guide-preview {
-      position: relative;
-      z-index: 1;
-      margin: 0 auto 1.75rem;
-      max-width: 920px;
-      border-radius: 18px;
-      overflow: hidden;
-      border: 1px solid var(--guide-line);
-      background: #fff;
-      box-shadow: 0 14px 36px rgba(11, 31, 58, 0.08);
-    }
-    .guide-preview-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 0.75rem;
-      padding: 0.75rem 1rem;
-      background: var(--guide-navy);
-      color: #fff;
-    }
-    .guide-preview-head strong { font-size: 0.92rem; }
-    .guide-preview-head span { font-size: 0.75rem; opacity: 0.78; }
-    .guide-preview-frame {
-      aspect-ratio: 1200 / 780;
-      background: #eef2f7;
-      display: grid;
-      place-items: center;
-    }
-    .guide-preview-frame img {
-      display: block;
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-      object-position: center top;
-    }
-
     .guide-steps {
       position: relative;
-      z-index: 2;
+      z-index: 1;
       display: grid;
       gap: 1.15rem;
-      margin: 0 auto 1.5rem;
+      margin: 0.35rem auto 1.5rem;
       max-width: 920px;
       padding-bottom: 0.5rem;
     }
@@ -246,7 +209,7 @@
     <div class="guide-wrap">
       <span class="eyebrow" data-g="eyebrow">دليل تعبئة الطلب</span>
       <h1 data-g="title">كيف تعبّئ بيانات الدراسة في أوبك؟</h1>
-      <p data-g="sub">لقطات حقيقية من النموذج — شاهد المعاينة ثم اتبع الخطوات واحدةً تلو الأخرى.</p>
+      <p data-g="sub">لقطات حقيقية من النموذج — اتبع الخطوات واحدةً تلو الأخرى.</p>
       <div class="guide-lang" role="group" aria-label="Language">
         <button type="button" data-lang="ar" class="is-on">عربي</button>
         <button type="button" data-lang="en">EN</button>
@@ -256,22 +219,6 @@
   </section>
 
   <div class="guide-wrap">
-    <figure class="guide-preview">
-      <div class="guide-preview-head">
-        <strong data-g="demoTitle">معاينة سريعة</strong>
-        <span data-g="demoSub">8 لقطات · تتكرر تلقائياً</span>
-      </div>
-      <div class="guide-preview-frame">
-        <img
-          src="/study-how-to.gif?v=20261105pro"
-          width="1200"
-          height="780"
-          alt=""
-          data-g-alt="demoAlt"
-        />
-      </div>
-    </figure>
-
     <div class="guide-progress"><span id="guide-progress"></span></div>
     <div class="guide-steps" id="guide-steps"></div>
 
@@ -322,10 +269,7 @@
           dir: "rtl",
           eyebrow: "دليل تعبئة الطلب",
           title: "كيف تعبّئ بيانات الدراسة في أوبك؟",
-          sub: "لقطات حقيقية من النموذج — شاهد المعاينة ثم اتبع الخطوات واحدةً تلو الأخرى.",
-          demoTitle: "معاينة سريعة",
-          demoSub: "8 لقطات · تتكرر تلقائياً",
-          demoAlt: "عرض متحرك لخطوات تعبئة نموذج الدراسة",
+          sub: "لقطات حقيقية من النموذج — اتبع الخطوات واحدةً تلو الأخرى.",
           prev: "السابق",
           next: "التالي",
           pause: "إيقاف",
@@ -387,10 +331,7 @@
           dir: "ltr",
           eyebrow: "How to apply",
           title: "How to fill the OBIC study form",
-          sub: "Real form screenshots — watch the preview, then follow each step.",
-          demoTitle: "Quick preview",
-          demoSub: "8 shots · loops automatically",
-          demoAlt: "Animated preview of the study form steps",
+          sub: "Real form screenshots — follow each step in order.",
           prev: "Prev",
           next: "Next",
           pause: "Pause",
@@ -452,10 +393,7 @@
           dir: "ltr",
           eyebrow: "填写指南",
           title: "如何填写 OBIC 留学表单",
-          sub: "真实表单截图 — 先看上方预览，再按步骤操作。",
-          demoTitle: "快速预览",
-          demoSub: "8 张截图 · 自动循环",
-          demoAlt: "留学表单填写步骤动画预览",
+          sub: "真实表单截图 — 按步骤依次操作。",
           prev: "上一步",
           next: "下一步",
           pause: "暂停",
