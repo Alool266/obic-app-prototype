@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-hidden="true">
+  <defs>
+    <linearGradient id="obic-ai-glass" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.72"/>
+      <stop offset="0.55" stop-color="#ffffff" stop-opacity="0.58"/>
+      <stop offset="1" stop-color="#E8F1FF" stop-opacity="0.45"/>
+    </linearGradient>
+  </defs>
+  <circle cx="50" cy="50" r="48" fill="url(#obic-ai-glass)" stroke="#0B1F3A" stroke-opacity="0.45" stroke-width="1.5"/>
+  <g transform="translate(28 28)" fill="#0B1F3A">
+    <path fill-opacity="0.9" d="M19.80,7.92 L22.91,20.21 L35.20,23.32 L22.91,26.43 L19.80,38.72 L16.69,26.43 L4.40,23.32 L16.69,20.21 Z"/>
+    <path fill-opacity="0.78" d="M30.80,7.92 L32.12,12.76 L36.96,14.08 L32.12,15.40 L30.80,20.24 L29.48,15.40 L24.64,14.08 L29.48,12.76 Z"/>
+  </g>
+</svg>

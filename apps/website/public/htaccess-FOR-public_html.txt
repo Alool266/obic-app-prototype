@@ -1,0 +1,52 @@
+<IfModule mod_rewrite.c>
+<IfModule mod_negotiation.c>
+    Options -MultiViews
+</IfModule>
+
+RewriteEngine On
+
+# ——— OBIC new website (GET only) ———
+# Files live in /public/ (css, js, index.html, login.html, category.html, …)
+# POST /login and /register still go to Laravel below.
+
+RewriteCond %{REQUEST_METHOD} GET
+RewriteRule ^$ public/index.html [L]
+
+RewriteCond %{REQUEST_METHOD} GET
+RewriteRule ^about/?$ public/about.html [L]
+
+RewriteCond %{REQUEST_METHOD} GET
+RewriteRule ^contact/?$ public/contact.html [L]
+
+RewriteCond %{REQUEST_METHOD} GET
+RewriteRule ^service/?$ public/service.html [L]
+
+RewriteCond %{REQUEST_METHOD} GET
+RewriteRule ^login/?$ public/login.html [L]
+
+RewriteCond %{REQUEST_METHOD} GET
+RewriteRule ^register/?$ public/register.html [L]
+
+RewriteCond %{REQUEST_METHOD} GET
+RewriteRule ^terms/?$ public/terms.html [L]
+
+RewriteCond %{REQUEST_METHOD} GET
+RewriteRule ^privacy/?$ public/privacy.html [L]
+
+# Category pages — new design shell (CMS data via ?legacy=1)
+RewriteCond %{REQUEST_METHOD} GET
+RewriteCond %{QUERY_STRING} !(^|&)legacy=1(&|$)
+RewriteRule ^category/([a-z0-9\-]+)/?$ public/category.html [L]
+
+# ——— Existing Laravel / Hostinger rules ———
+RewriteCond %{REQUEST_FILENAME} -d [OR]
+RewriteCond %{REQUEST_FILENAME} -f
+RewriteRule ^ ^$1 [N]
+
+RewriteCond %{REQUEST_URI} (\.\w+$) [NC]
+RewriteRule ^(.*)$ public/$1
+
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^ index.php
+</IfModule>

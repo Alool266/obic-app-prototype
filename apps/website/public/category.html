@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>OBIC — Services</title>
+  <meta name="description" content="OBIC professional services in China." />
+  <link rel="icon" type="image/png" href="/favicon-64.png" />
+  <link rel="apple-touch-icon" href="/logo.png" />
+  <link rel="stylesheet" href="/css/obic.css?v=20261104nav" />
+  <script>window.OBIC_API_BASE = "";</script>
+</head>
+<body class="page-services">
+  <header class="nav">
+    <div class="nav-inner">
+      <a class="brand" href="/">
+        <img src="/logo.png" alt="" width="36" height="36" />
+        OBIC
+      </a>
+      <ul class="nav-links">
+        <li><a href="/" data-i18n="navHome">Home</a></li>
+        <li><a class="is-active" href="/#services" data-i18n="navServices">Services</a></li>
+        <li><a href="/about.html" data-i18n="navAbout">About</a></li>
+        <li><a href="/contact.html" data-i18n="navContact">Contact</a></li>
+      </ul>
+      <div class="nav-actions">
+        <div class="lang" role="group" aria-label="Language">
+          <button type="button" data-lang="en" class="is-on">EN</button>
+          <button type="button" data-lang="ar">AR</button>
+          <button type="button" data-lang="zh">中文</button>
+        </div>
+        <a class="btn btn-ghost" href="/login" data-i18n="navLogin">Login</a>
+        <a class="btn btn-primary" href="/register" data-i18n="navRegister">Register</a>
+        <button class="menu-toggle" type="button" aria-label="Menu"><span></span></button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="cat-hero">
+      <div class="wrap svc-hero">
+        <div>
+          <nav class="crumbs" aria-label="Breadcrumb">
+            <a href="/" data-i18n="navHome">Home</a>
+            <span>/</span>
+            <a href="/#services" data-i18n="navServices">Services</a>
+            <span>/</span>
+            <span id="crumb-current">…</span>
+          </nav>
+          <h1 id="cat-title">…</h1>
+          <p class="lead" id="cat-desc"></p>
+        </div>
+        <div class="svc-hero-photo" id="cat-photo"></div>
+      </div>
+    </section>
+
+    <section class="section cat-section">
+      <div class="wrap">
+        <div id="svc-detail" class="svc-detail" hidden></div>
+        <nav id="cat-nav" class="svc-switch" aria-label="Services"></nav>
+        <div id="sub-grid" class="svc-list"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap footer-grid">
+      <div>
+        <a class="brand" href="/"><img src="/logo.png" alt="" width="36" height="36" /> OBIC</a>
+        <p data-i18n="footerAbout">Professional services for international clients operating and traveling in China.</p>
+      </div>
+      <div>
+        <h4 data-i18n="footerLinks">Links</h4>
+        <p>
+          <a href="/" data-i18n="navHome">Home</a><br />
+          <a href="/about.html" data-i18n="navAbout">About</a><br />
+          <a href="/contact.html" data-i18n="navContact">Contact</a><br />
+          <a href="/login" data-i18n="navLogin">Login</a><br />
+          <a href="/terms" data-i18n="legalTerms">Terms</a><br />
+          <a href="/privacy" data-i18n="legalPrivacy">Privacy</a>
+        </p>
+      </div>
+      <div>
+        <h4 data-i18n="footerContact">Contact</h4>
+        <p>
+          <span data-i18n="phone">15257977914</span><br />
+          <span data-i18n="email">obicproject117@gmail.com</span><br />
+          <span data-i18n="address">Road of Safety</span>
+        </p>
+      </div>
+    </div>
+    <div class="wrap footer-bottom">
+      <span data-i18n="copy">© 2026 OBIC. All rights reserved.</span>
+    </div>
+  </footer>
+
+  <script src="/js/photos.js?v=20260917c"></script>
+  <script src="/js/catalog.js?v=20260915f"></script>
+  <script src="/js/obic.js?v=20261105footer"></script>
+  <script src="/js/session.js?v=20260919o"></script>
+  <script src="/js/category.js?v=20261104c"></script>
+</body>
+</html>
