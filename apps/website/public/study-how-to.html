@@ -57,6 +57,35 @@
       border-color: transparent;
     }
 
+    .guide-video {
+      margin: 0 auto 1.35rem;
+      max-width: 920px;
+      border-radius: 18px;
+      overflow: hidden;
+      border: 1px solid var(--guide-line);
+      background: #0b1f3a;
+      box-shadow: 0 14px 36px rgba(11, 31, 58, 0.1);
+    }
+    .guide-video-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
+      background: var(--guide-navy);
+      color: #fff;
+    }
+    .guide-video-head strong { font-size: 0.92rem; }
+    .guide-video-head span { font-size: 0.75rem; opacity: 0.78; }
+    .guide-video video {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 1280 / 832;
+      background: #0b1f3a;
+      vertical-align: middle;
+    }
+
     .guide-steps {
       position: relative;
       z-index: 1;
@@ -209,7 +238,7 @@
     <div class="guide-wrap">
       <span class="eyebrow" data-g="eyebrow">دليل تعبئة الطلب</span>
       <h1 data-g="title">كيف تعبّئ بيانات الدراسة في أوبك؟</h1>
-      <p data-g="sub">لقطات حقيقية من النموذج — اتبع الخطوات واحدةً تلو الأخرى.</p>
+      <p data-g="sub">فيديو بصوت حاجة بالعربية، ثم لقطات حقيقية خطوة بخطوة.</p>
       <div class="guide-lang" role="group" aria-label="Language">
         <button type="button" data-lang="ar" class="is-on">عربي</button>
         <button type="button" data-lang="en">EN</button>
@@ -219,6 +248,20 @@
   </section>
 
   <div class="guide-wrap">
+    <figure class="guide-video">
+      <div class="guide-video-head">
+        <strong data-g="videoTitle">فيديو الشرح — صوت حاجة</strong>
+        <span data-g="videoSub">عربي · نحو 3 دقائق</span>
+      </div>
+      <video
+        controls
+        playsinline
+        preload="metadata"
+        poster="/img/study-howto/01-basics.png?v=20261105pro"
+        src="/study-how-to-ar.mp4?v=20261105hajia"
+      ></video>
+    </figure>
+
     <div class="guide-progress"><span id="guide-progress"></span></div>
     <div class="guide-steps" id="guide-steps"></div>
 
@@ -269,7 +312,9 @@
           dir: "rtl",
           eyebrow: "دليل تعبئة الطلب",
           title: "كيف تعبّئ بيانات الدراسة في أوبك؟",
-          sub: "لقطات حقيقية من النموذج — اتبع الخطوات واحدةً تلو الأخرى.",
+          sub: "فيديو بصوت حاجة بالعربية، ثم لقطات حقيقية خطوة بخطوة.",
+          videoTitle: "فيديو الشرح — صوت حاجة",
+          videoSub: "عربي · نحو 3 دقائق",
           prev: "السابق",
           next: "التالي",
           pause: "إيقاف",
@@ -331,7 +376,9 @@
           dir: "ltr",
           eyebrow: "How to apply",
           title: "How to fill the OBIC study form",
-          sub: "Real form screenshots — follow each step in order.",
+          sub: "Arabic video with Hajia’s voice, then real screenshots step by step.",
+          videoTitle: "How-to video — Hajia’s voice",
+          videoSub: "Arabic · about 3 minutes",
           prev: "Prev",
           next: "Next",
           pause: "Pause",
@@ -393,7 +440,9 @@
           dir: "ltr",
           eyebrow: "填写指南",
           title: "如何填写 OBIC 留学表单",
-          sub: "真实表单截图 — 按步骤依次操作。",
+          sub: "阿拉伯语哈吉娅讲解视频，再按真实截图逐步操作。",
+          videoTitle: "讲解视频 — 哈吉娅配音",
+          videoSub: "阿拉伯语 · 约 3 分钟",
           prev: "上一步",
           next: "下一步",
           pause: "暂停",
